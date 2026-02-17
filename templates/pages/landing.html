@@ -450,12 +450,12 @@
 
                     <!-- Restarting -->
                     <template x-if="updateStatus === 'restarting'">
-                        <div class="flex flex-col items-center py-2">
-                            <svg class="w-6 h-6 animate-spin text-emerald-400 mb-2" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        <div class="flex flex-col items-center py-3">
+                            <svg class="w-8 h-8 text-emerald-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
-                            <p class="text-xs text-emerald-400 font-medium">Restarting with v<span x-text="latestVersion"></span>...</p>
+                            <p class="text-sm text-emerald-400 font-medium mb-1">Updated to v<span x-text="latestVersion"></span></p>
+                            <p class="text-xs text-slate-400">Please reopen CPR Tracker</p>
                         </div>
                     </template>
 
@@ -570,13 +570,12 @@
                             <span>Applying update...</span>
                         </div>
 
-                        <!-- Restarting -->
+                        <!-- Done -->
                         <div x-show="updateStatus === 'restarting'" class="flex items-center gap-2 text-xs text-emerald-400">
-                            <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            <span>Restarting with v<span x-text="latestVersion"></span>...</span>
+                            <span>Updated to v<span x-text="latestVersion"></span> — please reopen the app</span>
                         </div>
 
                         <!-- Error -->
@@ -898,8 +897,10 @@
                             throw new Error(applyData.error);
                         }
 
-                        // Shutdown app (PowerShell script will restart it)
+                        // Show success, then shut down so the script can swap the file
                         this.updateStatus = 'restarting';
+                        // Brief delay so user sees the success message
+                        await new Promise(r => setTimeout(r, 2000));
                         await fetch('/api/updates/shutdown', {method: 'POST'});
 
                     } catch (e) {
