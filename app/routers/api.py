@@ -1402,10 +1402,15 @@ Remove-Item $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue
     with open(ps_script_path, "w", encoding="utf-8") as f:
         f.write(ps_script)
 
-    # Spawn PowerShell detached — stdin/out/err must be redirected for DETACHED_PROCESS on Windows
+    # Write a .bat wrapper to launch PowerShell — more reliable for detached spawning from PyInstaller
+    bat_path = os.path.join(updates_dir, "update.bat")
+    with open(bat_path, "w", encoding="utf-8") as bf:
+        bf.write(f'@echo off\npowershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "{ps_script_path}"\n')
+
+    # Use CREATE_NEW_PROCESS_GROUP + DETACHED for clean separation from parent
     subprocess.Popen(
-        ["powershell", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-File", ps_script_path],
-        creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NO_WINDOW,
+        ["cmd", "/c", bat_path],
+        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
