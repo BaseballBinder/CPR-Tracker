@@ -1,0 +1,117 @@
+{% extends "admin/admin_base.html" %}
+
+{% block content %}
+<!-- Page header -->
+<div class="mb-6" x-data="{ filter: 'all' }">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+        <div>
+            <h1 class="text-2xl font-bold text-[#e2e8f0]">Tickets</h1>
+            <p class="text-sm text-[#94a3b8] mt-1">Bug reports and feature suggestions from GitHub Issues</p>
+        </div>
+        <!-- Filter buttons -->
+        <div class="flex items-center gap-2">
+            <button
+                @click="filter = 'all'; document.querySelectorAll('[data-ticket]').forEach(r => r.style.display = '')"
+                :class="filter === 'all' ? 'bg-[#f59e0b] text-white' : 'bg-[#46424e] text-[#94a3b8] hover:text-white'"
+                class="px-3 py-1.5 rounded-[6px] text-sm font-medium transition-colors">
+                All
+            </button>
+            <button
+                @click="filter = 'open'; document.querySelectorAll('[data-ticket]').forEach(r => { r.style.display = r.dataset.status === 'open' ? '' : 'none' })"
+                :class="filter === 'open' ? 'bg-[#f59e0b] text-white' : 'bg-[#46424e] text-[#94a3b8] hover:text-white'"
+                class="px-3 py-1.5 rounded-[6px] text-sm font-medium transition-colors">
+                Open
+            </button>
+            <button
+                @click="filter = 'closed'; document.querySelectorAll('[data-ticket]').forEach(r => { r.style.display = r.dataset.status === 'closed' ? '' : 'none' })"
+                :class="filter === 'closed' ? 'bg-[#f59e0b] text-white' : 'bg-[#46424e] text-[#94a3b8] hover:text-white'"
+                class="px-3 py-1.5 rounded-[6px] text-sm font-medium transition-colors">
+                Closed
+            </button>
+        </div>
+    </div>
+
+    <!-- Tickets table card -->
+    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md">
+        {% if tickets | length > 0 %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-[#64748b] border-b border-[rgba(255,255,255,0.08)]">
+                        <th class="px-5 py-3 font-medium">#</th>
+                        <th class="px-5 py-3 font-medium">Type</th>
+                        <th class="px-5 py-3 font-medium">Title</th>
+                        <th class="px-5 py-3 font-medium">Service</th>
+                        <th class="px-5 py-3 font-medium">Date</th>
+                        <th class="px-5 py-3 font-medium">Status</th>
+                        <th class="px-5 py-3 font-medium">Resolved In</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-[rgba(255,255,255,0.04)]">
+                    {% for t in tickets %}
+                    <tr class="hover:bg-[rgba(255,255,255,0.02)]" data-ticket data-status="{{ t.status }}">
+                        <!-- Number -->
+                        <td class="px-5 py-3 text-[#94a3b8]">{{ t.number }}</td>
+                        <!-- Type badge -->
+                        <td class="px-5 py-3">
+                            {% if t.type == "bug" %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-500/20 text-red-400">
+                                Bug
+                            </span>
+                            {% elif t.type == "suggestion" %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400">
+                                Suggestion
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-500/20 text-gray-400">
+                                Other
+                            </span>
+                            {% endif %}
+                        </td>
+                        <!-- Title (linked to GitHub) -->
+                        <td class="px-5 py-3">
+                            <a href="{{ t.url }}" target="_blank" rel="noopener noreferrer"
+                               class="text-[#f59e0b] hover:text-[#d97706] font-medium">
+                                {{ t.title }}
+                            </a>
+                        </td>
+                        <!-- Service -->
+                        <td class="px-5 py-3 text-[#e2e8f0]">{{ t.service }}</td>
+                        <!-- Date -->
+                        <td class="px-5 py-3 text-[#94a3b8]">
+                            {{ t.created_at[:10] }}
+                        </td>
+                        <!-- Status -->
+                        <td class="px-5 py-3">
+                            <span class="inline-flex items-center gap-1.5">
+                                {% if t.status == "open" %}
+                                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                                <span class="text-[#e2e8f0]">Open</span>
+                                {% else %}
+                                <span class="w-2 h-2 rounded-full bg-gray-500"></span>
+                                <span class="text-[#94a3b8]">Closed</span>
+                                {% endif %}
+                            </span>
+                        </td>
+                        <!-- Resolved In -->
+                        <td class="px-5 py-3 text-[#94a3b8]">
+                            {% if t.resolved_in %}
+                                {{ t.resolved_in }}
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="px-5 py-12 text-center">
+            <p class="text-[#94a3b8]">No tickets found.</p>
+            <p class="text-xs text-[#64748b] mt-1">Issues will appear here once they are created on GitHub.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

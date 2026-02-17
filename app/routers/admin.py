@@ -90,6 +90,20 @@ async def admin_service_detail(request: Request, slug: str):
     )
 
 
+@router.get("/tickets", response_class=HTMLResponse)
+async def admin_tickets(request: Request):
+    """Tickets page — GitHub Issues viewer."""
+    from app.services.admin_service import is_admin_authenticated
+    if not is_admin_authenticated():
+        return RedirectResponse(url="/admin/login", status_code=302)
+    from app.services.ticket_service import get_tickets
+    tickets = get_tickets()
+    return request.app.state.templates.TemplateResponse(
+        "admin/tickets.html",
+        {"request": request, "page_title": "Tickets", "tickets": tickets}
+    )
+
+
 # ============================================================================
 # Admin Auth API
 # ============================================================================
