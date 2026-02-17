@@ -2,12 +2,18 @@
 API endpoints for data operations.
 """
 import os
+import sys
+import json
+import subprocess
 import tempfile
+import threading
+from pathlib import Path
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 
 from fastapi import APIRouter, Request, Form, UploadFile, File, HTTPException, Body
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
+from starlette.responses import StreamingResponse
 from pydantic import BaseModel
 
 from app.mock_data import add_provider, delete_provider, PROVIDERS, TEAMS, get_session_by_id, update_session
@@ -1272,6 +1278,145 @@ async def check_updates(request: Request):
 
     result = update_service.check_for_update(__version__, repo_owner, repo_name)
     return JSONResponse(result)
+
+
+@router.get("/updates/download-stream")
+async def download_update_stream(request: Request):
+    """SSE endpoint that downloads the new .exe from GitHub with progress events."""
+    import requests as http_requests
+
+    url = request.query_params.get("url", "")
+    if not url:
+        async def error_stream():
+            yield f"data: {json.dumps({'error': 'No download URL provided'})}\n\n"
+        return StreamingResponse(error_stream(), media_type="text/event-stream")
+
+    # Determine download directory
+    if getattr(sys, 'frozen', False):
+        appdata = os.environ.get("APPDATA", os.path.expanduser("~"))
+        updates_dir = os.path.join(appdata, "CPR-Tracker", "_updates")
+    else:
+        updates_dir = os.path.join(tempfile.gettempdir(), "CPR-Tracker_updates")
+    os.makedirs(updates_dir, exist_ok=True)
+    dest_path = os.path.join(updates_dir, "CPR-Tracker-new.exe")
+
+    def generate():
+        try:
+            resp = http_requests.get(url, stream=True, timeout=60)
+            resp.raise_for_status()
+            total = int(resp.headers.get("content-length", 0))
+            downloaded = 0
+
+            with open(dest_path, "wb") as f:
+                for chunk in resp.iter_content(chunk_size=65536):
+                    if chunk:
+                        f.write(chunk)
+                        downloaded += len(chunk)
+                        if total > 0:
+                            progress = int((downloaded / total) * 100)
+                        else:
+                            progress = 0
+                        yield f"data: {json.dumps({'progress': progress, 'downloaded': downloaded, 'total': total})}\n\n"
+
+            yield f"data: {json.dumps({'complete': True, 'path': dest_path})}\n\n"
+        except Exception as e:
+            # Clean up partial download
+            if os.path.exists(dest_path):
+                try:
+                    os.remove(dest_path)
+                except OSError:
+                    pass
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    return StreamingResponse(generate(), media_type="text/event-stream")
+
+
+@router.post("/updates/apply")
+async def apply_update(request: Request):
+    """Validate downloaded .exe, write PowerShell update script, spawn it detached."""
+    if not getattr(sys, 'frozen', False):
+        return JSONResponse({"error": "Auto-update only works in packaged mode"}, status_code=400)
+
+    data = await request.json()
+    new_exe_path = data.get("path", "")
+
+    if not new_exe_path or not os.path.exists(new_exe_path):
+        return JSONResponse({"error": "Downloaded file not found"}, status_code=400)
+
+    # MZ header check - verify it's a PE executable
+    try:
+        with open(new_exe_path, "rb") as f:
+            header = f.read(2)
+        if header != b"MZ":
+            os.remove(new_exe_path)
+            return JSONResponse({"error": "Downloaded file is not a valid executable"}, status_code=400)
+    except Exception as e:
+        return JSONResponse({"error": f"Cannot validate file: {e}"}, status_code=400)
+
+    current_exe = sys.executable
+    updates_dir = os.path.dirname(new_exe_path)
+    backup_exe = os.path.join(updates_dir, "CPR-Tracker-old.exe")
+    ps_script_path = os.path.join(updates_dir, "update.ps1")
+
+    ps_script = f'''# CPR-Tracker Auto-Update Script
+$exePath = "{current_exe}"
+$newExe = "{new_exe_path}"
+$backupExe = "{backup_exe}"
+
+# Wait for old process to exit (up to 30s)
+$maxWait = 30; $waited = 0
+while ($waited -lt $maxWait) {{
+    $procs = Get-Process -ErrorAction SilentlyContinue | Where-Object {{ $_.Path -eq $exePath }}
+    if (-not $procs) {{ break }}
+    Start-Sleep -Milliseconds 500; $waited += 0.5
+}}
+Start-Sleep -Seconds 1
+
+# Backup current exe
+Copy-Item "$exePath" "$backupExe" -Force
+
+# Replace with new exe
+try {{
+    Copy-Item "$newExe" "$exePath" -Force
+}} catch {{
+    # Rollback on failure
+    Copy-Item "$backupExe" "$exePath" -Force
+    exit 1
+}}
+
+# Launch updated app
+Start-Process "$exePath"
+
+# Cleanup after short delay
+Start-Sleep -Seconds 3
+Remove-Item "$newExe" -Force -ErrorAction SilentlyContinue
+Remove-Item "$backupExe" -Force -ErrorAction SilentlyContinue
+Remove-Item $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue
+'''
+
+    with open(ps_script_path, "w", encoding="utf-8") as f:
+        f.write(ps_script)
+
+    # Spawn PowerShell detached
+    subprocess.Popen(
+        ["powershell", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-File", ps_script_path],
+        creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NO_WINDOW,
+        close_fds=True,
+    )
+
+    return JSONResponse({"success": True, "message": "Update script launched"})
+
+
+@router.post("/updates/shutdown")
+async def shutdown_for_update():
+    """Gracefully exit the application after a short delay to let the response reach the client."""
+    def delayed_exit():
+        import time
+        time.sleep(0.5)
+        os._exit(0)
+
+    threading.Thread(target=delayed_exit, daemon=True).start()
+    return JSONResponse({"success": True, "message": "Shutting down for update"})
 
 
 # ============================================================================

@@ -59,8 +59,23 @@ def wait_for_server(port: int, timeout: float = 15.0) -> bool:
     return False
 
 
+def _cleanup_update_artifacts() -> None:
+    """Remove leftover update files from a previous auto-update."""
+    appdata = os.environ.get("APPDATA", os.path.expanduser("~"))
+    updates_dir = os.path.join(appdata, "CPR-Tracker", "_updates")
+    if os.path.isdir(updates_dir):
+        import shutil
+        try:
+            shutil.rmtree(updates_dir)
+            logger.info("Cleaned up update artifacts")
+        except Exception as e:
+            logger.warning(f"Could not clean update artifacts: {e}")
+
+
 def main() -> None:
     """Main entry point for the desktop application."""
+    _cleanup_update_artifacts()
+
     # Ensure AppData directory exists
     from app.desktop_config import ensure_appdata_dir
     ensure_appdata_dir()

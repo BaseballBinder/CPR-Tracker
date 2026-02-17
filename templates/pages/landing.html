@@ -413,19 +413,64 @@
                     <!-- Update available -->
                     <div x-show="updateAvailable" x-cloak class="mb-2.5 px-2.5 py-1.5 rounded"
                          style="background: rgba(220, 38, 38, 0.14); border: 1px solid rgba(220, 38, 38, 0.22);">
-                        <div class="flex items-center justify-between">
+
+                        <!-- Default: update available -->
+                        <div x-show="updateStatus === 'available'" class="flex items-center justify-between">
                             <div class="flex items-center gap-1.5 text-xs text-slate-300">
                                 <svg class="w-3.5 h-3.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                           d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                                 </svg>
-                                <span>v<span x-text="latestVersion"></span></span>
+                                <span>v<span x-text="latestVersion"></span> available</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <a x-show="releaseUrl" :href="releaseUrl" target="_blank"
                                    class="text-[11px] text-slate-500 hover:text-slate-300">What's new</a>
-                                <a :href="downloadUrl" target="_blank"
-                                   class="text-[11px] font-medium text-red-400 hover:text-red-300">Download</a>
+                                <button @click="startUpdate()"
+                                   class="text-[11px] font-medium text-red-400 hover:text-red-300 cursor-pointer">Update Now</button>
+                            </div>
+                        </div>
+
+                        <!-- Downloading: progress bar -->
+                        <div x-show="updateStatus === 'downloading'">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-[11px] text-slate-300">Downloading v<span x-text="latestVersion"></span>...</span>
+                                <span class="text-[11px] text-slate-400" x-text="updateProgress + '%'"></span>
+                            </div>
+                            <div class="w-full h-1.5 bg-[rgba(255,255,255,0.08)] rounded-full overflow-hidden">
+                                <div class="h-full bg-red-500 rounded-full transition-all duration-300"
+                                     :style="'width: ' + updateProgress + '%'"></div>
+                            </div>
+                        </div>
+
+                        <!-- Applying -->
+                        <div x-show="updateStatus === 'applying'" class="flex items-center gap-2 text-xs text-slate-300">
+                            <svg class="w-3.5 h-3.5 animate-spin text-red-400" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            <span>Applying update...</span>
+                        </div>
+
+                        <!-- Restarting -->
+                        <div x-show="updateStatus === 'restarting'" class="flex items-center gap-2 text-xs text-emerald-400">
+                            <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            <span>Restarting with v<span x-text="latestVersion"></span>...</span>
+                        </div>
+
+                        <!-- Error -->
+                        <div x-show="updateStatus === 'error'">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] text-red-400" x-text="updateError"></span>
+                                <div class="flex items-center gap-2">
+                                    <button @click="startUpdate()"
+                                       class="text-[11px] font-medium text-slate-400 hover:text-slate-200 cursor-pointer">Retry</button>
+                                    <a :href="downloadUrl" target="_blank"
+                                       class="text-[11px] font-medium text-red-400 hover:text-red-300">Manual download</a>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -641,6 +686,9 @@
                 latestVersion: '',
                 downloadUrl: '',
                 releaseUrl: '',
+                updateStatus: 'available',
+                updateProgress: 0,
+                updateError: '',
 
                 get canCreate() {
                     return (
@@ -671,6 +719,62 @@
                             this.releaseUrl = data.release_url || '';
                         }
                     } catch (e) {}
+                },
+
+                async startUpdate() {
+                    if (!this.downloadUrl) return;
+                    this.updateStatus = 'downloading';
+                    this.updateProgress = 0;
+                    this.updateError = '';
+
+                    try {
+                        // Stream download with progress
+                        const evtSource = new EventSource('/api/updates/download-stream?url=' + encodeURIComponent(this.downloadUrl));
+                        const self = this;
+
+                        await new Promise((resolve, reject) => {
+                            evtSource.onmessage = function(event) {
+                                const data = JSON.parse(event.data);
+                                if (data.error) {
+                                    evtSource.close();
+                                    reject(new Error(data.error));
+                                    return;
+                                }
+                                if (data.progress !== undefined) {
+                                    self.updateProgress = data.progress;
+                                }
+                                if (data.complete) {
+                                    evtSource.close();
+                                    self._downloadedPath = data.path;
+                                    resolve();
+                                }
+                            };
+                            evtSource.onerror = function() {
+                                evtSource.close();
+                                reject(new Error('Download connection lost'));
+                            };
+                        });
+
+                        // Apply update
+                        this.updateStatus = 'applying';
+                        const applyResp = await fetch('/api/updates/apply', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({path: this._downloadedPath})
+                        });
+                        const applyData = await applyResp.json();
+                        if (applyData.error) {
+                            throw new Error(applyData.error);
+                        }
+
+                        // Shutdown app (PowerShell script will restart it)
+                        this.updateStatus = 'restarting';
+                        await fetch('/api/updates/shutdown', {method: 'POST'});
+
+                    } catch (e) {
+                        this.updateStatus = 'error';
+                        this.updateError = e.message || 'Update failed';
+                    }
                 },
 
                 async handleLogin() {
