@@ -33,6 +33,10 @@ def _parse_semver(version: str) -> tuple:
 def check_for_update(current_version: str, repo_owner: str = "", repo_name: str = "") -> dict:
     """Check GitHub Releases for a newer version.
 
+    Fetches all recent releases and finds the highest semver version,
+    rather than relying on GitHub's /releases/latest endpoint which
+    can return stale results.
+
     Returns:
         dict with keys:
             available (bool): Whether an update is available
@@ -52,16 +56,10 @@ def check_for_update(current_version: str, repo_owner: str = "", repo_name: str 
             "error": "Update repository not configured",
         }
 
-    url = f"{GITHUB_API}/repos/{owner}/{name}/releases/latest"
+    url = f"{GITHUB_API}/repos/{owner}/{name}/releases?per_page=20"
 
     try:
         resp = requests.get(url, timeout=10, headers={"Accept": "application/vnd.github.v3+json"})
-        if resp.status_code == 404:
-            return {
-                "available": False,
-                "current_version": current_version,
-                "error": "No releases found",
-            }
         if resp.status_code != 200:
             return {
                 "available": False,
@@ -69,29 +67,51 @@ def check_for_update(current_version: str, repo_owner: str = "", repo_name: str 
                 "error": f"GitHub API returned {resp.status_code}",
             }
 
-        release = resp.json()
-        latest_version = release.get("tag_name", "").lstrip("v")
+        releases = resp.json()
+        if not releases:
+            return {
+                "available": False,
+                "current_version": current_version,
+                "error": "No releases found",
+            }
 
-        # Compare versions
+        # Find the highest version release that isn't a draft or prerelease
         current_tuple = _parse_semver(current_version)
-        latest_tuple = _parse_semver(latest_version)
+        best_version = current_tuple
+        best_release = None
 
-        update_available = latest_tuple > current_tuple
+        for release in releases:
+            if release.get("draft") or release.get("prerelease"):
+                continue
+            tag = release.get("tag_name", "")
+            ver = _parse_semver(tag)
+            if ver > best_version:
+                best_version = ver
+                best_release = release
+
+        if best_release is None:
+            return {
+                "available": False,
+                "current_version": current_version,
+                "latest_version": current_version,
+            }
+
+        latest_version = best_release["tag_name"].lstrip("v")
 
         # Find .exe download URL
         download_url = ""
-        for asset in release.get("assets", []):
+        for asset in best_release.get("assets", []):
             if asset["name"].lower().endswith(".exe"):
                 download_url = asset["browser_download_url"]
                 break
 
         return {
-            "available": update_available,
+            "available": True,
             "current_version": current_version,
             "latest_version": latest_version,
             "download_url": download_url,
-            "release_notes": release.get("body", ""),
-            "release_url": release.get("html_url", ""),
+            "release_notes": best_release.get("body", ""),
+            "release_url": best_release.get("html_url", ""),
         }
     except requests.RequestException as e:
         logger.warning(f"Update check failed: {e}")
