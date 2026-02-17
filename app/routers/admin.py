@@ -90,6 +90,20 @@ async def admin_service_detail(request: Request, slug: str):
     )
 
 
+@router.get("/analytics", response_class=HTMLResponse)
+async def admin_analytics(request: Request):
+    """Cross-service analytics and comparison charts."""
+    from app.services.admin_service import is_admin_authenticated, get_all_services_data, load_annotations
+    if not is_admin_authenticated():
+        return RedirectResponse(url="/admin/login", status_code=302)
+    services_data = get_all_services_data()
+    annotations = load_annotations()
+    return request.app.state.templates.TemplateResponse(
+        "admin/analytics.html",
+        {"request": request, "page_title": "Analytics", "services_data": services_data, "annotations": annotations}
+    )
+
+
 @router.get("/tickets", response_class=HTMLResponse)
 async def admin_tickets(request: Request):
     """Tickets page — GitHub Issues viewer."""

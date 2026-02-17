@@ -1,0 +1,699 @@
+{% extends "admin/admin_base.html" %}
+
+{% block content %}
+<div x-data="analyticsPage()" x-init="init()">
+
+    <!-- Page Header -->
+    <div class="mb-6">
+        <h1 class="text-xl font-bold text-[#e2e8f0]">Analytics</h1>
+        <p class="text-sm text-[#64748b] mt-1">Cross-service performance comparison and trend analysis</p>
+    </div>
+
+    <!-- ================================================================
+         Overview Cards (4-column grid)
+         ================================================================ -->
+    {% set total_sessions_all = services_data | map(attribute='total_sessions') | sum %}
+    {% set ns = namespace(rosc_total=0, real_total=0, ccf_sum=0, ccf_count=0, best_service='--', best_count=0) %}
+    {% for svc in services_data %}
+        {% set ns.rosc_total = ns.rosc_total + svc.rosc_count %}
+        {% set ns.real_total = ns.real_total + svc.real_calls %}
+        {% if svc.avg_ccf is not none and svc.avg_ccf != '--' %}
+            {% set ns.ccf_sum = ns.ccf_sum + svc.avg_ccf %}
+            {% set ns.ccf_count = ns.ccf_count + 1 %}
+        {% endif %}
+        {% if svc.total_sessions > ns.best_count %}
+            {% set ns.best_count = svc.total_sessions %}
+            {% set ns.best_service = svc.name %}
+        {% endif %}
+    {% endfor %}
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <!-- Total Sessions -->
+        <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-medium text-[#94a3b8] uppercase tracking-wider">Total Sessions</span>
+                <svg class="w-5 h-5 text-[#f59e0b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+            </div>
+            <p class="text-3xl font-bold text-[#e2e8f0]">{{ total_sessions_all }}</p>
+            <p class="text-xs text-[#64748b] mt-1">across {{ services_data | length }} service{{ 's' if services_data | length != 1 else '' }}</p>
+        </div>
+
+        <!-- Average ROSC Rate -->
+        <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-medium text-[#94a3b8] uppercase tracking-wider">Avg ROSC Rate</span>
+                <svg class="w-5 h-5 text-[#f59e0b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                </svg>
+            </div>
+            <p class="text-3xl font-bold text-emerald-400">
+                {% if ns.real_total > 0 %}{{ "%.1f" | format(ns.rosc_total / ns.real_total * 100) }}%{% else %}--{% endif %}
+            </p>
+            <p class="text-xs text-[#64748b] mt-1">{{ ns.rosc_total }} of {{ ns.real_total }} real calls</p>
+        </div>
+
+        <!-- Average CCF -->
+        <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-medium text-[#94a3b8] uppercase tracking-wider">Avg CCF</span>
+                <svg class="w-5 h-5 text-[#f59e0b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                          d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                </svg>
+            </div>
+            <p class="text-3xl font-bold text-[#e2e8f0]">
+                {% if ns.ccf_count > 0 %}{{ "%.1f" | format(ns.ccf_sum / ns.ccf_count) }}%{% else %}--{% endif %}
+            </p>
+            <p class="text-xs text-[#64748b] mt-1">average across services</p>
+        </div>
+
+        <!-- Most Active Service -->
+        <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-medium text-[#94a3b8] uppercase tracking-wider">Most Active</span>
+                <svg class="w-5 h-5 text-[#f59e0b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+            </div>
+            <p class="text-xl font-bold text-[#f59e0b] truncate" title="{{ ns.best_service }}">{{ ns.best_service }}</p>
+            <p class="text-xs text-[#64748b] mt-1">{{ ns.best_count }} sessions</p>
+        </div>
+    </div>
+
+    {% if services_data | length > 0 %}
+    <!-- ================================================================
+         Charts Row 1: Sessions per Service + Monthly Trends
+         ================================================================ -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <!-- Sessions per Service (bar chart) -->
+        <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+            <h2 class="text-sm font-semibold text-[#e2e8f0] uppercase tracking-wider mb-4">Sessions per Service</h2>
+            <div class="relative" style="height: 280px;">
+                <canvas id="sessionsPerServiceChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Monthly Trends per Service (line chart) -->
+        <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+            <h2 class="text-sm font-semibold text-[#e2e8f0] uppercase tracking-wider mb-4">Monthly Session Trends</h2>
+            <div class="relative" style="height: 280px;">
+                <canvas id="monthlyTrendsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================
+         Charts Row 2: Average Metrics + ROSC Rate by Service
+         ================================================================ -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <!-- Average Metrics by Service (grouped bar chart) -->
+        <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+            <h2 class="text-sm font-semibold text-[#e2e8f0] uppercase tracking-wider mb-4">Average Metrics by Service</h2>
+            <div class="relative" style="height: 280px;">
+                <canvas id="avgMetricsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- ROSC Rate by Service (bar chart) -->
+        <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+            <h2 class="text-sm font-semibold text-[#e2e8f0] uppercase tracking-wider mb-4">ROSC Rate by Service</h2>
+            <div class="relative" style="height: 280px;">
+                <canvas id="roscRateChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================
+         Performance Trend with Event Annotations
+         ================================================================ -->
+    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5 mb-4"
+         x-data="annotationManager()">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h2 class="text-sm font-semibold text-[#e2e8f0] uppercase tracking-wider">Performance Trend</h2>
+                <p class="text-xs text-[#64748b] mt-0.5">Monthly average metrics across all services with event annotations</p>
+            </div>
+            <button @click="showAddForm = !showAddForm"
+                    class="px-3 py-1.5 text-xs font-medium text-[#94a3b8] rounded-md
+                           border border-[rgba(255,255,255,0.08)] hover:text-[#e2e8f0]
+                           hover:border-[rgba(255,255,255,0.15)] hover:bg-[rgba(255,255,255,0.03)]
+                           transition-all duration-200 cursor-pointer flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+                Add Event
+            </button>
+        </div>
+
+        <!-- Add Annotation Form -->
+        <div x-show="showAddForm" x-cloak
+             class="mb-4 p-4 rounded-md border border-[rgba(255,255,255,0.10)]"
+             style="background: rgba(255,255,255,0.02);">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-[#94a3b8] mb-1">Month</label>
+                    <input type="month" x-model="newMonth"
+                           class="w-full text-sm bg-[#46424e] text-[#e2e8f0] border border-[rgba(255,255,255,0.15)]
+                                  rounded-md px-2.5 py-1.5 outline-none focus:border-[rgba(245,158,11,0.5)]">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-[#94a3b8] mb-1">Event Label</label>
+                    <input type="text" x-model="newLabel" placeholder="e.g. CPR Training Push"
+                           class="w-full text-sm bg-[#46424e] text-[#e2e8f0] placeholder-[#4b5563] border border-[rgba(255,255,255,0.15)]
+                                  rounded-md px-2.5 py-1.5 outline-none focus:border-[rgba(245,158,11,0.5)]">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-[#94a3b8] mb-1">Description (optional)</label>
+                    <input type="text" x-model="newDesc" placeholder="Brief description..."
+                           class="w-full text-sm bg-[#46424e] text-[#e2e8f0] placeholder-[#4b5563] border border-[rgba(255,255,255,0.15)]
+                                  rounded-md px-2.5 py-1.5 outline-none focus:border-[rgba(245,158,11,0.5)]">
+                </div>
+                <div class="flex items-end gap-2">
+                    <div class="flex-1">
+                        <label class="block text-xs font-medium text-[#94a3b8] mb-1">Color</label>
+                        <select x-model="newColor"
+                                class="w-full text-sm bg-[#46424e] text-[#e2e8f0] border border-[rgba(255,255,255,0.15)]
+                                       rounded-md px-2.5 py-1.5 outline-none focus:border-[rgba(245,158,11,0.5)]">
+                            <option value="#f59e0b">Amber</option>
+                            <option value="#dc2626">Red</option>
+                            <option value="#f97316">Orange</option>
+                            <option value="#3b82f6">Blue</option>
+                            <option value="#10b981">Green</option>
+                            <option value="#a855f7">Purple</option>
+                        </select>
+                    </div>
+                    <button @click="addAnnotation()"
+                            :disabled="!newMonth || !newLabel"
+                            class="px-3 py-1.5 text-sm font-medium text-white rounded-md cursor-pointer
+                                   transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                            style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                        Add
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Existing Annotations List -->
+        <template x-if="annotations.length > 0">
+            <div class="mb-4 flex flex-wrap gap-2">
+                <template x-for="ann in annotations" :key="ann.id">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border"
+                          :style="'border-color:' + ann.color + '40; background:' + ann.color + '15; color:' + ann.color">
+                        <span class="w-1.5 h-1.5 rounded-full" :style="'background:' + ann.color"></span>
+                        <span x-text="ann.month"></span>:
+                        <span x-text="ann.label"></span>
+                        <button @click="deleteAnnotation(ann.id)" class="ml-0.5 opacity-60 hover:opacity-100 transition-opacity cursor-pointer">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </span>
+                </template>
+            </div>
+        </template>
+
+        <!-- Performance Trend Chart -->
+        <div class="relative" style="height: 320px;">
+            <canvas id="performanceTrendChart"></canvas>
+        </div>
+    </div>
+    {% else %}
+    <!-- Empty state -->
+    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-12 text-center">
+        <svg class="w-16 h-16 text-[#64748b] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        <p class="text-lg text-[#94a3b8] font-medium">No analytics data available</p>
+        <p class="text-sm text-[#64748b] mt-1">Charts will appear once services have session data.</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function analyticsPage() {
+    return {
+        init() {
+            this.$nextTick(() => { this.initCharts(); });
+        },
+
+        initCharts() {
+            const servicesData = {{ services_data | tojson }};
+            if (!servicesData || servicesData.length === 0) return;
+
+            const labels = servicesData.map(s => s.name);
+            const chartFont = { family: '"Source Sans 3", system-ui, sans-serif' };
+            const tooltipStyle = {
+                backgroundColor: '#36323e',
+                titleColor: '#e2e8f0',
+                bodyColor: '#94a3b8',
+                borderColor: 'rgba(255,255,255,0.15)',
+                borderWidth: 1,
+                padding: 10,
+                cornerRadius: 6,
+                titleFont: { ...chartFont, weight: '600' },
+                bodyFont: chartFont,
+            };
+            const gridStyle = { color: 'rgba(255,255,255,0.04)' };
+
+            const COLORS = [
+                '#f59e0b', '#ef4444', '#3b82f6', '#10b981', '#8b5cf6',
+                '#ec4899', '#14b8a6', '#f97316', '#06b6d4', '#84cc16'
+            ];
+
+            // --------------------------------------------------------
+            // 1. Sessions per Service (bar chart)
+            // --------------------------------------------------------
+            const sessCanvas = document.getElementById('sessionsPerServiceChart');
+            if (sessCanvas) {
+                new Chart(sessCanvas.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Real Calls',
+                                data: servicesData.map(s => s.real_calls || 0),
+                                backgroundColor: 'rgba(245, 158, 11, 0.75)',
+                                borderColor: '#f59e0b',
+                                borderWidth: 1,
+                                borderRadius: 3,
+                            },
+                            {
+                                label: 'Simulated',
+                                data: servicesData.map(s => s.simulated || 0),
+                                backgroundColor: 'rgba(100, 116, 139, 0.6)',
+                                borderColor: '#64748b',
+                                borderWidth: 1,
+                                borderRadius: 3,
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: { color: '#94a3b8', font: { ...chartFont, size: 11 }, padding: 12, usePointStyle: true, pointStyle: 'rectRounded' },
+                            },
+                            tooltip: tooltipStyle,
+                        },
+                        scales: {
+                            x: { stacked: true, ticks: { color: '#94a3b8', font: { ...chartFont, size: 11 } }, grid: gridStyle },
+                            y: { stacked: true, beginAtZero: true, ticks: { color: '#64748b', font: { ...chartFont, size: 10 }, stepSize: 1 }, grid: gridStyle },
+                        },
+                    },
+                });
+            }
+
+            // --------------------------------------------------------
+            // 2. Monthly Trends per Service (line chart)
+            // --------------------------------------------------------
+            const trendCanvas = document.getElementById('monthlyTrendsChart');
+            if (trendCanvas) {
+                const allMonths = new Set();
+                servicesData.forEach(s => {
+                    if (s.monthly_counts) Object.keys(s.monthly_counts).forEach(m => allMonths.add(m));
+                });
+                const monthKeys = Array.from(allMonths).sort();
+                const monthLabels = monthKeys.map(m => {
+                    const [y, mo] = m.split('-');
+                    const ms = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                    return ms[parseInt(mo) - 1] + ' ' + y.slice(2);
+                });
+
+                const datasets = servicesData.map((s, i) => ({
+                    label: s.name,
+                    data: monthKeys.map(m => (s.monthly_counts && s.monthly_counts[m]) || 0),
+                    borderColor: COLORS[i % COLORS.length],
+                    backgroundColor: COLORS[i % COLORS.length] + '25',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                }));
+
+                new Chart(trendCanvas.getContext('2d'), {
+                    type: 'line',
+                    data: { labels: monthLabels, datasets: datasets },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: { color: '#94a3b8', font: { ...chartFont, size: 11 }, padding: 16, usePointStyle: true },
+                            },
+                            tooltip: tooltipStyle,
+                        },
+                        scales: {
+                            x: { ticks: { color: '#94a3b8', font: { ...chartFont, size: 11 } }, grid: gridStyle },
+                            y: { beginAtZero: true, ticks: { color: '#64748b', font: { ...chartFont, size: 10 }, stepSize: 1 }, grid: gridStyle },
+                        },
+                    },
+                });
+            }
+
+            // --------------------------------------------------------
+            // 3. Average Metrics by Service (grouped bar: rate, depth, CCF)
+            // --------------------------------------------------------
+            const metricsCanvas = document.getElementById('avgMetricsChart');
+            if (metricsCanvas) {
+                new Chart(metricsCanvas.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Avg Rate (cpm)',
+                                data: servicesData.map(s => s.avg_compression_rate || 0),
+                                backgroundColor: 'rgba(245, 158, 11, 0.7)',
+                                borderColor: '#f59e0b',
+                                borderWidth: 1,
+                                borderRadius: 3,
+                            },
+                            {
+                                label: 'Avg Depth (mm)',
+                                data: servicesData.map(s => s.avg_compression_depth || 0),
+                                backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                                borderColor: '#ef4444',
+                                borderWidth: 1,
+                                borderRadius: 3,
+                            },
+                            {
+                                label: 'Avg CCF (%)',
+                                data: servicesData.map(s => s.avg_ccf || 0),
+                                backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                                borderColor: '#3b82f6',
+                                borderWidth: 1,
+                                borderRadius: 3,
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: { color: '#94a3b8', font: { ...chartFont, size: 11 }, padding: 12, usePointStyle: true, pointStyle: 'rectRounded' },
+                            },
+                            tooltip: tooltipStyle,
+                        },
+                        scales: {
+                            x: { ticks: { color: '#94a3b8', font: { ...chartFont, size: 11 } }, grid: gridStyle },
+                            y: { beginAtZero: true, ticks: { color: '#64748b', font: { ...chartFont, size: 10 } }, grid: gridStyle },
+                        },
+                    },
+                });
+            }
+
+            // --------------------------------------------------------
+            // 4. ROSC Rate by Service (bar chart)
+            // --------------------------------------------------------
+            const roscCanvas = document.getElementById('roscRateChart');
+            if (roscCanvas) {
+                const roscColors = servicesData.map((s, i) => COLORS[i % COLORS.length]);
+                new Chart(roscCanvas.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'ROSC Rate (%)',
+                            data: servicesData.map(s => s.rosc_rate || 0),
+                            backgroundColor: roscColors.map(c => c + 'BB'),
+                            borderColor: roscColors,
+                            borderWidth: 1,
+                            borderRadius: 3,
+                        }],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false,
+                            },
+                            tooltip: {
+                                ...tooltipStyle,
+                                callbacks: {
+                                    label: function(ctx) {
+                                        const svc = servicesData[ctx.dataIndex];
+                                        return [
+                                            'ROSC Rate: ' + (svc.rosc_rate || 0) + '%',
+                                            'ROSC: ' + (svc.rosc_count || 0) + ' / ' + (svc.real_calls || 0) + ' real calls',
+                                        ];
+                                    }
+                                }
+                            },
+                        },
+                        scales: {
+                            x: { ticks: { color: '#94a3b8', font: { ...chartFont, size: 11 } }, grid: gridStyle },
+                            y: { beginAtZero: true, max: 100, ticks: { color: '#64748b', font: { ...chartFont, size: 10 }, callback: v => v + '%' }, grid: gridStyle },
+                        },
+                    },
+                });
+            }
+
+            // --------------------------------------------------------
+            // 5. Performance Trend Chart (with annotation markers)
+            // --------------------------------------------------------
+            const perfCanvas = document.getElementById('performanceTrendChart');
+            if (perfCanvas) {
+                // Merge monthly_avg data from all services into aggregate averages
+                const allPerfMonths = new Set();
+                servicesData.forEach(s => {
+                    if (s.monthly_avg) Object.keys(s.monthly_avg).forEach(m => allPerfMonths.add(m));
+                    if (s.monthly_counts) Object.keys(s.monthly_counts).forEach(m => allPerfMonths.add(m));
+                });
+                const perfMonthKeys = Array.from(allPerfMonths).sort();
+                const perfLabels = perfMonthKeys.map(m => {
+                    const [y, mo] = m.split('-');
+                    const ms = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                    return ms[parseInt(mo) - 1] + ' ' + y.slice(2);
+                });
+
+                // Aggregate monthly averages across services
+                function aggMetric(key) {
+                    return perfMonthKeys.map(m => {
+                        const vals = [];
+                        servicesData.forEach(s => {
+                            if (s.monthly_avg && s.monthly_avg[m] && s.monthly_avg[m][key] != null) {
+                                vals.push(s.monthly_avg[m][key]);
+                            }
+                        });
+                        return vals.length ? Math.round(vals.reduce((a,b) => a+b, 0) / vals.length * 10) / 10 : null;
+                    });
+                }
+
+                // Custom plugin for vertical annotation lines
+                const annotationLinePlugin = {
+                    id: 'annotationLines',
+                    afterDraw(chart) {
+                        const anns = chart.options.plugins?.annotationLines?.items;
+                        if (!anns || anns.length === 0) return;
+                        const ctx = chart.ctx;
+                        const xScale = chart.scales.x;
+                        const yScale = chart.scales.y;
+                        anns.forEach(ann => {
+                            const idx = perfLabels.indexOf(ann.displayLabel);
+                            if (idx === -1) return;
+                            const xPixel = xScale.getPixelForValue(idx);
+                            ctx.save();
+                            // Dashed vertical line
+                            ctx.beginPath();
+                            ctx.moveTo(xPixel, yScale.top);
+                            ctx.lineTo(xPixel, yScale.bottom);
+                            ctx.strokeStyle = ann.color || '#f59e0b';
+                            ctx.lineWidth = 2;
+                            ctx.setLineDash([6, 4]);
+                            ctx.stroke();
+                            // Label background
+                            ctx.setLineDash([]);
+                            const text = ann.label;
+                            ctx.font = 'bold 11px Source Sans 3, sans-serif';
+                            const tw = ctx.measureText(text).width;
+                            const pad = 4;
+                            const bx = xPixel - tw/2 - pad;
+                            const by = yScale.top - 22;
+                            ctx.fillStyle = ann.color || '#f59e0b';
+                            ctx.beginPath();
+                            ctx.roundRect(bx, by, tw + pad*2, 18, 3);
+                            ctx.fill();
+                            // Label text
+                            ctx.fillStyle = '#fff';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(text, xPixel, by + 9);
+                            ctx.restore();
+                        });
+                    }
+                };
+
+                // Build annotation items for chart
+                const storedAnnotations = {{ annotations | tojson }};
+                const annotationItems = storedAnnotations.map(a => {
+                    const [y, mo] = a.month.split('-');
+                    const ms = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                    return {
+                        displayLabel: ms[parseInt(mo) - 1] + ' ' + y.slice(2),
+                        label: a.label,
+                        color: a.color || '#f59e0b',
+                    };
+                });
+
+                new Chart(perfCanvas.getContext('2d'), {
+                    type: 'line',
+                    plugins: [annotationLinePlugin],
+                    data: {
+                        labels: perfLabels,
+                        datasets: [
+                            {
+                                label: 'Avg CCF (%)',
+                                data: aggMetric('avg_ccf'),
+                                borderColor: '#f59e0b',
+                                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                                borderWidth: 2.5,
+                                tension: 0.3,
+                                fill: true,
+                                pointRadius: 4,
+                                pointHoverRadius: 7,
+                                spanGaps: true,
+                            },
+                            {
+                                label: 'Depth Compliance (%)',
+                                data: aggMetric('avg_depth_compliance'),
+                                borderColor: '#ef4444',
+                                backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                                borderWidth: 2,
+                                tension: 0.3,
+                                fill: true,
+                                pointRadius: 4,
+                                pointHoverRadius: 7,
+                                spanGaps: true,
+                            },
+                            {
+                                label: 'Rate Compliance (%)',
+                                data: aggMetric('avg_rate_compliance'),
+                                borderColor: '#3b82f6',
+                                backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                                borderWidth: 2,
+                                tension: 0.3,
+                                fill: true,
+                                pointRadius: 4,
+                                pointHoverRadius: 7,
+                                spanGaps: true,
+                            },
+                            {
+                                label: 'Avg Rate (cpm)',
+                                data: aggMetric('avg_rate'),
+                                borderColor: '#10b981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                                borderWidth: 1.5,
+                                tension: 0.3,
+                                fill: false,
+                                pointRadius: 3,
+                                pointHoverRadius: 6,
+                                spanGaps: true,
+                                yAxisID: 'y1',
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: { padding: { top: 28 } },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: { color: '#94a3b8', font: { ...chartFont, size: 11 }, padding: 14, usePointStyle: true },
+                            },
+                            tooltip: {
+                                ...tooltipStyle,
+                                callbacks: {
+                                    afterBody: function(items) {
+                                        const label = items[0]?.label;
+                                        const match = annotationItems.find(a => a.displayLabel === label);
+                                        return match ? '\n' + match.label : '';
+                                    }
+                                }
+                            },
+                            annotationLines: { items: annotationItems },
+                        },
+                        scales: {
+                            x: { ticks: { color: '#94a3b8', font: { ...chartFont, size: 11 } }, grid: gridStyle },
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                position: 'left',
+                                title: { display: true, text: 'Percentage (%)', color: '#64748b', font: { ...chartFont, size: 11 } },
+                                ticks: { color: '#64748b', font: { ...chartFont, size: 10 } },
+                                grid: gridStyle,
+                            },
+                            y1: {
+                                beginAtZero: true,
+                                position: 'right',
+                                title: { display: true, text: 'Rate (cpm)', color: '#64748b', font: { ...chartFont, size: 11 } },
+                                ticks: { color: '#64748b', font: { ...chartFont, size: 10 } },
+                                grid: { drawOnChartArea: false },
+                            },
+                        },
+                    },
+                });
+            }
+        },
+    };
+}
+
+function annotationManager() {
+    return {
+        annotations: {{ annotations | tojson }},
+        showAddForm: false,
+        newMonth: '',
+        newLabel: '',
+        newDesc: '',
+        newColor: '#f59e0b',
+
+        async addAnnotation() {
+            if (!this.newMonth || !this.newLabel) return;
+            try {
+                const resp = await fetch('/admin/api/annotations', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        month: this.newMonth,
+                        label: this.newLabel,
+                        description: this.newDesc,
+                        color: this.newColor,
+                    }),
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    window.location.reload();
+                }
+            } catch (e) {}
+        },
+
+        async deleteAnnotation(id) {
+            try {
+                const resp = await fetch('/admin/api/annotations/' + id, { method: 'DELETE' });
+                const data = await resp.json();
+                if (data.success) {
+                    window.location.reload();
+                }
+            } catch (e) {}
+        },
+    };
+}
+</script>
+{% endblock %}
