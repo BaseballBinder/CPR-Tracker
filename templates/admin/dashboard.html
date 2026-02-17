@@ -1,1 +1,90 @@
-<html><body>Admin Dashboard Placeholder</body></html>
+{% extends "admin/admin_base.html" %}
+
+{% block content %}
+<!-- Overview Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <!-- Total Services -->
+    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+        <div class="text-sm text-[#94a3b8] mb-1">Total Services</div>
+        <div class="text-3xl font-bold text-[#e2e8f0]">{{ services_data | length }}</div>
+    </div>
+
+    <!-- Total Sessions -->
+    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+        <div class="text-sm text-[#94a3b8] mb-1">Total Sessions</div>
+        <div class="text-3xl font-bold text-[#e2e8f0]">{{ services_data | map(attribute='total_sessions') | sum }}</div>
+    </div>
+
+    <!-- Total Providers -->
+    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+        <div class="text-sm text-[#94a3b8] mb-1">Total Providers</div>
+        <div class="text-3xl font-bold text-[#e2e8f0]">{{ services_data | map(attribute='active_providers') | sum }}</div>
+    </div>
+
+    <!-- Avg ROSC Rate -->
+    {% set ns = namespace(rosc_total=0, no_rosc_total=0) %}
+    {% for svc in services_data %}
+        {% set ns.rosc_total = ns.rosc_total + svc.rosc_count %}
+        {% set ns.no_rosc_total = ns.no_rosc_total + svc.no_rosc_count %}
+    {% endfor %}
+    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+        <div class="text-sm text-[#94a3b8] mb-1">Avg ROSC Rate</div>
+        <div class="text-3xl font-bold text-[#e2e8f0]">
+            {% if (ns.rosc_total + ns.no_rosc_total) > 0 %}
+                {{ "%.1f" | format(ns.rosc_total / (ns.rosc_total + ns.no_rosc_total) * 100) }}%
+            {% else %}
+                N/A
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Quick Service List -->
+<div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-[#e2e8f0]">Services</h2>
+        <a href="/admin/services" class="text-sm text-[#f59e0b] hover:text-[#d97706] font-medium">View All &rarr;</a>
+    </div>
+
+    {% if services_data | length > 0 %}
+    <!-- Table -->
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-left text-[#64748b] border-b border-[rgba(255,255,255,0.06)]">
+                    <th class="pb-3 pr-4 font-medium">Service</th>
+                    <th class="pb-3 pr-4 font-medium">Providers</th>
+                    <th class="pb-3 pr-4 font-medium">Sessions</th>
+                    <th class="pb-3 pr-4 font-medium">Real Calls</th>
+                    <th class="pb-3 font-medium">ROSC Rate</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-[rgba(255,255,255,0.04)]">
+                {% for svc in services_data %}
+                <tr class="hover:bg-[rgba(255,255,255,0.02)]">
+                    <td class="py-3 pr-4">
+                        <a href="/admin/services/{{ svc.slug }}" class="text-[#f59e0b] hover:text-[#d97706] font-medium">
+                            {{ svc.name }}
+                        </a>
+                    </td>
+                    <td class="py-3 pr-4 text-[#e2e8f0]">{{ svc.active_providers }}</td>
+                    <td class="py-3 pr-4 text-[#e2e8f0]">{{ svc.total_sessions }}</td>
+                    <td class="py-3 pr-4 text-[#e2e8f0]">{{ svc.real_calls }}</td>
+                    <td class="py-3 text-[#e2e8f0]">
+                        {% if svc.real_calls > 0 %}
+                            {{ "%.1f" | format(svc.rosc_rate) }}%
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-[#94a3b8]">No services configured yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
