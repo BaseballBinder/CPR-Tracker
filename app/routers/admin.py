@@ -3,7 +3,7 @@ Admin router - consolidated admin area routes.
 Handles admin authentication, dashboard, cross-service data,
 test data management, and chart annotations.
 """
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 router = APIRouter(prefix="/admin")
@@ -66,6 +66,27 @@ async def admin_services(request: Request):
     return request.app.state.templates.TemplateResponse(
         "admin/services.html",
         {"request": request, "page_title": "Services", "services_data": services_data}
+    )
+
+
+@router.get("/services/{slug}", response_class=HTMLResponse)
+async def admin_service_detail(request: Request, slug: str):
+    """Service detail — drill into a single service."""
+    from app.services.admin_service import is_admin_authenticated, get_all_services_data
+    if not is_admin_authenticated():
+        return RedirectResponse(url="/admin/login", status_code=302)
+
+    services_data = get_all_services_data()
+    service = next((s for s in services_data if s["slug"] == slug), None)
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found")
+
+    from app.services.activity_service import get_activity_log
+    activity = get_activity_log(slug, limit=20)
+
+    return request.app.state.templates.TemplateResponse(
+        "admin/service_detail.html",
+        {"request": request, "page_title": service["name"], "service": service, "activity": activity}
     )
 
 

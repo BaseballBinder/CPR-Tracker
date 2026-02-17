@@ -1,0 +1,193 @@
+{% extends "admin/admin_base.html" %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav class="text-sm text-[#64748b] mb-6">
+    <a href="/admin/services" class="text-[#f59e0b] hover:text-[#d97706]">Services</a>
+    <span class="mx-2">&rarr;</span>
+    <span class="text-[#e2e8f0]">{{ service.name }}</span>
+</nav>
+
+<!-- Page header -->
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-[#e2e8f0]">{{ service.name }}</h1>
+</div>
+
+<!-- Summary Cards (4-column grid) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <!-- Providers -->
+    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+        <p class="text-sm text-[#64748b] mb-1">Providers</p>
+        <p class="text-2xl font-bold text-[#e2e8f0]">{{ service.active_providers }}</p>
+    </div>
+    <!-- Total Sessions -->
+    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+        <p class="text-sm text-[#64748b] mb-1">Total Sessions</p>
+        <p class="text-2xl font-bold text-[#e2e8f0]">{{ service.total_sessions }}</p>
+        <p class="text-xs text-[#64748b] mt-1">{{ service.real_calls }} real / {{ service.simulated }} sim</p>
+    </div>
+    <!-- ROSC Rate -->
+    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+        <p class="text-sm text-[#64748b] mb-1">ROSC Rate</p>
+        <p class="text-2xl font-bold text-[#e2e8f0]">
+            {% if service.real_calls > 0 %}
+                {{ "%.1f" | format(service.rosc_rate) }}%
+            {% else %}
+                N/A
+            {% endif %}
+        </p>
+    </div>
+    <!-- Avg CCF -->
+    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+        <p class="text-sm text-[#64748b] mb-1">Avg CCF</p>
+        <p class="text-2xl font-bold text-[#e2e8f0]">
+            {% if service.avg_ccf > 0 %}
+                {{ "%.1f" | format(service.avg_ccf) }}%
+            {% else %}
+                N/A
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<!-- Two-column grid: Provider Roster + Recent Activity -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+    <!-- Provider Roster Snapshot -->
+    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+        <h2 class="text-lg font-semibold text-[#e2e8f0] mb-4">Provider Roster Snapshot</h2>
+        <div class="max-h-64 overflow-y-auto space-y-2">
+            {% set active_providers = [] %}
+            {% for p in service.providers if p.status == 'active' %}
+                {% if true %}{% set _ = active_providers.append(p) %}{% endif %}
+            <div class="flex items-center justify-between py-1.5 px-2 rounded hover:bg-[rgba(255,255,255,0.02)]">
+                <span class="text-sm text-[#e2e8f0]">{{ p.name }}</span>
+                <span class="text-xs text-[#64748b] bg-[#46424e] px-2 py-0.5 rounded">{{ p.certification or "Unknown" }}</span>
+            </div>
+            {% else %}
+            <p class="text-sm text-[#94a3b8]">No active providers.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+        <h2 class="text-lg font-semibold text-[#e2e8f0] mb-4">Recent Activity</h2>
+        <div class="max-h-64 overflow-y-auto space-y-2">
+            {% for event in activity %}
+            <div class="flex items-center gap-3 py-1.5 px-2 rounded hover:bg-[rgba(255,255,255,0.02)]">
+                <!-- Color-coded dot -->
+                {% if event.type == 'login' %}
+                <span class="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0"></span>
+                {% elif event.type == 'session_import' %}
+                <span class="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0"></span>
+                {% elif event.type == 'provider_added' %}
+                <span class="w-2 h-2 rounded-full bg-purple-400 flex-shrink-0"></span>
+                {% elif event.type == 'export' %}
+                <span class="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0"></span>
+                {% else %}
+                <span class="w-2 h-2 rounded-full bg-gray-400 flex-shrink-0"></span>
+                {% endif %}
+                <div class="flex-1 min-w-0">
+                    <span class="text-sm text-[#e2e8f0]">{{ event.type | replace("_", " ") | title }}</span>
+                </div>
+                <span class="text-xs text-[#64748b] flex-shrink-0">
+                    {{ event.timestamp[:16] | replace("T", " ") }}
+                </span>
+            </div>
+            {% else %}
+            <p class="text-sm text-[#94a3b8]">No activity recorded yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Recent Sessions (full-width table) -->
+<div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md">
+    <div class="px-5 py-4 border-b border-[rgba(255,255,255,0.08)]">
+        <h2 class="text-lg font-semibold text-[#e2e8f0]">Recent Sessions</h2>
+    </div>
+    {% if service.sessions | length > 0 %}
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-left text-[#64748b] border-b border-[rgba(255,255,255,0.08)]">
+                    <th class="px-5 py-3 font-medium">Date</th>
+                    <th class="px-5 py-3 font-medium">Type</th>
+                    <th class="px-5 py-3 font-medium">Status</th>
+                    <th class="px-5 py-3 font-medium">Outcome</th>
+                    <th class="px-5 py-3 font-medium">Rate</th>
+                    <th class="px-5 py-3 font-medium">Depth</th>
+                    <th class="px-5 py-3 font-medium">CCF</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-[rgba(255,255,255,0.04)]">
+                {% for s in service.sessions | reverse %}
+                {% if loop.index <= 20 %}
+                <tr class="hover:bg-[rgba(255,255,255,0.02)]">
+                    <!-- Date -->
+                    <td class="px-5 py-3 text-[#e2e8f0]">
+                        {{ s.date[:10] if s.date else "&mdash;" }}
+                    </td>
+                    <!-- Type -->
+                    <td class="px-5 py-3 text-[#e2e8f0]">
+                        {{ s.session_type | default("&mdash;") | replace("_", " ") | title }}
+                    </td>
+                    <!-- Status -->
+                    <td class="px-5 py-3">
+                        {% if s.status == 'complete' %}
+                        <span class="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded">
+                            Complete
+                        </span>
+                        {% elif s.status == 'importing' %}
+                        <span class="inline-flex items-center gap-1.5 text-xs font-medium text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded">
+                            Importing
+                        </span>
+                        {% elif s.status == 'failed' %}
+                        <span class="inline-flex items-center gap-1.5 text-xs font-medium text-red-400 bg-red-400/10 px-2 py-0.5 rounded">
+                            Failed
+                        </span>
+                        {% else %}
+                        <span class="text-[#94a3b8]">{{ s.status | default("&mdash;") }}</span>
+                        {% endif %}
+                    </td>
+                    <!-- Outcome -->
+                    <td class="px-5 py-3 text-[#e2e8f0]">
+                        {{ s.outcome | default("&mdash;") }}
+                    </td>
+                    <!-- Rate -->
+                    <td class="px-5 py-3 text-[#e2e8f0]">
+                        {% if s.metrics and s.metrics.compression_rate %}
+                            {{ s.metrics.compression_rate }}
+                        {% else %}
+                            &mdash;
+                        {% endif %}
+                    </td>
+                    <!-- Depth -->
+                    <td class="px-5 py-3 text-[#e2e8f0]">
+                        {% if s.metrics and s.metrics.compression_depth %}
+                            {{ s.metrics.compression_depth }}
+                        {% else %}
+                            &mdash;
+                        {% endif %}
+                    </td>
+                    <!-- CCF -->
+                    <td class="px-5 py-3 text-[#e2e8f0]">
+                        {% if s.metrics and s.metrics.compression_fraction %}
+                            {{ s.metrics.compression_fraction }}%
+                        {% else %}
+                            &mdash;
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="px-5 py-12 text-center text-[#94a3b8]">
+        No sessions recorded yet.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
