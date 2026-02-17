@@ -839,6 +839,7 @@
                     try {
                         const resp = await fetch('/api/updates/check');
                         const data = await resp.json();
+                        console.log('Update check:', JSON.stringify(data));
                         if (data.available && data.download_url) {
                             this.updateAvailable = true;
                             this.latestVersion = data.latest_version;
@@ -846,7 +847,9 @@
                             this.releaseUrl = data.release_url || '';
                             this.showUpdateModal = true;
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        console.error('Update check failed:', e);
+                    }
                 },
 
                 async startUpdate() {
