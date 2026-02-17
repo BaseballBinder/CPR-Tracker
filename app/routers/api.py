@@ -1318,7 +1318,14 @@ async def download_update_stream(request: Request):
                             progress = 0
                         yield f"data: {json.dumps({'progress': progress, 'downloaded': downloaded, 'total': total})}\n\n"
 
-            yield f"data: {json.dumps({'complete': True, 'path': dest_path})}\n\n"
+            # Verify download is complete
+            actual_size = os.path.getsize(dest_path)
+            if total > 0 and actual_size != total:
+                os.remove(dest_path)
+                yield f"data: {json.dumps({'error': f'Download incomplete: got {actual_size} bytes, expected {total}'})}\n\n"
+                return
+
+            yield f"data: {json.dumps({'complete': True, 'path': dest_path, 'size': actual_size})}\n\n"
         except Exception as e:
             # Clean up partial download
             if os.path.exists(dest_path):
@@ -1409,16 +1416,22 @@ if not exist "%EXE_PATH%" (
     goto cleanup
 )
 
+REM Log file sizes for debugging
+for %%F in ("%EXE_PATH%") do echo [%date% %time%] New exe size: %%~zF bytes >> "%LOG%"
 echo [%date% %time%] File replaced successfully >> "%LOG%"
 
-REM Launch the updated exe
-start "" "%EXE_PATH%"
-echo [%date% %time%] Launch command sent >> "%LOG%"
+REM Write a VBScript to launch via ShellExecute (same as double-click)
+set "LAUNCH_VBS={os.path.join(updates_dir, 'launch.vbs')}"
+echo Set objShell = CreateObject("Shell.Application") > "%LAUNCH_VBS%"
+echo objShell.ShellExecute "%EXE_PATH%", "", "", "open", 1 >> "%LAUNCH_VBS%"
+wscript //B "%LAUNCH_VBS%"
+echo [%date% %time%] ShellExecute launch sent >> "%LOG%"
 
 :cleanup
 timeout /t 5 /nobreak >nul
 del /F /Q "%NEW_EXE%" 2>nul
 del /F /Q "%BACKUP%" 2>nul
+del /F /Q "%LAUNCH_VBS%" 2>nul
 echo [%date% %time%] Cleanup done >> "%LOG%"
 (goto) 2>nul & del /F /Q "%~f0"
 '''
