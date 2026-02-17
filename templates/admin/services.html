@@ -1,0 +1,82 @@
+{% extends "admin/admin_base.html" %}
+
+{% block content %}
+<!-- Page header -->
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-[#e2e8f0]">Service Registry</h1>
+    <p class="text-sm text-[#94a3b8] mt-1">{{ services_data | length }} service{{ "s" if services_data | length != 1 else "" }} registered</p>
+</div>
+
+<!-- Services table card -->
+<div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md">
+    {% if services_data | length > 0 %}
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-left text-[#64748b] border-b border-[rgba(255,255,255,0.08)]">
+                    <th class="px-5 py-3 font-medium">Service</th>
+                    <th class="px-5 py-3 font-medium">Status</th>
+                    <th class="px-5 py-3 font-medium">Providers</th>
+                    <th class="px-5 py-3 font-medium">Sessions</th>
+                    <th class="px-5 py-3 font-medium">Real Calls</th>
+                    <th class="px-5 py-3 font-medium">ROSC Rate</th>
+                    <th class="px-5 py-3 font-medium">Last Active</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-[rgba(255,255,255,0.04)]">
+                {% for svc in services_data %}
+                <tr class="hover:bg-[rgba(255,255,255,0.02)]">
+                    <!-- Service name -->
+                    <td class="px-5 py-3">
+                        <a href="/admin/services/{{ svc.slug }}" class="text-[#f59e0b] hover:text-[#d97706] font-medium">
+                            {{ svc.name }}
+                        </a>
+                    </td>
+                    <!-- Status -->
+                    <td class="px-5 py-3">
+                        {% if svc.last_active %}
+                        <span class="inline-flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            <span class="text-[#e2e8f0]">Active</span>
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-gray-500"></span>
+                            <span class="text-[#94a3b8]">New</span>
+                        </span>
+                        {% endif %}
+                    </td>
+                    <!-- Providers -->
+                    <td class="px-5 py-3 text-[#e2e8f0]">{{ svc.active_providers }}</td>
+                    <!-- Sessions -->
+                    <td class="px-5 py-3 text-[#e2e8f0]">{{ svc.total_sessions }}</td>
+                    <!-- Real Calls -->
+                    <td class="px-5 py-3 text-[#e2e8f0]">{{ svc.real_calls }}</td>
+                    <!-- ROSC Rate -->
+                    <td class="px-5 py-3 text-[#e2e8f0]">
+                        {% if svc.real_calls > 0 %}
+                            {{ "%.1f" | format(svc.rosc_rate) }}%
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <!-- Last Active -->
+                    <td class="px-5 py-3 text-[#94a3b8]">
+                        {% if svc.last_active %}
+                            {{ svc.last_active[:16] | replace("T", " ") }}
+                        {% else %}
+                            &mdash;
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="px-5 py-12 text-center text-[#94a3b8]">
+        No services configured yet.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

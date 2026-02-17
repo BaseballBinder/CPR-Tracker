@@ -56,6 +56,19 @@ async def admin_dashboard(request: Request):
     )
 
 
+@router.get("/services", response_class=HTMLResponse)
+async def admin_services(request: Request):
+    """Service registry — list all services."""
+    from app.services.admin_service import is_admin_authenticated, get_all_services_data
+    if not is_admin_authenticated():
+        return RedirectResponse(url="/admin/login", status_code=302)
+    services_data = get_all_services_data()
+    return request.app.state.templates.TemplateResponse(
+        "admin/services.html",
+        {"request": request, "page_title": "Services", "services_data": services_data}
+    )
+
+
 # ============================================================================
 # Admin Auth API
 # ============================================================================
