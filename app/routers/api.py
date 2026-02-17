@@ -16,7 +16,8 @@ from app.services.session_service import get_session_service
 from app.services.export_service import get_export_service
 from app.services.schema_service import get_schema_service
 from app.services.wizard_service import get_wizard_service
-from app.service_context import get_active_service_dir
+from app.service_context import get_active_service_dir, get_active_service
+from app.services.activity_service import log_activity
 
 router = APIRouter(prefix="/api")
 
@@ -66,6 +67,13 @@ async def create_provider(
         certification=certification,
         role=role
     )
+
+    try:
+        slug = get_active_service()
+        if slug:
+            log_activity(slug, "provider_added", {"name": name})
+    except Exception:
+        pass
 
     # Check if client wants JSON (fetch calls) or HTML (HTMX)
     accept_header = request.headers.get("accept", "")
@@ -159,6 +167,13 @@ async def create_real_call_session(
             original_filename=original_filename,
         )
 
+        try:
+            slug = get_active_service()
+            if slug:
+                log_activity(slug, "session_import", {"session_id": session["id"], "type": "real_call"})
+        except Exception:
+            pass
+
         return JSONResponse(
             status_code=201,
             content={
@@ -238,6 +253,13 @@ async def create_simulated_session(
             original_filename=original_filename,
             paste_text=paste_text,
         )
+
+        try:
+            slug = get_active_service()
+            if slug:
+                log_activity(slug, "session_import", {"session_id": session["id"], "type": "simulated"})
+        except Exception:
+            pass
 
         return JSONResponse(
             status_code=201,
@@ -344,6 +366,14 @@ async def export_session_pco(session_id: str):
     export_service = get_export_service()
     success, message, output_path = export_service.export_pco(session)
 
+    if success:
+        try:
+            slug = get_active_service()
+            if slug:
+                log_activity(slug, "export", {"format": "canroc_pco", "session_id": session_id})
+        except Exception:
+            pass
+
     return JSONResponse(content={
         "success": success,
         "message": message,
@@ -364,6 +394,14 @@ async def export_session_master(session_id: str):
 
     export_service = get_export_service()
     success, message, output_path = export_service.export_master(session)
+
+    if success:
+        try:
+            slug = get_active_service()
+            if slug:
+                log_activity(slug, "export", {"format": "canroc_master", "session_id": session_id})
+        except Exception:
+            pass
 
     return JSONResponse(content={
         "success": success,
@@ -1000,6 +1038,13 @@ async def export_all_pco():
         wb.save(output_path)
         wb.close()
 
+        try:
+            slug = get_active_service()
+            if slug:
+                log_activity(slug, "export", {"format": "canroc_pco", "session_count": len(sessions)})
+        except Exception:
+            pass
+
         return JSONResponse(content={
             "success": True,
             "message": f"Exported {len(sessions)} sessions to PCO template",
@@ -1126,6 +1171,13 @@ async def export_all_master():
         # Save the workbook
         wb.save(output_path)
         wb.close()
+
+        try:
+            slug = get_active_service()
+            if slug:
+                log_activity(slug, "export", {"format": "canroc_master", "session_count": len(sessions)})
+        except Exception:
+            pass
 
         return JSONResponse(content={
             "success": True,

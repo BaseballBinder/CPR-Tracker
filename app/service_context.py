@@ -55,6 +55,12 @@ def set_active_service(slug: str, name: Optional[str] = None) -> None:
 
     logger.info(f"Active service set to: {slug}")
 
+    try:
+        from app.services.activity_service import log_activity
+        log_activity(slug, "login")
+    except Exception:
+        logger.debug("Failed to log login activity", exc_info=True)
+
 
 def clear_active_service() -> None:
     """Clear the active service (logout)."""
