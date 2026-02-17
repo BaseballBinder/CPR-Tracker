@@ -1380,6 +1380,9 @@ Start-Sleep -Seconds 1
 # Backup current exe
 Copy-Item "$exePath" "$backupExe" -Force
 
+# Remove internet zone identifier from downloaded file
+Unblock-File "$newExe" -ErrorAction SilentlyContinue
+
 # Replace with new exe
 try {{
     Copy-Item "$newExe" "$exePath" -Force
@@ -1388,6 +1391,9 @@ try {{
     Copy-Item "$backupExe" "$exePath" -Force
     exit 1
 }}
+
+# Unblock the replaced exe as well
+Unblock-File "$exePath" -ErrorAction SilentlyContinue
 
 # Launch updated app
 Start-Process "$exePath"
