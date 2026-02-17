@@ -1333,7 +1333,7 @@ async def download_update_stream(request: Request):
 
 @router.post("/updates/apply")
 async def apply_update(request: Request):
-    """Validate downloaded .exe, write update batch script, spawn it detached."""
+    """Validate downloaded .exe and prepare update scripts (does not spawn them)."""
     if not getattr(sys, 'frozen', False):
         return JSONResponse({"error": "Auto-update only works in packaged mode"}, status_code=400)
 
@@ -1343,10 +1343,10 @@ async def apply_update(request: Request):
     if not new_exe_path or not os.path.exists(new_exe_path):
         return JSONResponse({"error": "Downloaded file not found"}, status_code=400)
 
-    # MZ header check + size check - verify it's a real PE executable
+    # MZ header check + size check
     try:
         file_size = os.path.getsize(new_exe_path)
-        if file_size < 1_000_000:  # Less than 1MB is definitely wrong
+        if file_size < 1_000_000:
             os.remove(new_exe_path)
             return JSONResponse({"error": "Downloaded file too small — likely corrupt"}, status_code=400)
         with open(new_exe_path, "rb") as f:
@@ -1363,10 +1363,9 @@ async def apply_update(request: Request):
     backup_exe = os.path.join(updates_dir, "CPR-Tracker-old.exe")
     log_path = os.path.join(updates_dir, "update.log")
     bat_path = os.path.join(updates_dir, "update.bat")
+    vbs_path = os.path.join(updates_dir, "update.vbs")
 
-    # Pure .bat script — no PowerShell dependency
-    # Uses del+move instead of Copy-Item to avoid NTFS ADS inheritance
-    # Waits by PID for reliable process detection
+    # Pure .bat script for the actual update work
     bat_script = f'''@echo off
 set "EXE_PATH={current_exe}"
 set "NEW_EXE={new_exe_path}"
@@ -1377,18 +1376,17 @@ set "OLD_PID={current_pid}"
 echo [%date% %time%] Update script started >> "%LOG%"
 echo [%date% %time%] Waiting for PID %OLD_PID% to exit... >> "%LOG%"
 
-REM Wait for old process to exit (check by PID, up to 30s)
+REM Wait for old process to exit (up to 30s)
 set /a TRIES=0
 :waitloop
-tasklist /FI "PID eq %OLD_PID%" 2>nul | find "%OLD_PID%" >nul
+tasklist /FI "PID eq %OLD_PID%" 2>nul | find /i "%OLD_PID%" >nul 2>&1
 if errorlevel 1 goto done_waiting
-if %TRIES% GEQ 60 goto done_waiting
+if %TRIES% GEQ 30 goto done_waiting
 timeout /t 1 /nobreak >nul
 set /a TRIES+=1
 goto waitloop
 :done_waiting
 
-REM Extra safety delay for file lock release
 timeout /t 2 /nobreak >nul
 echo [%date% %time%] Process exited, proceeding >> "%LOG%"
 
@@ -1396,11 +1394,10 @@ REM Backup current exe
 copy /Y "%EXE_PATH%" "%BACKUP%" >nul 2>&1
 echo [%date% %time%] Backup created >> "%LOG%"
 
-REM Delete old exe then move new one in (avoids ADS/stream inheritance)
+REM Delete old exe then move new one (avoids NTFS ADS inheritance)
 del /F /Q "%EXE_PATH%" >nul 2>&1
 if exist "%EXE_PATH%" (
-    echo [%date% %time%] ERROR: Could not delete old exe >> "%LOG%"
-    REM Try copy as fallback
+    echo [%date% %time%] ERROR: Could not delete old exe, trying copy >> "%LOG%"
     copy /Y "%NEW_EXE%" "%EXE_PATH%" >nul 2>&1
 ) else (
     move /Y "%NEW_EXE%" "%EXE_PATH%" >nul 2>&1
@@ -1412,11 +1409,7 @@ if not exist "%EXE_PATH%" (
     goto cleanup
 )
 
-echo [%date% %time%] File replaced, launching... >> "%LOG%"
-
-REM Remove Zone.Identifier alternate data stream if present
-echo. > "%EXE_PATH%:Zone.Identifier" 2>nul
-del /F "%EXE_PATH%:Zone.Identifier" 2>nul
+echo [%date% %time%] File replaced successfully >> "%LOG%"
 
 REM Launch the updated exe
 start "" "%EXE_PATH%"
@@ -1427,28 +1420,42 @@ timeout /t 5 /nobreak >nul
 del /F /Q "%NEW_EXE%" 2>nul
 del /F /Q "%BACKUP%" 2>nul
 echo [%date% %time%] Cleanup done >> "%LOG%"
-REM Self-delete
 (goto) 2>nul & del /F /Q "%~f0"
 '''
 
+    # VBScript wrapper — runs the .bat completely invisible (no terminal window)
+    vbs_script = f'CreateObject("Wscript.Shell").Run "cmd /c ""{bat_path}""", 0, False\n'
+
     with open(bat_path, "w", encoding="utf-8") as f:
         f.write(bat_script)
+    with open(vbs_path, "w", encoding="utf-8") as f:
+        f.write(vbs_script)
 
-    # Spawn the .bat detached from our process
+    return JSONResponse({"success": True, "message": "Update prepared"})
+
+
+@router.post("/updates/shutdown")
+async def shutdown_for_update():
+    """Spawn the update script then exit. Script runs invisible, waits for us to die, swaps files."""
+    if not getattr(sys, 'frozen', False):
+        return JSONResponse({"error": "Not in packaged mode"}, status_code=400)
+
+    appdata = os.environ.get("APPDATA", os.path.expanduser("~"))
+    vbs_path = os.path.join(appdata, "CPR-Tracker", "_updates", "update.vbs")
+
+    if not os.path.exists(vbs_path):
+        return JSONResponse({"error": "No update prepared"}, status_code=400)
+
+    # Spawn the invisible VBScript wrapper which launches the .bat
     subprocess.Popen(
-        ["cmd", "/c", bat_path],
-        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS,
+        ["wscript", "//B", vbs_path],
+        creationflags=subprocess.DETACHED_PROCESS,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
 
-    return JSONResponse({"success": True, "message": "Update script launched"})
-
-
-@router.post("/updates/shutdown")
-async def shutdown_for_update():
-    """Gracefully exit the application after a short delay to let the response reach the client."""
+    # Exit after response is sent
     def delayed_exit():
         import time
         time.sleep(0.5)
