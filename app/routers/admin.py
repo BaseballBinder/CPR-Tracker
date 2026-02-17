@@ -3,7 +3,7 @@ Admin router - consolidated admin area routes.
 Handles admin authentication, dashboard, cross-service data,
 test data management, and chart annotations.
 """
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 router = APIRouter(prefix="/admin")
@@ -115,6 +115,20 @@ async def admin_tickets(request: Request):
     return request.app.state.templates.TemplateResponse(
         "admin/tickets.html",
         {"request": request, "page_title": "Tickets", "tickets": tickets}
+    )
+
+
+@router.get("/data-tools", response_class=HTMLResponse)
+async def admin_data_tools(request: Request):
+    """Data Tools page - CSV provider upload."""
+    from app.services.admin_service import is_admin_authenticated
+    if not is_admin_authenticated():
+        return RedirectResponse(url="/admin/login", status_code=302)
+    from app.service_context import list_services
+    services = list_services()
+    return request.app.state.templates.TemplateResponse(
+        "admin/data_tools.html",
+        {"request": request, "page_title": "Data Tools", "services": services}
     )
 
 
@@ -239,3 +253,31 @@ async def remove_annotation(annotation_id: str):
     if delete_annotation(annotation_id):
         return JSONResponse(content={"success": True})
     return JSONResponse({"error": "Annotation not found"}, status_code=404)
+
+
+# ============================================================================
+# CSV Provider Upload
+# ============================================================================
+
+@router.post("/api/csv-upload")
+async def admin_csv_upload(
+    request: Request,
+    service_slug: str = Form(...),
+    csv_file: UploadFile = File(...),
+):
+    """Upload a CSV file of providers for a service."""
+    err = _require_admin()
+    if err:
+        return err
+    from app.services.csv_import_service import validate_provider_csv, parse_provider_csv, import_providers_to_service
+    from app.services.activity_service import log_activity
+    content = (await csv_file.read()).decode("utf-8")
+    errors = validate_provider_csv(content)
+    if errors:
+        return JSONResponse({"success": False, "errors": errors}, status_code=400)
+    providers = parse_provider_csv(content)
+    if not providers:
+        return JSONResponse({"success": False, "errors": ["No valid provider rows found"]}, status_code=400)
+    result = import_providers_to_service(service_slug, providers)
+    log_activity(service_slug, "provider_csv_upload", {"added": result["added"], "skipped": result["skipped"]})
+    return {"success": True, "result": result}
