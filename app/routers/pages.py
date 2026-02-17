@@ -379,39 +379,6 @@ async def settings(request: Request):
     )
 
 
-@router.get("/admin", response_class=HTMLResponse)
-async def admin_dashboard(request: Request):
-    """Admin dashboard - cross-service comparison."""
-    from app.services.admin_service import is_admin_authenticated, get_all_services_data, ensure_admin_credentials
-    ensure_admin_credentials()
-
-    if not is_admin_authenticated():
-        # Show login form
-        return request.app.state.templates.TemplateResponse(
-            "pages/admin_dashboard.html",
-            {
-                "request": request,
-                "page_title": "Admin Dashboard",
-                "authenticated": False,
-                "services_data": [],
-            }
-        )
-
-    services_data = get_all_services_data()
-    from app.services.admin_service import load_annotations
-    annotations = load_annotations()
-    return request.app.state.templates.TemplateResponse(
-        "pages/admin_dashboard.html",
-        {
-            "request": request,
-            "page_title": "Admin Dashboard",
-            "authenticated": True,
-            "services_data": services_data,
-            "annotations": annotations,
-        }
-    )
-
-
 @router.get("/help", response_class=HTMLResponse)
 async def help_page(request: Request):
     """Help / How-To page."""
