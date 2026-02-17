@@ -1358,10 +1358,15 @@ async def apply_update(request: Request):
     backup_exe = os.path.join(updates_dir, "CPR-Tracker-old.exe")
     ps_script_path = os.path.join(updates_dir, "update.ps1")
 
+    # Use single-quoted paths in PowerShell to avoid escape issues
+    ps_current = current_exe.replace("'", "''")
+    ps_new = new_exe_path.replace("'", "''")
+    ps_backup = backup_exe.replace("'", "''")
+
     ps_script = f'''# CPR-Tracker Auto-Update Script
-$exePath = "{current_exe}"
-$newExe = "{new_exe_path}"
-$backupExe = "{backup_exe}"
+$exePath = '{ps_current}'
+$newExe = '{ps_new}'
+$backupExe = '{ps_backup}'
 
 # Wait for old process to exit (up to 30s)
 $maxWait = 30; $waited = 0
@@ -1397,11 +1402,13 @@ Remove-Item $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue
     with open(ps_script_path, "w", encoding="utf-8") as f:
         f.write(ps_script)
 
-    # Spawn PowerShell detached
+    # Spawn PowerShell detached — stdin/out/err must be redirected for DETACHED_PROCESS on Windows
     subprocess.Popen(
         ["powershell", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-File", ps_script_path],
         creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NO_WINDOW,
-        close_fds=True,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
 
     return JSONResponse({"success": True, "message": "Update script launched"})
