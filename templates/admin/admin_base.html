@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title }} - CPR Tracker Admin</title>
+
+    <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg">
+
+    <!-- Tailwind CSS (vendored for offline use) -->
+    <script src="/static/vendor/js/tailwindcss.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        // Admin amber/gold palette
+                        amber: {
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                        },
+                        // Ember Dark theme surfaces
+                        dark: {
+                            body: '#2c2834',
+                            sidebar: '#221e28',
+                            topbar: '#36323e',
+                            card: '#3e3a46',
+                            'card-alt': '#46424e',
+                            input: '#46424e',
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['"Source Sans 3"', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <!-- Source Sans 3 Font (self-hosted for offline use) -->
+    <link rel="stylesheet" href="/static/vendor/fonts/source-sans-3.css">
+
+    <!-- HTMX (for partial updates) -->
+    <script src="/static/vendor/js/htmx.min.js"></script>
+
+    <!-- Alpine.js (for sidebar toggle and dropdowns) -->
+    <script defer src="/static/vendor/js/alpine.min.js"></script>
+
+    <!-- Chart.js for analytics charts -->
+    <script src="/static/vendor/js/chart.min.js"></script>
+
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="/static/css/app.css">
+
+    <style>
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            background-color: #2c2834;
+        }
+        /* Loading indicator for HTMX requests */
+        .htmx-request .htmx-indicator {
+            display: block !important;
+        }
+        .htmx-indicator {
+            display: none;
+        }
+        /* Fade out old content during swap */
+        .htmx-swapping {
+            opacity: 0.5;
+            transition: opacity 200ms ease-out;
+        }
+        /* Skeleton pulse animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+
+    {% block head %}{% endblock %}
+</head>
+<body class="min-h-screen text-[#e2e8f0] antialiased" x-data="{ sidebarOpen: false }">
+    <div class="min-h-screen flex">
+        <!-- Mobile sidebar overlay -->
+        <div
+            x-show="sidebarOpen"
+            x-transition:enter="transition-opacity ease-linear duration-200"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition-opacity ease-linear duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed inset-0 bg-slate-900/50 z-40 lg:hidden"
+            @click="sidebarOpen = false"
+        ></div>
+
+        <!-- Sidebar -->
+        {% include "admin/components/sidebar.html" %}
+
+        <!-- Main content area -->
+        <div class="flex-1 flex flex-col min-w-0">
+            <!-- Topbar -->
+            {% include "admin/components/topbar.html" %}
+
+            <!-- Page content -->
+            <main class="flex-1 p-4 lg:p-6 overflow-auto">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal container -->
+    <div id="modal-container"></div>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

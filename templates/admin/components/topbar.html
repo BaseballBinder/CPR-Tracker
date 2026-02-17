@@ -1,0 +1,20 @@
+<!-- Admin Topbar -->
+<header class="h-16 bg-[#36323e] border-b border-[rgba(245,158,11,0.15)] flex items-center justify-between px-6">
+    <div class="flex items-center gap-4">
+        <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden text-slate-300 hover:text-white">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+        </button>
+        <h1 class="text-lg font-semibold text-[#e2e8f0]">{{ page_title }}</h1>
+    </div>
+    <div class="flex items-center gap-3">
+        <span class="text-xs text-[#64748b] bg-[#46424e] px-2 py-1 rounded">Admin Mode</span>
+        <button hx-post="/admin/api/logout"
+                hx-swap="none"
+                hx-on::after-request="window.location.href='/landing'"
+                class="px-3 py-1.5 text-sm text-slate-300 hover:text-white border border-[rgba(255,255,255,0.15)] rounded-md hover:bg-[rgba(255,255,255,0.05)] transition-colors">
+            Logout
+        </button>
+    </div>
+</header>
