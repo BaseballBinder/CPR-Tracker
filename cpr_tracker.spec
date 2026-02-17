@@ -127,5 +127,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='static\\images\\logos\\JcLS.ico' if os.path.exists('static\\images\\logos\\JcLS.ico') else None,
+    icon='static\\images\\logos\\cpr-tracker.ico' if os.path.exists('static\\images\\logos\\cpr-tracker.ico') else None,
 )
