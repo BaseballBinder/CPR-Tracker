@@ -16,7 +16,8 @@ from app.services.session_service import get_session_service
 from app.services.export_service import get_export_service
 from app.services.schema_service import get_schema_service
 from app.services.wizard_service import get_wizard_service
-from app.service_context import get_active_service_dir
+from app.service_context import get_active_service_dir, get_active_service
+from app.services.activity_service import log_activity
 
 router = APIRouter(prefix="/api")
 
@@ -66,6 +67,13 @@ async def create_provider(
         certification=certification,
         role=role
     )
+
+    try:
+        slug = get_active_service()
+        if slug:
+            log_activity(slug, "provider_added", {"name": name})
+    except Exception:
+        pass
 
     # Check if client wants JSON (fetch calls) or HTML (HTMX)
     accept_header = request.headers.get("accept", "")
@@ -159,6 +167,13 @@ async def create_real_call_session(
             original_filename=original_filename,
         )
 
+        try:
+            slug = get_active_service()
+            if slug:
+                log_activity(slug, "session_import", {"session_id": session["id"], "type": "real_call"})
+        except Exception:
+            pass
+
         return JSONResponse(
             status_code=201,
             content={
@@ -238,6 +253,13 @@ async def create_simulated_session(
             original_filename=original_filename,
             paste_text=paste_text,
         )
+
+        try:
+            slug = get_active_service()
+            if slug:
+                log_activity(slug, "session_import", {"session_id": session["id"], "type": "simulated"})
+        except Exception:
+            pass
 
         return JSONResponse(
             status_code=201,
@@ -344,6 +366,14 @@ async def export_session_pco(session_id: str):
     export_service = get_export_service()
     success, message, output_path = export_service.export_pco(session)
 
+    if success:
+        try:
+            slug = get_active_service()
+            if slug:
+                log_activity(slug, "export", {"format": "canroc_pco", "session_id": session_id})
+        except Exception:
+            pass
+
     return JSONResponse(content={
         "success": success,
         "message": message,
@@ -364,6 +394,14 @@ async def export_session_master(session_id: str):
 
     export_service = get_export_service()
     success, message, output_path = export_service.export_master(session)
+
+    if success:
+        try:
+            slug = get_active_service()
+            if slug:
+                log_activity(slug, "export", {"format": "canroc_master", "session_id": session_id})
+        except Exception:
+            pass
 
     return JSONResponse(content={
         "success": success,
@@ -1000,6 +1038,13 @@ async def export_all_pco():
         wb.save(output_path)
         wb.close()
 
+        try:
+            slug = get_active_service()
+            if slug:
+                log_activity(slug, "export", {"format": "canroc_pco", "session_count": len(sessions)})
+        except Exception:
+            pass
+
         return JSONResponse(content={
             "success": True,
             "message": f"Exported {len(sessions)} sessions to PCO template",
@@ -1126,6 +1171,13 @@ async def export_all_master():
         # Save the workbook
         wb.save(output_path)
         wb.close()
+
+        try:
+            slug = get_active_service()
+            if slug:
+                log_activity(slug, "export", {"format": "canroc_master", "session_count": len(sessions)})
+        except Exception:
+            pass
 
         return JSONResponse(content={
             "success": True,
@@ -1312,121 +1364,6 @@ async def backup_config():
 
     result = backup_service.get_config_display(service_dir)
     return JSONResponse(result)
-
-
-# ============================================================================
-# Admin Endpoints
-# ============================================================================
-
-@router.post("/admin/login")
-async def admin_login(request: Request):
-    """Authenticate as admin."""
-    from app.services.admin_service import check_admin_password, set_admin_authenticated
-
-    # Accept both JSON and form data
-    content_type = request.headers.get("content-type", "")
-    if "application/json" in content_type:
-        data = await request.json()
-        username = str(data.get("username", ""))
-        password = str(data.get("password", ""))
-    else:
-        form = await request.form()
-        username = str(form.get("username", ""))
-        password = str(form.get("password", ""))
-
-    if check_admin_password(username, password):
-        set_admin_authenticated(True)
-        return {"success": True, "redirect": "/admin"}
-    return {"success": False, "error": "Invalid admin credentials"}
-
-
-@router.post("/admin/logout")
-async def admin_logout():
-    """Log out admin."""
-    from app.services.admin_service import set_admin_authenticated
-    set_admin_authenticated(False)
-    return {"success": True, "redirect": "/landing"}
-
-
-@router.get("/admin/services-data")
-async def admin_services_data():
-    """Get cross-service data for admin dashboard."""
-    from app.services.admin_service import is_admin_authenticated, get_all_services_data
-    if not is_admin_authenticated():
-        return JSONResponse({"error": "Not authenticated"}, status_code=401)
-    data = get_all_services_data()
-    return JSONResponse(content={"services": data})
-
-
-# ============================================================================
-# Test Data Endpoints
-# ============================================================================
-
-@router.post("/admin/test-data/generate")
-async def generate_test_data_endpoint():
-    """Generate test fire department data."""
-    from app.services.admin_service import is_admin_authenticated
-    from app.services.test_data_service import generate_test_data
-    if not is_admin_authenticated():
-        return JSONResponse({"error": "Not authenticated"}, status_code=401)
-    result = generate_test_data()
-    if result.get("success"):
-        return JSONResponse(result)
-    return JSONResponse(result, status_code=400)
-
-
-@router.delete("/admin/test-data/delete")
-async def delete_test_data_endpoint():
-    """Delete test fire department data."""
-    from app.services.admin_service import is_admin_authenticated
-    from app.services.test_data_service import delete_test_data
-    if not is_admin_authenticated():
-        return JSONResponse({"error": "Not authenticated"}, status_code=401)
-    result = delete_test_data()
-    if result.get("success"):
-        return JSONResponse(result)
-    return JSONResponse(result, status_code=400)
-
-
-# ============================================================================
-# Annotation Endpoints (Event Markers for Trend Charts)
-# ============================================================================
-
-@router.get("/admin/annotations")
-async def list_annotations():
-    """Get all event annotations."""
-    from app.services.admin_service import is_admin_authenticated, load_annotations
-    if not is_admin_authenticated():
-        return JSONResponse({"error": "Not authenticated"}, status_code=401)
-    return JSONResponse(content={"annotations": load_annotations()})
-
-
-@router.post("/admin/annotations")
-async def create_annotation(request: Request):
-    """Create an event annotation."""
-    from app.services.admin_service import is_admin_authenticated, add_annotation
-    if not is_admin_authenticated():
-        return JSONResponse({"error": "Not authenticated"}, status_code=401)
-    data = await request.json()
-    month = str(data.get("month", "")).strip()
-    label = str(data.get("label", "")).strip()
-    description = str(data.get("description", "")).strip()
-    color = str(data.get("color", "#dc2626")).strip()
-    if not month or not label:
-        return JSONResponse({"error": "Month and label are required"}, status_code=400)
-    entry = add_annotation(month, label, description, color)
-    return JSONResponse(content={"success": True, "annotation": entry})
-
-
-@router.delete("/admin/annotations/{annotation_id}")
-async def remove_annotation(annotation_id: str):
-    """Delete an event annotation."""
-    from app.services.admin_service import is_admin_authenticated, delete_annotation
-    if not is_admin_authenticated():
-        return JSONResponse({"error": "Not authenticated"}, status_code=401)
-    if delete_annotation(annotation_id):
-        return JSONResponse(content={"success": True})
-    return JSONResponse({"error": "Annotation not found"}, status_code=404)
 
 
 # ============================================================================

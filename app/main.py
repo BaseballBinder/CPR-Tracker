@@ -11,7 +11,7 @@ from fastapi.templating import Jinja2Templates
 
 from app.desktop_config import get_bundle_dir
 from app.version import __version__
-from app.routers import pages, partials, api
+from app.routers import pages, partials, api, admin
 from app.services.export_service import ensure_templates
 from app.services.schema_service import get_schema_service
 
@@ -90,3 +90,4 @@ validate_schemas_on_startup()
 app.include_router(pages.router)
 app.include_router(partials.router)
 app.include_router(api.router)
+app.include_router(admin.router)

@@ -1,0 +1,133 @@
+{% extends "admin/admin_base.html" %}
+
+{% block content %}
+<!-- Page header -->
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-[#e2e8f0]">Admin Settings</h1>
+    <p class="text-sm text-[#94a3b8] mt-1">Manage your admin account and application preferences</p>
+</div>
+
+<!-- Password Change Card -->
+<div class="max-w-lg" x-data="{
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+    loading: false,
+    message: '',
+    messageType: '',
+
+    async changePassword() {
+        this.message = '';
+        this.messageType = '';
+
+        if (!this.currentPassword) {
+            this.message = 'Please enter your current password';
+            this.messageType = 'error';
+            return;
+        }
+        if (!this.newPassword) {
+            this.message = 'Please enter a new password';
+            this.messageType = 'error';
+            return;
+        }
+        if (this.newPassword.length < 6) {
+            this.message = 'New password must be at least 6 characters';
+            this.messageType = 'error';
+            return;
+        }
+        if (this.newPassword !== this.confirmPassword) {
+            this.message = 'New passwords do not match';
+            this.messageType = 'error';
+            return;
+        }
+
+        this.loading = true;
+        try {
+            const resp = await fetch('/admin/api/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    current_password: this.currentPassword,
+                    new_password: this.newPassword
+                })
+            });
+            const data = await resp.json();
+            if (data.success) {
+                this.message = 'Password changed successfully';
+                this.messageType = 'success';
+                this.currentPassword = '';
+                this.newPassword = '';
+                this.confirmPassword = '';
+            } else {
+                this.message = data.error || 'Failed to change password';
+                this.messageType = 'error';
+            }
+        } catch (e) {
+            this.message = 'Network error: ' + e.message;
+            this.messageType = 'error';
+        } finally {
+            this.loading = false;
+        }
+    }
+}">
+    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+        <h2 class="text-lg font-semibold text-[#e2e8f0] mb-1">Change Password</h2>
+        <p class="text-sm text-[#94a3b8] mb-5">Update your admin login credentials</p>
+
+        <!-- Status message -->
+        <template x-if="message">
+            <div class="mb-4 px-4 py-3 rounded-lg text-sm font-medium"
+                 :class="messageType === 'success'
+                    ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'
+                    : 'bg-red-500/10 border border-red-500/30 text-red-400'">
+                <span x-text="message"></span>
+            </div>
+        </template>
+
+        <!-- Current Password -->
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-[#94a3b8] mb-1.5">Current Password</label>
+            <input type="password" x-model="currentPassword"
+                   placeholder="Enter current password"
+                   class="w-full bg-[#46424e] border border-[rgba(255,255,255,0.15)] rounded-lg px-3 py-2 text-sm text-[#e2e8f0] placeholder-[#64748b] focus:outline-none focus:ring-2 focus:ring-[#f59e0b]/50 focus:border-[#f59e0b] transition-colors">
+        </div>
+
+        <!-- New Password -->
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-[#94a3b8] mb-1.5">New Password</label>
+            <input type="password" x-model="newPassword"
+                   placeholder="Enter new password (min. 6 characters)"
+                   class="w-full bg-[#46424e] border border-[rgba(255,255,255,0.15)] rounded-lg px-3 py-2 text-sm text-[#e2e8f0] placeholder-[#64748b] focus:outline-none focus:ring-2 focus:ring-[#f59e0b]/50 focus:border-[#f59e0b] transition-colors">
+        </div>
+
+        <!-- Confirm New Password -->
+        <div class="mb-5">
+            <label class="block text-sm font-medium text-[#94a3b8] mb-1.5">Confirm New Password</label>
+            <input type="password" x-model="confirmPassword"
+                   placeholder="Re-enter new password"
+                   @keydown.enter="changePassword()"
+                   class="w-full bg-[#46424e] border border-[rgba(255,255,255,0.15)] rounded-lg px-3 py-2 text-sm text-[#e2e8f0] placeholder-[#64748b] focus:outline-none focus:ring-2 focus:ring-[#f59e0b]/50 focus:border-[#f59e0b] transition-colors">
+        </div>
+
+        <!-- Submit button -->
+        <button @click="changePassword()"
+                :disabled="loading"
+                class="inline-flex items-center gap-2 px-5 py-2 rounded-[6px] text-sm font-medium transition-colors
+                       bg-[#f59e0b] text-white hover:bg-[#d97706]
+                       disabled:opacity-50 disabled:cursor-not-allowed">
+            <template x-if="loading">
+                <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+            </template>
+            <template x-if="!loading">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+            </template>
+            <span x-text="loading ? 'Changing...' : 'Change Password'"></span>
+        </button>
+    </div>
+</div>
+{% endblock %}

@@ -11,6 +11,7 @@ from typing import Optional, List, Dict
 
 from app.desktop_config import get_appdata_dir
 from app.services.auth_service import hash_password, verify_password
+from app.services.activity_service import get_last_active
 
 logger = logging.getLogger(__name__)
 
@@ -222,6 +223,7 @@ def get_all_services_data() -> list:
         results.append({
             "slug": slug,
             "name": name,
+            "last_active": get_last_active(slug),
             "total_sessions": total_sessions,
             "real_calls": len(real_calls),
             "simulated": len(simulated),

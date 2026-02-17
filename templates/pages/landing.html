@@ -717,7 +717,7 @@
                     this.loading = true;
                     this.errorMsg = '';
                     try {
-                        const resp = await fetch('/api/admin/login', {
+                        const resp = await fetch('/admin/api/login', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({

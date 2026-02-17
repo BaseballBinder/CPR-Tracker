@@ -1,0 +1,151 @@
+{% extends "admin/admin_base.html" %}
+
+{% block content %}
+<!-- Page header -->
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-[#e2e8f0]">Data Tools</h1>
+    <p class="text-sm text-[#94a3b8] mt-1">Import and manage provider rosters via CSV upload</p>
+</div>
+
+<!-- CSV Upload Card -->
+<div class="max-w-2xl" x-data="{
+    service: '',
+    file: null,
+    fileName: '',
+    loading: false,
+    result: null,
+    errors: [],
+
+    selectFile(event) {
+        const f = event.target.files[0];
+        if (f) {
+            this.file = f;
+            this.fileName = f.name;
+            this.result = null;
+            this.errors = [];
+        }
+    },
+
+    async upload() {
+        if (!this.service || !this.file) return;
+        this.loading = true;
+        this.result = null;
+        this.errors = [];
+
+        const formData = new FormData();
+        formData.append('service_slug', this.service);
+        formData.append('csv_file', this.file);
+
+        try {
+            const resp = await fetch('/admin/api/csv-upload', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await resp.json();
+            if (data.success) {
+                this.result = data.result;
+            } else {
+                this.errors = data.errors || ['Upload failed'];
+            }
+        } catch (e) {
+            this.errors = ['Network error: ' + e.message];
+        } finally {
+            this.loading = false;
+        }
+    }
+}">
+    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-6">
+        <h2 class="text-lg font-semibold text-[#e2e8f0] mb-1">CSV Provider Upload</h2>
+        <p class="text-sm text-[#94a3b8] mb-5">Upload a CSV file to seed or update a service's provider roster.</p>
+
+        <!-- Service selector -->
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-[#94a3b8] mb-1.5">Service</label>
+            <select x-model="service"
+                    class="w-full bg-[#46424e] border border-[rgba(255,255,255,0.10)] rounded-[6px] px-3 py-2 text-[#e2e8f0] text-sm focus:outline-none focus:ring-2 focus:ring-[#f59e0b]/50 focus:border-[#f59e0b]">
+                <option value="" disabled>Select a service...</option>
+                {% for svc in services %}
+                <option value="{{ svc.slug }}">{{ svc.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- File input -->
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-[#94a3b8] mb-1.5">CSV File</label>
+            <div class="relative">
+                <input type="file" accept=".csv" @change="selectFile($event)"
+                       class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                <div class="flex items-center gap-3 bg-[#46424e] border border-[rgba(255,255,255,0.10)] rounded-[6px] px-3 py-2 cursor-pointer hover:border-[rgba(245,158,11,0.4)] transition-colors">
+                    <svg class="w-5 h-5 text-[#94a3b8] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                    </svg>
+                    <span x-text="fileName || 'Choose a .csv file...'" class="text-sm"
+                          :class="fileName ? 'text-[#e2e8f0]' : 'text-[#64748b]'"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- CSV format hint -->
+        <div class="mb-5 bg-[#2c2834] border border-[rgba(255,255,255,0.06)] rounded-[6px] px-4 py-3">
+            <p class="text-xs font-medium text-[#94a3b8] mb-1.5">Expected CSV format:</p>
+            <code class="text-xs text-[#f59e0b] font-mono">Name,Certification</code><br>
+            <code class="text-xs text-[#64748b] font-mono">John Smith,ACP</code><br>
+            <code class="text-xs text-[#64748b] font-mono">Jane Doe,PCP</code>
+        </div>
+
+        <!-- Upload button -->
+        <button @click="upload()"
+                :disabled="!service || !file || loading"
+                class="inline-flex items-center gap-2 px-5 py-2 rounded-[6px] text-sm font-medium transition-colors
+                       bg-[#f59e0b] text-white hover:bg-[#d97706]
+                       disabled:opacity-50 disabled:cursor-not-allowed">
+            <template x-if="loading">
+                <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+            </template>
+            <template x-if="!loading">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                </svg>
+            </template>
+            <span x-text="loading ? 'Uploading...' : 'Upload CSV'"></span>
+        </button>
+    </div>
+
+    <!-- Success result -->
+    <template x-if="result">
+        <div class="mt-4 bg-emerald-500/10 border border-emerald-500/30 rounded-md p-4">
+            <div class="flex items-center gap-2 mb-2">
+                <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span class="text-sm font-medium text-emerald-400">Upload Successful</span>
+            </div>
+            <div class="text-sm text-[#e2e8f0] space-y-1">
+                <p><span class="text-[#94a3b8]">Added:</span> <span x-text="result.added" class="font-medium"></span> providers</p>
+                <p><span class="text-[#94a3b8]">Skipped (duplicates):</span> <span x-text="result.skipped" class="font-medium"></span></p>
+            </div>
+        </div>
+    </template>
+
+    <!-- Error display -->
+    <template x-if="errors.length > 0">
+        <div class="mt-4 bg-red-500/10 border border-red-500/30 rounded-md p-4">
+            <div class="flex items-center gap-2 mb-2">
+                <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span class="text-sm font-medium text-red-400">Upload Failed</span>
+            </div>
+            <ul class="text-sm text-[#e2e8f0] list-disc list-inside space-y-1">
+                <template x-for="err in errors" :key="err">
+                    <li x-text="err"></li>
+                </template>
+            </ul>
+        </div>
+    </template>
+</div>
+{% endblock %}
