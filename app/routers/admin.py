@@ -132,6 +132,18 @@ async def admin_data_tools(request: Request):
     )
 
 
+@router.get("/settings", response_class=HTMLResponse)
+async def admin_settings(request: Request):
+    """Admin settings page."""
+    from app.services.admin_service import is_admin_authenticated
+    if not is_admin_authenticated():
+        return RedirectResponse(url="/admin/login", status_code=302)
+    return request.app.state.templates.TemplateResponse(
+        "admin/settings.html",
+        {"request": request, "page_title": "Settings"}
+    )
+
+
 # ============================================================================
 # Admin Auth API
 # ============================================================================
@@ -164,6 +176,31 @@ async def admin_logout():
     from app.services.admin_service import set_admin_authenticated
     set_admin_authenticated(False)
     return {"success": True, "redirect": "/landing"}
+
+
+@router.post("/api/change-password")
+async def admin_change_password(request: Request):
+    """Change admin password."""
+    from app.services.admin_service import is_admin_authenticated, check_admin_password, get_admin_file
+    if not is_admin_authenticated():
+        raise HTTPException(status_code=401)
+
+    data = await request.json()
+    current_pw = data.get("current_password", "")
+    new_pw = data.get("new_password", "")
+
+    if not check_admin_password("Admin", current_pw):
+        return {"success": False, "error": "Current password is incorrect"}
+    if len(new_pw) < 6:
+        return {"success": False, "error": "New password must be at least 6 characters"}
+
+    from app.services.auth_service import hash_password
+    import json
+    admin_file = get_admin_file()
+    admin_data = json.loads(admin_file.read_text(encoding="utf-8"))
+    admin_data["password_hash"] = hash_password(new_pw)
+    admin_file.write_text(json.dumps(admin_data, indent=2), encoding="utf-8")
+    return {"success": True}
 
 
 # ============================================================================
