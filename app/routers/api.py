@@ -1333,7 +1333,7 @@ async def download_update_stream(request: Request):
 
 @router.post("/updates/apply")
 async def apply_update(request: Request):
-    """Validate downloaded .exe, write PowerShell update script, spawn it detached."""
+    """Validate downloaded .exe, write update batch script, spawn it detached."""
     if not getattr(sys, 'frozen', False):
         return JSONResponse({"error": "Auto-update only works in packaged mode"}, status_code=400)
 
@@ -1343,8 +1343,12 @@ async def apply_update(request: Request):
     if not new_exe_path or not os.path.exists(new_exe_path):
         return JSONResponse({"error": "Downloaded file not found"}, status_code=400)
 
-    # MZ header check - verify it's a PE executable
+    # MZ header check + size check - verify it's a real PE executable
     try:
+        file_size = os.path.getsize(new_exe_path)
+        if file_size < 1_000_000:  # Less than 1MB is definitely wrong
+            os.remove(new_exe_path)
+            return JSONResponse({"error": "Downloaded file too small — likely corrupt"}, status_code=400)
         with open(new_exe_path, "rb") as f:
             header = f.read(2)
         if header != b"MZ":
@@ -1354,66 +1358,83 @@ async def apply_update(request: Request):
         return JSONResponse({"error": f"Cannot validate file: {e}"}, status_code=400)
 
     current_exe = sys.executable
+    current_pid = os.getpid()
     updates_dir = os.path.dirname(new_exe_path)
     backup_exe = os.path.join(updates_dir, "CPR-Tracker-old.exe")
-    ps_script_path = os.path.join(updates_dir, "update.ps1")
+    log_path = os.path.join(updates_dir, "update.log")
+    bat_path = os.path.join(updates_dir, "update.bat")
 
-    # Use single-quoted paths in PowerShell to avoid escape issues
-    ps_current = current_exe.replace("'", "''")
-    ps_new = new_exe_path.replace("'", "''")
-    ps_backup = backup_exe.replace("'", "''")
+    # Pure .bat script — no PowerShell dependency
+    # Uses del+move instead of Copy-Item to avoid NTFS ADS inheritance
+    # Waits by PID for reliable process detection
+    bat_script = f'''@echo off
+set "EXE_PATH={current_exe}"
+set "NEW_EXE={new_exe_path}"
+set "BACKUP={backup_exe}"
+set "LOG={log_path}"
+set "OLD_PID={current_pid}"
 
-    ps_script = f'''# CPR-Tracker Auto-Update Script
-$exePath = '{ps_current}'
-$newExe = '{ps_new}'
-$backupExe = '{ps_backup}'
+echo [%date% %time%] Update script started >> "%LOG%"
+echo [%date% %time%] Waiting for PID %OLD_PID% to exit... >> "%LOG%"
 
-# Wait for old process to exit (up to 30s)
-$maxWait = 30; $waited = 0
-while ($waited -lt $maxWait) {{
-    $procs = Get-Process -ErrorAction SilentlyContinue | Where-Object {{ $_.Path -eq $exePath }}
-    if (-not $procs) {{ break }}
-    Start-Sleep -Milliseconds 500; $waited += 0.5
-}}
-Start-Sleep -Seconds 1
+REM Wait for old process to exit (check by PID, up to 30s)
+set /a TRIES=0
+:waitloop
+tasklist /FI "PID eq %OLD_PID%" 2>nul | find "%OLD_PID%" >nul
+if errorlevel 1 goto done_waiting
+if %TRIES% GEQ 60 goto done_waiting
+timeout /t 1 /nobreak >nul
+set /a TRIES+=1
+goto waitloop
+:done_waiting
 
-# Backup current exe
-Copy-Item "$exePath" "$backupExe" -Force
+REM Extra safety delay for file lock release
+timeout /t 2 /nobreak >nul
+echo [%date% %time%] Process exited, proceeding >> "%LOG%"
 
-# Remove internet zone identifier from downloaded file
-Unblock-File "$newExe" -ErrorAction SilentlyContinue
+REM Backup current exe
+copy /Y "%EXE_PATH%" "%BACKUP%" >nul 2>&1
+echo [%date% %time%] Backup created >> "%LOG%"
 
-# Replace with new exe
-try {{
-    Copy-Item "$newExe" "$exePath" -Force
-}} catch {{
-    # Rollback on failure
-    Copy-Item "$backupExe" "$exePath" -Force
-    exit 1
-}}
+REM Delete old exe then move new one in (avoids ADS/stream inheritance)
+del /F /Q "%EXE_PATH%" >nul 2>&1
+if exist "%EXE_PATH%" (
+    echo [%date% %time%] ERROR: Could not delete old exe >> "%LOG%"
+    REM Try copy as fallback
+    copy /Y "%NEW_EXE%" "%EXE_PATH%" >nul 2>&1
+) else (
+    move /Y "%NEW_EXE%" "%EXE_PATH%" >nul 2>&1
+)
 
-# Unblock the replaced exe as well
-Unblock-File "$exePath" -ErrorAction SilentlyContinue
+if not exist "%EXE_PATH%" (
+    echo [%date% %time%] ERROR: New exe not in place, rolling back >> "%LOG%"
+    copy /Y "%BACKUP%" "%EXE_PATH%" >nul 2>&1
+    goto cleanup
+)
 
-# Launch updated app
-Start-Process "$exePath"
+echo [%date% %time%] File replaced, launching... >> "%LOG%"
 
-# Cleanup after short delay
-Start-Sleep -Seconds 3
-Remove-Item "$newExe" -Force -ErrorAction SilentlyContinue
-Remove-Item "$backupExe" -Force -ErrorAction SilentlyContinue
-Remove-Item $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue
+REM Remove Zone.Identifier alternate data stream if present
+echo. > "%EXE_PATH%:Zone.Identifier" 2>nul
+del /F "%EXE_PATH%:Zone.Identifier" 2>nul
+
+REM Launch the updated exe
+start "" "%EXE_PATH%"
+echo [%date% %time%] Launch command sent >> "%LOG%"
+
+:cleanup
+timeout /t 5 /nobreak >nul
+del /F /Q "%NEW_EXE%" 2>nul
+del /F /Q "%BACKUP%" 2>nul
+echo [%date% %time%] Cleanup done >> "%LOG%"
+REM Self-delete
+(goto) 2>nul & del /F /Q "%~f0"
 '''
 
-    with open(ps_script_path, "w", encoding="utf-8") as f:
-        f.write(ps_script)
+    with open(bat_path, "w", encoding="utf-8") as f:
+        f.write(bat_script)
 
-    # Write a .bat wrapper to launch PowerShell — more reliable for detached spawning from PyInstaller
-    bat_path = os.path.join(updates_dir, "update.bat")
-    with open(bat_path, "w", encoding="utf-8") as bf:
-        bf.write(f'@echo off\npowershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "{ps_script_path}"\n')
-
-    # Use CREATE_NEW_PROCESS_GROUP + DETACHED for clean separation from parent
+    # Spawn the .bat detached from our process
     subprocess.Popen(
         ["cmd", "/c", bat_path],
         creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS,
