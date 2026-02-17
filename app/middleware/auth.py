@@ -18,6 +18,7 @@ PUBLIC_PATHS = {
 PUBLIC_PREFIXES = (
     "/static/",
     "/api/auth/",
+    "/api/updates/",
     "/admin",
 )
 
