@@ -1,0 +1,131 @@
+# -*- mode: python ; coding: utf-8 -*-
+"""
+PyInstaller spec file for CPR Performance Tracker.
+Bundles FastAPI + pywebview into a single .exe.
+"""
+
+import os
+
+block_cipher = None
+
+# Collect data files
+datas = [
+    ('templates', 'templates'),
+    ('static', 'static'),
+    ('data/schemas', 'data/schemas'),
+    ('templates_canroc', 'templates_canroc'),
+]
+
+# Hidden imports that PyInstaller can't detect
+hiddenimports = [
+    'uvicorn',
+    'uvicorn.logging',
+    'uvicorn.loops',
+    'uvicorn.loops.auto',
+    'uvicorn.protocols',
+    'uvicorn.protocols.http',
+    'uvicorn.protocols.http.auto',
+    'uvicorn.protocols.websockets',
+    'uvicorn.protocols.websockets.auto',
+    'uvicorn.lifespan',
+    'uvicorn.lifespan.on',
+    'uvicorn.lifespan.off',
+    'app',
+    'app.main',
+    'app.config',
+    'app.models',
+    'app.persistence',
+    'app.mock_data',
+    'app.desktop_config',
+    'app.service_context',
+    'app.version',
+    'app.routers',
+    'app.routers.pages',
+    'app.routers.api',
+    'app.routers.partials',
+    'app.services',
+    'app.services.session_service',
+    'app.services.export_service',
+    'app.services.ingestion_service',
+    'app.services.schema_service',
+    'app.services.wizard_service',
+    'app.services.auth_service',
+    'app.services.backup_service',
+    'app.services.update_service',
+    'app.services.admin_service',
+    'app.services.settings_service',
+    'app.services.test_data_service',
+    'app.middleware',
+    'app.middleware.auth',
+    'starlette',
+    'starlette.middleware',
+    'starlette.middleware.base',
+    'starlette.responses',
+    'starlette.routing',
+    'fastapi',
+    'fastapi.templating',
+    'fastapi.staticfiles',
+    'jinja2',
+    'openpyxl',
+    'multipart',
+    'python_multipart',
+    'cryptography',
+    'cryptography.fernet',
+    'webview',
+    'requests',
+]
+
+# Excludes to reduce size
+excludes = [
+    'tkinter',
+    '_tkinter',
+    'matplotlib',
+    'numpy',
+    'scipy',
+    'pandas',
+    'pytest',
+    'pip',
+    'setuptools',
+    'wheel',
+]
+
+a = Analysis(
+    ['desktop.py'],
+    pathex=[],
+    binaries=[],
+    datas=datas,
+    hiddenimports=hiddenimports,
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=excludes,
+    win_no_prefer_redirects=False,
+    win_private_assemblies=False,
+    cipher=block_cipher,
+    noarchive=False,
+)
+
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    [],
+    name='CPR-Tracker',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    runtime_tmpdir=None,
+    console=False,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    icon='static\\images\\logos\\JcLS.ico' if os.path.exists('static\\images\\logos\\JcLS.ico') else None,
+)

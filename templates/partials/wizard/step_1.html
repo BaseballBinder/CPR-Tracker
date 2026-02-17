@@ -1,0 +1,135 @@
+{# Wizard Step 1: Session Type Selection #}
+{# Modal Overlay #}
+<div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+<div class="bg-[#3e3a46] rounded-[6px] border border-[rgba(255,255,255,0.10)] shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto" x-data="{ sessionType: '{{ session_type or '' }}' }">
+    {# Modal Header #}
+    <div class="flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.10)]">
+        <h2 class="text-lg font-semibold text-slate-100">Add Session</h2>
+        <button onclick="document.getElementById('modal-container').innerHTML = ''" class="text-slate-400 hover:text-slate-300">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+
+    {# Progress Steps #}
+    <div class="px-4 py-3 border-b border-[rgba(255,255,255,0.10)] bg-[#36323e]">
+        <div class="flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 bg-[#dc2626] text-white rounded-full flex items-center justify-center font-medium">1</span>
+                <span class="text-slate-100 font-medium">Type</span>
+            </div>
+            <div class="flex-1 h-0.5 bg-[#46424e] mx-2"></div>
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 bg-[#46424e] text-slate-400 rounded-full flex items-center justify-center font-medium">2</span>
+                <span class="text-slate-400">Data</span>
+            </div>
+            <div class="flex-1 h-0.5 bg-[#46424e] mx-2"></div>
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 bg-[#46424e] text-slate-400 rounded-full flex items-center justify-center font-medium">3</span>
+                <span class="text-slate-400">Preview</span>
+            </div>
+            <div class="flex-1 h-0.5 bg-[#46424e] mx-2"></div>
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 bg-[#46424e] text-slate-400 rounded-full flex items-center justify-center font-medium">4</span>
+                <span class="text-slate-400">Save</span>
+            </div>
+        </div>
+    </div>
+
+    {# Form Content #}
+    <form hx-post="/partials/session/wizard/validate/1" hx-target="#modal-container" hx-swap="innerHTML" hx-encoding="multipart/form-data">
+        <div class="p-6 space-y-6">
+            {# Session Type Selection #}
+            <div>
+                <label class="block text-sm font-medium text-slate-200 mb-3">Session Type <span class="text-[#dc2626]">*</span></label>
+                <div class="grid grid-cols-2 gap-4">
+                    {# Real Call Option #}
+                    <label class="relative cursor-pointer">
+                        <input type="radio" name="session_type" value="real_call" class="peer sr-only" x-model="sessionType">
+                        <div class="p-4 border-2 rounded-[6px] transition-all peer-checked:border-[#dc2626] peer-checked:bg-red-900/20 border-[rgba(255,255,255,0.10)] hover:border-[rgba(255,255,255,0.15)]">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-10 h-10 bg-red-900/20 rounded-full flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-[#dc2626]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                    </svg>
+                                </div>
+                                <span class="font-medium text-slate-100">Real Call</span>
+                            </div>
+                            <p class="text-xs text-slate-400">Import from ZOLL CPR Report ZIP file</p>
+                        </div>
+                    </label>
+
+                    {# Simulated Option #}
+                    <label class="relative cursor-pointer">
+                        <input type="radio" name="session_type" value="simulated" class="peer sr-only" x-model="sessionType">
+                        <div class="p-4 border-2 rounded-[6px] transition-all peer-checked:border-[#dc2626] peer-checked:bg-red-900/20 border-[rgba(255,255,255,0.10)] hover:border-[rgba(255,255,255,0.15)]">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-10 h-10 bg-blue-900/20 rounded-full flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                    </svg>
+                                </div>
+                                <span class="font-medium text-slate-100">Simulated</span>
+                            </div>
+                            <p class="text-xs text-slate-400">Training session from manikin data</p>
+                        </div>
+                    </label>
+                </div>
+                {% if errors and errors.session_type %}
+                <p class="text-xs text-[#b91c1c] mt-2">{{ errors.session_type }}</p>
+                {% endif %}
+            </div>
+
+            {# ZIP Upload - only shown for Real Calls #}
+            <div x-show="sessionType === 'real_call'" x-transition x-data="{ fileName: '' }">
+                <label class="block text-sm font-medium text-slate-200 mb-2">Upload ZOLL CPR Report <span class="text-[#dc2626]">*</span></label>
+                <div class="relative">
+                    <input type="file"
+                           name="zip_file"
+                           accept=".zip"
+                           @change="fileName = $event.target.files[0]?.name || ''"
+                           class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                    <div class="border-2 border-dashed rounded-[6px] p-6 text-center transition-colors bg-[#3e3a46] border-[rgba(255,255,255,0.15)] hover:border-slate-400">
+                        <div x-show="!fileName">
+                            <svg class="w-10 h-10 mx-auto text-slate-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p class="text-sm text-slate-300 mb-1">Drop your ZIP file here, or <span class="text-[#dc2626] font-medium">browse</span></p>
+                            <p class="text-xs text-slate-400">ZOLL CPR Report ZIP file</p>
+                        </div>
+                        <div x-show="fileName" class="flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5 text-[#16a34a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span class="text-sm text-slate-200" x-text="fileName"></span>
+                        </div>
+                    </div>
+                </div>
+                {% if errors and errors.zip_file %}
+                <p class="text-xs text-[#b91c1c] mt-1">{{ errors.zip_file }}</p>
+                {% endif %}
+            </div>
+
+            {# Info for Simulated Sessions #}
+            <div x-show="sessionType === 'simulated'" x-transition>
+                <div class="bg-blue-900/20 border border-blue-500/30 rounded-[6px] p-3">
+                    <p class="text-xs text-blue-400">
+                        <strong>Next:</strong> You'll upload CSV data or paste session metrics. Team Lead assignment is optional.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        {# Footer #}
+        <div class="flex items-center justify-between p-4 border-t border-[rgba(255,255,255,0.10)] bg-[#36323e]">
+            <button type="button" onclick="document.getElementById('modal-container').innerHTML = ''" class="px-4 py-2 text-sm text-slate-300 hover:text-slate-100">
+                Cancel
+            </button>
+            <button type="submit" class="px-4 py-2 bg-[#dc2626] text-white text-sm font-medium rounded-[6px] hover:bg-[#b91c1c] transition-colors">
+                Next
+            </button>
+        </div>
+    </form>
+</div>
+</div>

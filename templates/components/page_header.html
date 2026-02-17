@@ -1,0 +1,117 @@
+{#
+  PageHeader Component
+
+  Usage:
+    {% set page_title = "Dashboard" %}
+    {% set page_subtitle = "Overview of metrics" %}
+    {% set page_actions = [{"text": "Export", "href": "#", "variant": "primary", "icon": "download"}] %}
+    {% set page_breadcrumbs = [{"label": "Home", "href": "/"}, {"label": "Dashboard"}] %}
+    {% include "components/page_header.html" %}
+
+  Action options:
+    - text: Button text (or label for backwards compatibility)
+    - href: Link URL
+    - variant: primary, secondary, ghost
+    - icon: plus, download, save, check, x
+    - hx_get, hx_target: Optional HTMX attributes for modal triggers
+#}
+
+{# Breadcrumbs (if provided) #}
+{% if page_breadcrumbs and page_breadcrumbs | length > 1 %}
+<nav class="mb-4">
+    <ol class="flex items-center text-sm text-slate-400">
+        {% for crumb in page_breadcrumbs %}
+        {% if not loop.last %}
+        <li><a href="{{ crumb.href }}" class="hover:text-[#dc2626]">{{ crumb.label }}</a></li>
+        <li class="mx-2">/</li>
+        {% else %}
+        <li class="text-slate-100 font-medium">{{ crumb.label }}</li>
+        {% endif %}
+        {% endfor %}
+    </ol>
+</nav>
+{% endif %}
+
+{# Header #}
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+        <h1 class="text-[30px] font-semibold text-slate-100 flex items-center gap-3">
+            <img src="{{ url_for('static', path='images/logos/JcLS.png') }}" alt="JcLS Logo" class="h-24 w-auto">
+            {{ page_title }}
+        </h1>
+        {% if page_subtitle %}
+        <p class="text-sm text-slate-400 mt-1">{{ page_subtitle }}</p>
+        {% endif %}
+    </div>
+
+    {% if page_actions and page_actions | length > 0 %}
+    <div class="flex items-center gap-2">
+        {% for action in page_actions %}
+        {% set action_text = action.text or action.label %}
+
+        {% if action.hx_get %}
+        {# HTMX-enabled button #}
+        <button
+            type="button"
+            class="inline-flex items-center gap-2 px-4 py-2 {% if action.variant == 'primary' %}bg-[#dc2626] text-white hover:bg-[#b91c1c]{% elif action.variant == 'secondary' %}border border-[rgba(255,255,255,0.10)] text-slate-200 hover:bg-[rgba(255,255,255,0.04)]{% else %}text-slate-300 hover:bg-[rgba(255,255,255,0.10)]{% endif %} text-sm font-medium rounded-[6px] transition-colors"
+            hx-get="{{ action.hx_get }}"
+            hx-target="{{ action.hx_target }}"
+            hx-swap="innerHTML"
+        >
+            {% if action.icon == 'download' %}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
+            {% elif action.icon == 'plus' %}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            {% elif action.icon == 'save' %}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+            </svg>
+            {% elif action.icon == 'check' %}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            {% elif action.icon == 'x' %}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            {% endif %}
+            {{ action_text }}
+        </button>
+        {% else %}
+        {# Regular link button #}
+        <a
+            href="{{ action.href }}"
+            class="inline-flex items-center gap-2 px-4 py-2 {% if action.variant == 'primary' %}bg-[#dc2626] text-white hover:bg-[#b91c1c]{% elif action.variant == 'secondary' %}border border-[rgba(255,255,255,0.10)] text-slate-200 hover:bg-[rgba(255,255,255,0.04)]{% else %}text-slate-300 hover:bg-[rgba(255,255,255,0.10)]{% endif %} text-sm font-medium rounded-[6px] transition-colors"
+        >
+            {% if action.icon == 'download' %}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
+            {% elif action.icon == 'plus' %}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            {% elif action.icon == 'save' %}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+            </svg>
+            {% elif action.icon == 'check' %}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            {% elif action.icon == 'x' %}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            {% endif %}
+            {{ action_text }}
+        </a>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>

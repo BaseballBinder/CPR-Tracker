@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block content %}
+{# Page Header with Export Buttons #}
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-semibold text-slate-100">CanROC Export</h1>
+        <p class="text-sm text-slate-400">Export session data to CanROC and EHS Data templates</p>
+    </div>
+    {% if canroc_sessions %}
+    <div class="flex items-center gap-3">
+        <button onclick="exportAllPCO()"
+                {% if not templates_status.pco %}disabled{% endif %}
+                class="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-[6px] hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed transition-colors flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Export All EHS Data
+        </button>
+        <button onclick="exportAllMaster()"
+                {% if not templates_status.master %}disabled{% endif %}
+                class="px-4 py-2 text-sm font-medium bg-[#dc2626] text-white rounded-[6px] hover:bg-[#b91c1c] disabled:bg-slate-600 disabled:cursor-not-allowed transition-colors flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Export All CanROC
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+{# Template Status Cards #}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 page-enter page-d1">
+    {# EHS Data (PCO) Template Status #}
+    <div class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl p-4 border {% if templates_status.pco %}border-green-500/30{% else %}border-red-500/30{% endif %} shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 {% if templates_status.pco %}bg-green-900/30{% else %}bg-red-900/30{% endif %} rounded-full flex items-center justify-center">
+                {% if templates_status.pco %}
+                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                {% else %}
+                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+                {% endif %}
+            </div>
+            <div>
+                <h3 class="font-semibold text-slate-100">EHS Data Template</h3>
+                <p class="text-sm {% if templates_status.pco %}text-green-600{% else %}text-red-600{% endif %}">
+                    {% if templates_status.pco %}Ready{% else %}Not Found{% endif %}
+                </p>
+            </div>
+        </div>
+        <p class="text-xs text-slate-400 mt-2">Per-minute CPR metrics (Minutes 1-10)</p>
+    </div>
+
+    {# CanROC (Master) Template Status #}
+    <div class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl p-4 border {% if templates_status.master %}border-green-500/30{% else %}border-red-500/30{% endif %} shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 {% if templates_status.master %}bg-green-900/30{% else %}bg-red-900/30{% endif %} rounded-full flex items-center justify-center">
+                {% if templates_status.master %}
+                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                {% else %}
+                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+                {% endif %}
+            </div>
+            <div>
+                <h3 class="font-semibold text-slate-100">CanROC Template</h3>
+                <p class="text-sm {% if templates_status.master %}text-green-600{% else %}text-red-600{% endif %}">
+                    {% if templates_status.master %}Ready{% else %}Not Found{% endif %}
+                </p>
+            </div>
+        </div>
+        <p class="text-xs text-slate-400 mt-2">CanROC Master data submission sheet</p>
+    </div>
+</div>
+
+{# Sessions Ready for Export #}
+<div class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] shadow-sm mb-6 page-enter page-d2">
+    <div class="p-4 border-b border-[rgba(255,255,255,0.07)]">
+        <h2 class="text-[20px] font-semibold text-slate-100">Sessions with CanROC Data</h2>
+        <p class="text-sm text-slate-400">Real-life call sessions - complete wizard data before export</p>
+    </div>
+
+    {% if canroc_sessions %}
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-[#2c2834] text-slate-300 text-left">
+                <tr>
+                    <th class="px-4 py-3 font-medium">Date</th>
+                    <th class="px-4 py-3 font-medium">Team Lead</th>
+                    <th class="px-4 py-3 font-medium">Event Type</th>
+                    <th class="px-4 py-3 font-medium">Outcome</th>
+                    <th class="px-4 py-3 font-medium">EHS Data Status</th>
+                    <th class="px-4 py-3 font-medium">CanROC Status</th>
+                    <th class="px-4 py-3 font-medium text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-[rgba(255,255,255,0.04)]">
+                {% for session in canroc_sessions %}
+                <tr class="hover:bg-[#36323e]">
+                    <td class="px-4 py-3 text-slate-200 font-medium">{{ session.date }}</td>
+                    <td class="px-4 py-3 text-slate-200">{{ session.provider_name or 'Unknown' }}</td>
+                    <td class="px-4 py-3 text-slate-200">{{ session.event_type or 'Cardiac Arrest' }}</td>
+                    <td class="px-4 py-3">
+                        {% if session.outcome == 'ROSC' %}
+                        <span class="px-2 py-1 text-xs font-medium bg-green-900/30 text-green-400 rounded-full">ROSC</span>
+                        {% elif session.outcome %}
+                        <span class="px-2 py-1 text-xs font-medium bg-[#46424e] text-slate-300 rounded-full">{{ session.outcome }}</span>
+                        {% else %}
+                        <span class="text-slate-400">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3">
+                        {% if session.pco_wizard_complete %}
+                        <span class="px-2 py-1 text-xs font-medium bg-green-900/30 text-green-400 rounded-full">Complete</span>
+                        {% elif session.pco_wizard_percent > 0 %}
+                        <span class="px-2 py-1 text-xs font-medium bg-amber-900/30 text-amber-400 rounded-full">{{ session.pco_wizard_percent|round(0)|int }}%</span>
+                        {% else %}
+                        <span class="px-2 py-1 text-xs font-medium bg-[#46424e] text-slate-300 rounded-full">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3">
+                        {% if session.master_wizard_complete %}
+                        <span class="px-2 py-1 text-xs font-medium bg-green-900/30 text-green-400 rounded-full">Complete</span>
+                        {% elif session.master_wizard_percent > 0 %}
+                        <span class="px-2 py-1 text-xs font-medium bg-amber-900/30 text-amber-400 rounded-full">{{ session.master_wizard_percent|round(0)|int }}%</span>
+                        {% else %}
+                        <span class="px-2 py-1 text-xs font-medium bg-[#46424e] text-slate-300 rounded-full">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            {# EHS Data (PCO) Wizard Button #}
+                            <button hx-get="/partials/canroc/{{ session.id }}/pco/wizard"
+                                    hx-target="#modal-container"
+                                    hx-swap="innerHTML"
+                                    class="px-3 py-1 text-xs font-medium border {% if session.pco_wizard_complete %}border-green-500/30 text-green-400 hover:bg-green-900/20{% else %}border-blue-500/30 text-blue-400 hover:bg-blue-900/20{% endif %} rounded transition-colors">
+                                {% if session.pco_wizard_complete %}Review EHS{% else %}Edit EHS{% endif %}
+                            </button>
+                            {# CanROC (Master) Wizard Button #}
+                            <button hx-get="/partials/canroc/{{ session.id }}/master/wizard"
+                                    hx-target="#modal-container"
+                                    hx-swap="innerHTML"
+                                    class="px-3 py-1 text-xs font-medium border {% if session.master_wizard_complete %}border-green-500/30 text-green-400 hover:bg-green-900/20{% else %}border-amber-500/30 text-amber-400 hover:bg-amber-900/20{% endif %} rounded transition-colors">
+                                {% if session.master_wizard_complete %}Review CanROC{% else %}Edit CanROC{% endif %}
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="p-8">
+        {% set empty_icon = "clipboard" %}
+        {% set empty_title = "No CanROC Sessions" %}
+        {% set empty_message = "Import real-life call sessions to export CanROC data" %}
+        {% set empty_cta_text = "Import Session" %}
+        {% set empty_cta_href = "/sessions" %}
+        {% include "components/empty_state.html" %}
+    </div>
+    {% endif %}
+</div>
+
+{# Modal Container #}
+<div id="modal-container"></div>
+
+{# Export JavaScript #}
+<script>
+async function exportAllPCO() {
+    try {
+        const response = await fetch('/api/canroc/export/pco', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+        if (data.success) {
+            // Trigger download
+            window.location.href = `/api/exports/download/${data.filename}`;
+        } else {
+            alert('Export failed: ' + data.message);
+        }
+    } catch (error) {
+        alert('Export error: ' + error.message);
+    }
+}
+
+async function exportAllMaster() {
+    try {
+        const response = await fetch('/api/canroc/export/master', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+        if (data.success) {
+            // Trigger download
+            window.location.href = `/api/exports/download/${data.filename}`;
+        } else {
+            alert('Export failed: ' + data.message);
+        }
+    } catch (error) {
+        alert('Export error: ' + error.message);
+    }
+}
+</script>
+{% endblock %}

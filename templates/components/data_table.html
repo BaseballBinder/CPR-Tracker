@@ -1,0 +1,90 @@
+{#
+  DataTable Component
+
+  Usage:
+    {% set table_columns = [
+        {"key": "date", "label": "Date"},
+        {"key": "event_type", "label": "Event Type"},
+        {"key": "outcome", "label": "Outcome", "type": "badge"}
+    ] %}
+    {% set table_rows = sessions %}
+    {% set table_empty_message = "No sessions found" %}
+    {% set table_empty_cta_text = "Import sessions" %}
+    {% set table_empty_cta_href = "/import-export" %}
+    {% include "components/data_table.html" %}
+
+  Features:
+    - Sticky header
+    - Zebra rows (odd/even)
+    - Hover highlight
+    - Empty state with CTA
+#}
+
+<div class="bg-[#3e3a46] rounded-[6px] border border-[rgba(255,255,255,0.10)] shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-[#36323e] text-slate-300 text-left sticky top-0 z-10">
+                <tr>
+                    {% for col in table_columns %}
+                    <th class="px-4 py-3 font-medium whitespace-nowrap">{{ col.label }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-[rgba(255,255,255,0.10)]">
+                {% if table_rows and table_rows | length > 0 %}
+                    {% for row in table_rows %}
+                    <tr class="hover:bg-[rgba(255,255,255,0.04)] {% if loop.index is even %}bg-[rgba(255,255,255,0.02)]{% endif %}">
+                        {% for col in table_columns %}
+                        <td class="px-4 py-3 text-slate-200 whitespace-nowrap">
+                            {% if col.type == 'badge' %}
+                                {# Determine badge variant based on value #}
+                                {% set cell_value = row[col.key] %}
+                                {% if cell_value == 'ROSC' %}
+                                    {% set badge_text = cell_value %}
+                                    {% set badge_variant = 'success' %}
+                                {% elif cell_value == 'No ROSC' %}
+                                    {% set badge_text = cell_value %}
+                                    {% set badge_variant = 'neutral' %}
+                                {% elif cell_value == 'Ongoing' %}
+                                    {% set badge_text = cell_value %}
+                                    {% set badge_variant = 'warning' %}
+                                {% elif cell_value == 'active' %}
+                                    {% set badge_text = 'Active' %}
+                                    {% set badge_variant = 'success' %}
+                                {% elif cell_value == 'inactive' %}
+                                    {% set badge_text = 'Inactive' %}
+                                    {% set badge_variant = 'neutral' %}
+                                {% else %}
+                                    {% set badge_text = cell_value %}
+                                    {% set badge_variant = 'info' %}
+                                {% endif %}
+                                {% include "components/badge.html" %}
+                            {% elif col.type == 'link' %}
+                                <a href="{{ col.href_prefix }}{{ row[col.key_id] }}" class="text-[#dc2626] hover:text-[#b91c1c] font-medium">
+                                    {{ row[col.key] }}
+                                </a>
+                            {% elif col.type == 'metric' %}
+                                {{ row.metrics[col.metric_key] }}{{ col.suffix | default('') }}
+                            {% else %}
+                                {{ row[col.key] }}
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="{{ table_columns | length }}" class="px-4 py-12 text-center">
+                            {% set empty_icon = 'clipboard' %}
+                            {% set empty_title = table_empty_message | default('No data found') %}
+                            {% set empty_message = '' %}
+                            {% set empty_cta_text = table_empty_cta_text %}
+                            {% set empty_cta_href = table_empty_cta_href %}
+                            {% include "components/empty_state.html" %}
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>

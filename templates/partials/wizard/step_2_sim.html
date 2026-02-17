@@ -1,0 +1,402 @@
+{# Wizard Step 2: Simulated - CSV/Paste + Practitioners #}
+{# Modal Overlay #}
+<div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+<div class="bg-[#3e3a46] rounded-[6px] border border-[rgba(255,255,255,0.10)] shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto" x-data="{ inputMode: 'paste', fileName: '', dragOver: false }">
+    {# Modal Header #}
+    <div class="flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.10)]">
+        <div class="flex items-center gap-2">
+            <h2 class="text-lg font-semibold text-slate-100">Add Session</h2>
+            <span class="px-2 py-0.5 text-xs font-medium bg-blue-900/20 text-blue-400 rounded">Simulated</span>
+        </div>
+        <button onclick="document.getElementById('modal-container').innerHTML = ''" class="text-slate-400 hover:text-slate-300">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+
+    {# Progress Steps #}
+    <div class="px-4 py-3 border-b border-[rgba(255,255,255,0.10)] bg-[#36323e]">
+        <div class="flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 bg-[#16a34a] text-white rounded-full flex items-center justify-center font-medium">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                </span>
+                <span class="text-slate-400">Type</span>
+            </div>
+            <div class="flex-1 h-0.5 bg-[#16a34a] mx-2"></div>
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 bg-[#dc2626] text-white rounded-full flex items-center justify-center font-medium">2</span>
+                <span class="text-slate-100 font-medium">Data</span>
+            </div>
+            <div class="flex-1 h-0.5 bg-[#46424e] mx-2"></div>
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 bg-[#46424e] text-slate-400 rounded-full flex items-center justify-center font-medium">3</span>
+                <span class="text-slate-400">Preview</span>
+            </div>
+            <div class="flex-1 h-0.5 bg-[#46424e] mx-2"></div>
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 bg-[#46424e] text-slate-400 rounded-full flex items-center justify-center font-medium">4</span>
+                <span class="text-slate-400">Save</span>
+            </div>
+        </div>
+    </div>
+
+    {# Form Content #}
+    <form hx-post="/partials/session/wizard/validate/2"
+          hx-target="#modal-container"
+          hx-swap="innerHTML"
+          hx-encoding="multipart/form-data">
+        {# Pass through session data from step 1 #}
+        <input type="hidden" name="session_type" value="{{ session_type }}">
+        <input type="hidden" name="event_date" value="{{ event_date }}">
+        <input type="hidden" name="event_time" value="{{ event_time or '' }}">
+        <input type="hidden" name="platoon" value="{{ platoon or '' }}">
+
+        {# Error Summary Banner #}
+        {% if errors %}
+        <div class="mx-6 mt-4 p-3 bg-red-900/20 border border-red-500/30 rounded-[6px]">
+            <div class="flex items-start gap-2">
+                <svg class="w-5 h-5 text-[#dc2626] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                    <p class="text-sm font-medium text-[#dc2626]">Please fix the following errors:</p>
+                    <ul class="mt-1 text-sm text-[#b91c1c] list-disc list-inside">
+                        {% if errors.paste_text %}<li>{{ errors.paste_text }}</li>{% endif %}
+                        {% if errors.primary_provider_id %}<li>{{ errors.primary_provider_id }}</li>{% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="p-6 space-y-6">
+            {# Input Mode Toggle #}
+            <div>
+                <label class="block text-sm font-medium text-slate-200 mb-2">Data Input Method</label>
+                <div class="flex gap-2">
+                    <button type="button"
+                            @click="inputMode = 'paste'"
+                            :class="inputMode === 'paste' ? 'bg-[#dc2626] text-white' : 'bg-[#46424e] text-slate-300 hover:bg-[rgba(255,255,255,0.15)]'"
+                            class="px-4 py-2 text-sm font-medium rounded-[6px] transition-colors">
+                        Paste Text
+                    </button>
+                    <button type="button"
+                            @click="inputMode = 'csv'"
+                            :class="inputMode === 'csv' ? 'bg-[#dc2626] text-white' : 'bg-[#46424e] text-slate-300 hover:bg-[rgba(255,255,255,0.15)]'"
+                            class="px-4 py-2 text-sm font-medium rounded-[6px] transition-colors">
+                        Upload CSV
+                    </button>
+                </div>
+            </div>
+
+            {# Paste Text Input #}
+            <div x-show="inputMode === 'paste'">
+                <label class="block text-sm font-medium text-slate-200 mb-2">Paste Session Data</label>
+                <textarea name="paste_text"
+                          rows="6"
+                          placeholder="Paste data from manikin software here...
+
+Example format:
+Date, Provider, Duration, Compression Rate, Depth, Depth %, Rate %
+2025-12-30, John Doe, 120, 110, 5.5, 92, 88"
+                          class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] font-mono {% if errors and errors.paste_text %}border-red-300 ring-1 ring-red-300{% endif %}"></textarea>
+                {% if errors and errors.paste_text %}
+                <p class="text-xs text-[#b91c1c] mt-1">{{ errors.paste_text }}</p>
+                {% else %}
+                <p class="text-xs text-slate-400 mt-1">CSV format with headers, or tab-separated values</p>
+                {% endif %}
+            </div>
+
+            {# CSV File Upload #}
+            <div x-show="inputMode === 'csv'">
+                <label class="block text-sm font-medium text-slate-200 mb-2">Upload CSV File</label>
+                <div class="relative"
+                     @dragover.prevent="dragOver = true"
+                     @dragleave.prevent="dragOver = false"
+                     @drop.prevent="
+                        dragOver = false;
+                        const droppedFiles = $event.dataTransfer.files;
+                        if (droppedFiles.length > 0) {
+                            fileName = droppedFiles[0].name;
+                            const dt = new DataTransfer();
+                            for (const file of droppedFiles) dt.items.add(file);
+                            $refs.csvInput.files = dt.files;
+                        }
+                     "
+                    <input type="file"
+                           name="csv_file"
+                           accept=".csv,.txt"
+                           x-ref="csvInput"
+                           @change="fileName = $event.target.files[0]?.name || ''"
+                           class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                    <div class="border-2 border-dashed rounded-[6px] p-6 text-center transition-colors"
+                         :class="dragOver ? 'border-[#dc2626] bg-red-900/20' : 'border-[rgba(255,255,255,0.15)] hover:border-slate-400'">
+                        <template x-if="!fileName">
+                            <div>
+                                <svg class="w-8 h-8 mx-auto text-slate-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                <p class="text-sm text-slate-300">Drop CSV file here, or <span class="text-[#dc2626] font-medium">browse</span></p>
+                            </div>
+                        </template>
+                        <template x-if="fileName">
+                            <div class="flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5 text-[#16a34a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span class="text-sm text-slate-200" x-text="fileName"></span>
+                                <button type="button" @click.prevent="fileName = ''; $refs.csvInput.value = ''" class="text-slate-400 hover:text-slate-300">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            {# Practitioner Assignment with Autocomplete #}
+            <div x-data="providerAutocomplete()">
+                <label class="block text-sm font-medium text-slate-200 mb-2">Assign Practitioner</label>
+                <div class="relative">
+                    <input type="hidden" name="primary_provider_id" x-model="selectedProviderId">
+                    <input type="text"
+                           x-model="searchQuery"
+                           @input="filterProviders()"
+                           @focus="showDropdown = true"
+                           @click="showDropdown = true"
+                           @keydown.escape="showDropdown = false"
+                           @keydown.arrow-down.prevent="highlightNext()"
+                           @keydown.arrow-up.prevent="highlightPrev()"
+                           @keydown.enter.prevent="selectHighlighted()"
+                           placeholder="Type to search providers..."
+                           class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626]"
+                           autocomplete="off">
+
+                    {# Dropdown #}
+                    <div x-show="showDropdown && (filteredProviders.length > 0 || searchQuery.length > 0)"
+                         @click.away="showDropdown = false"
+                         x-transition
+                         class="absolute z-20 mt-1 w-full bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-[6px] shadow-lg max-h-48 overflow-y-auto">
+
+                        {# Matching providers #}
+                        <template x-for="(provider, index) in filteredProviders" :key="provider.id">
+                            <button type="button"
+                                    @click="selectProvider(provider)"
+                                    @mouseenter="highlightedIndex = index"
+                                    :class="{ 'bg-[#46424e]': highlightedIndex === index }"
+                                    class="w-full px-3 py-2 text-left text-sm hover:bg-[#36323e] flex items-center justify-between">
+                                <span x-text="provider.name"></span>
+                                <span class="text-xs text-slate-400" x-text="provider.certification"></span>
+                            </button>
+                        </template>
+
+                        {# No matches - show add new option #}
+                        <template x-if="filteredProviders.length === 0 && searchQuery.length >= 2">
+                            <div class="p-2">
+                                <p class="text-xs text-slate-400 px-2 pb-2">No matching providers found</p>
+                                <button type="button"
+                                        @click="showAddProviderForm()"
+                                        class="w-full px-3 py-2 text-left text-sm bg-blue-900/20 hover:bg-blue-900/20 text-blue-400 rounded flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                    </svg>
+                                    <span>Add "<span x-text="searchQuery"></span>" as new provider</span>
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+
+                    {# Selected provider indicator #}
+                    <template x-if="selectedProviderId && selectedProviderName">
+                        <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                            <span class="text-xs text-green-600 bg-green-900/20 px-2 py-0.5 rounded" x-text="selectedProviderCert"></span>
+                            <button type="button" @click="clearSelection()" class="text-slate-400 hover:text-slate-300">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+                <p class="text-xs text-slate-400 mt-1">Start typing a name, or add a new provider if not found</p>
+
+                {# Add New Provider Inline Form #}
+                <div x-show="showAddForm" x-transition class="mt-3 p-3 bg-[#36323e] border border-[rgba(255,255,255,0.10)] rounded-[6px]">
+                    <p class="text-sm font-medium text-slate-200 mb-2">Add New Provider</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" x-model="newFirstName" placeholder="First Name" class="text-sm border border-[rgba(255,255,255,0.15)] rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#dc2626]">
+                        <input type="text" x-model="newLastName" placeholder="Last Name" class="text-sm border border-[rgba(255,255,255,0.15)] rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#dc2626]">
+                    </div>
+                    <div class="mt-2">
+                        <select x-model="newCertification" class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#dc2626] bg-[#3e3a46]">
+                            <option value="">Select Certification</option>
+                            <option value="ACP">ACP</option>
+                            <option value="PCP">PCP</option>
+                            <option value="Mechanic">Mechanic</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end gap-2 mt-3">
+                        <button type="button" @click="cancelAddProvider()" class="px-3 py-1.5 text-xs text-slate-300 hover:text-slate-100">Cancel</button>
+                        <button type="button" @click="submitNewProvider()" :disabled="!canSubmitNewProvider" :class="canSubmitNewProvider ? 'bg-[#dc2626] hover:bg-[#b91c1c]' : 'bg-slate-300 cursor-not-allowed'" class="px-3 py-1.5 text-xs text-white rounded transition-colors">Add Provider</button>
+                    </div>
+                </div>
+                {% if errors and errors.primary_provider_id %}
+                <p class="text-xs text-[#b91c1c] mt-1">{{ errors.primary_provider_id }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <script>
+        function providerAutocomplete() {
+            // Get all providers and filter to active ones
+            const allProviders = {{ providers | tojson | safe }};
+            const activeProviders = allProviders.filter(p => p.status === 'active');
+
+            return {
+                providers: activeProviders,
+                filteredProviders: [],
+                searchQuery: '',
+                selectedProviderId: '',
+                selectedProviderName: '',
+                selectedProviderCert: '',
+                showDropdown: false,
+                highlightedIndex: -1,
+                showAddForm: false,
+                newFirstName: '',
+                newLastName: '',
+                newCertification: '',
+
+                init() {
+                    this.filteredProviders = this.providers.slice(0, 10);
+                },
+
+                filterProviders() {
+                    if (!this.searchQuery) {
+                        this.filteredProviders = this.providers.slice(0, 10);
+                    } else {
+                        const query = this.searchQuery.toLowerCase();
+                        this.filteredProviders = this.providers
+                            .filter(p => p.name.toLowerCase().includes(query))
+                            .slice(0, 10);
+                    }
+                    this.highlightedIndex = -1;
+                    this.showDropdown = true;
+                },
+
+                selectProvider(provider) {
+                    this.selectedProviderId = provider.id;
+                    this.selectedProviderName = provider.name;
+                    this.selectedProviderCert = provider.certification;
+                    this.searchQuery = provider.name;
+                    this.showDropdown = false;
+                },
+
+                clearSelection() {
+                    this.selectedProviderId = '';
+                    this.selectedProviderName = '';
+                    this.selectedProviderCert = '';
+                    this.searchQuery = '';
+                    this.showDropdown = false;
+                },
+
+                highlightNext() {
+                    if (this.highlightedIndex < this.filteredProviders.length - 1) {
+                        this.highlightedIndex++;
+                    }
+                },
+
+                highlightPrev() {
+                    if (this.highlightedIndex > 0) {
+                        this.highlightedIndex--;
+                    }
+                },
+
+                selectHighlighted() {
+                    if (this.highlightedIndex >= 0 && this.filteredProviders[this.highlightedIndex]) {
+                        this.selectProvider(this.filteredProviders[this.highlightedIndex]);
+                    }
+                },
+
+                showAddProviderForm() {
+                    this.showAddForm = true;
+                    this.showDropdown = false;
+                    // Pre-fill name from search query
+                    const parts = this.searchQuery.trim().split(/\s+/);
+                    if (parts.length >= 2) {
+                        this.newFirstName = parts[0];
+                        this.newLastName = parts.slice(1).join(' ');
+                    } else if (parts.length === 1) {
+                        this.newFirstName = parts[0];
+                        this.newLastName = '';
+                    }
+                },
+
+                cancelAddProvider() {
+                    this.showAddForm = false;
+                    this.newFirstName = '';
+                    this.newLastName = '';
+                    this.newCertification = '';
+                },
+
+                get canSubmitNewProvider() {
+                    return this.newFirstName.trim() && this.newLastName.trim() && this.newCertification;
+                },
+
+                async submitNewProvider() {
+                    if (!this.canSubmitNewProvider) return;
+
+                    const formData = new FormData();
+                    formData.append('first_name', this.newFirstName.trim());
+                    formData.append('last_name', this.newLastName.trim());
+                    formData.append('certification', this.newCertification);
+
+                    try {
+                        const response = await fetch('/api/providers', {
+                            method: 'POST',
+                            body: formData,
+                            headers: { 'Accept': 'application/json' }
+                        });
+
+                        if (response.ok) {
+                            const result = await response.json();
+                            if (result.success && result.provider) {
+                                // Add the new provider to our local list
+                                this.providers.push({
+                                    id: result.provider.id,
+                                    name: result.provider.name,
+                                    certification: result.provider.certification,
+                                    status: 'active'
+                                });
+                                // Select the new provider
+                                this.selectProvider(result.provider);
+                            }
+                            this.cancelAddProvider();
+                        }
+                    } catch (error) {
+                        console.error('Failed to add provider:', error);
+                    }
+                }
+            };
+        }
+        </script>
+
+        {# Footer #}
+        <div class="flex items-center justify-between p-4 border-t border-[rgba(255,255,255,0.10)] bg-[#36323e]">
+            <button type="button"
+                    hx-get="/partials/session/wizard/step/1"
+                    hx-target="#modal-container"
+                    hx-swap="innerHTML"
+                    class="px-4 py-2 text-sm text-slate-300 hover:text-slate-100">
+                Back
+            </button>
+            <button type="submit" class="px-4 py-2 bg-[#dc2626] text-white text-sm font-medium rounded-[6px] hover:bg-[#b91c1c] transition-colors">
+                Next
+            </button>
+        </div>
+    </form>
+</div>
+</div>

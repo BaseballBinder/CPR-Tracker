@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block content %}
+{# Page Header #}
+{% set page_title = "Import / Export" %}
+{% set page_subtitle = "Import session data and export datasets" %}
+{% include "components/page_header.html" %}
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 page-enter page-d1">
+    {# Import Panel #}
+    <div class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] shadow-sm">
+        <div class="p-4 border-b border-[rgba(255,255,255,0.07)]">
+            <h2 class="text-[20px] font-semibold text-slate-100">Import Data</h2>
+        </div>
+        <div class="p-6">
+            {# Import Tabs #}
+            <div class="mb-6" x-data="{ importTab: 'csv' }">
+                <div class="flex border-b border-[rgba(255,255,255,0.07)] mb-4">
+                    <button
+                        @click="importTab = 'csv'"
+                        :class="importTab === 'csv' ? 'border-[#dc2626] text-[#dc2626]' : 'border-transparent text-slate-400 hover:text-slate-200'"
+                        class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+                    >
+                        CSV Upload
+                    </button>
+                    <button
+                        @click="importTab = 'paste'"
+                        :class="importTab === 'paste' ? 'border-[#dc2626] text-[#dc2626]' : 'border-transparent text-slate-400 hover:text-slate-200'"
+                        class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+                    >
+                        Paste Text
+                    </button>
+                </div>
+
+                {# CSV Upload #}
+                <div x-show="importTab === 'csv'">
+                    <div class="border-2 border-dashed border-[rgba(255,255,255,0.15)] rounded-[6px] p-8 text-center hover:border-[#dc2626] transition-colors cursor-pointer">
+                        <svg class="w-12 h-12 mx-auto text-slate-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        </svg>
+                        <p class="text-sm text-slate-300 mb-2">Drag and drop your CSV file here, or click to browse</p>
+                        <p class="text-xs text-slate-400">Supports: .csv files up to 10MB</p>
+                        <input type="file" class="hidden" accept=".csv">
+                    </div>
+                    <div class="mt-4">
+                        <a href="#" class="text-sm text-[#dc2626] hover:text-[#b91c1c]">Download CSV template →</a>
+                    </div>
+                </div>
+
+                {# Paste Text #}
+                <div x-show="importTab === 'paste'">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-200 mb-2">Paste ChatGPT Analysis Output</label>
+                        <textarea
+                            class="w-full h-48 text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626]"
+                            placeholder="Paste the formatted CPR analysis output here..."
+                        ></textarea>
+                    </div>
+                    <p class="text-xs text-slate-400 mb-4">
+                        Expected format: Structured CPR metrics output from ChatGPT analysis
+                    </p>
+                </div>
+            </div>
+
+            {# Import Button #}
+            <button class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#dc2626] text-white text-sm font-medium rounded-[6px] hover:bg-[#b91c1c] transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                </svg>
+                Import Data
+            </button>
+        </div>
+    </div>
+
+    {# Export Panel #}
+    <div class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] shadow-sm">
+        <div class="p-4 border-b border-[rgba(255,255,255,0.07)]">
+            <h2 class="text-[20px] font-semibold text-slate-100">Export Data</h2>
+        </div>
+        <div class="p-6">
+            {# Export Options #}
+            <div class="space-y-4 mb-6">
+                <div class="flex items-center justify-between p-4 border border-[rgba(255,255,255,0.07)] rounded-xl hover:bg-[#36323e] cursor-pointer">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-[#46424e] rounded-[6px] flex items-center justify-center">
+                            <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-slate-100">All Sessions</p>
+                            <p class="text-xs text-slate-400">Export all session data as CSV</p>
+                        </div>
+                    </div>
+                    <button class="px-3 py-1.5 text-sm font-medium text-[#dc2626] border border-[#dc2626] rounded-[6px] hover:bg-red-900/20 transition-colors">
+                        Export
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-between p-4 border border-[rgba(255,255,255,0.07)] rounded-xl hover:bg-[#36323e] cursor-pointer">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-[#46424e] rounded-[6px] flex items-center justify-center">
+                            <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-slate-100">Provider Data</p>
+                            <p class="text-xs text-slate-400">Export provider roster and stats</p>
+                        </div>
+                    </div>
+                    <button class="px-3 py-1.5 text-sm font-medium text-[#dc2626] border border-[#dc2626] rounded-[6px] hover:bg-red-900/20 transition-colors">
+                        Export
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-between p-4 border border-[rgba(255,255,255,0.07)] rounded-xl hover:bg-[#36323e] cursor-pointer">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-[#46424e] rounded-[6px] flex items-center justify-center">
+                            <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-slate-100">Analytics Summary</p>
+                            <p class="text-xs text-slate-400">Export aggregated metrics</p>
+                        </div>
+                    </div>
+                    <button class="px-3 py-1.5 text-sm font-medium text-[#dc2626] border border-[#dc2626] rounded-[6px] hover:bg-red-900/20 transition-colors">
+                        Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Import History #}
+<div class="mt-6 bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] shadow-sm page-enter page-d2">
+    <div class="p-4 border-b border-[rgba(255,255,255,0.07)]">
+        <h2 class="text-[20px] font-semibold text-slate-100">Import History</h2>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-[#36323e] text-slate-300 text-left">
+                <tr>
+                    <th class="px-4 py-3 font-medium">Date</th>
+                    <th class="px-4 py-3 font-medium">File/Source</th>
+                    <th class="px-4 py-3 font-medium">Records</th>
+                    <th class="px-4 py-3 font-medium">Status</th>
+                    <th class="px-4 py-3 font-medium">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-[rgba(255,255,255,0.04)]">
+                {% if import_history %}
+                {% for item in import_history %}
+                <tr class="hover:bg-[#36323e]">
+                    <td class="px-4 py-3 text-slate-200">{{ item.date }}</td>
+                    <td class="px-4 py-3 text-slate-200">{{ item.source }}</td>
+                    <td class="px-4 py-3 text-slate-200">{{ item.records }} sessions</td>
+                    <td class="px-4 py-3">
+                        {% if item.status == 'success' %}
+                        {% set badge_text = "Success" %}
+                        {% set badge_variant = "success" %}
+                        {% else %}
+                        {% set badge_text = "Failed" %}
+                        {% set badge_variant = "error" %}
+                        {% endif %}
+                        {% include "components/badge.html" %}
+                    </td>
+                    <td class="px-4 py-3">
+                        <button class="text-slate-400 hover:text-slate-300 text-sm">View details</button>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="5" class="px-4 py-12">
+                        {% set empty_icon = "upload" %}
+                        {% set empty_title = "No import history" %}
+                        {% set empty_message = "Import data to see your history here" %}
+                        {% set empty_cta_text = "" %}
+                        {% set empty_cta_href = "" %}
+                        {% include "components/empty_state.html" %}
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

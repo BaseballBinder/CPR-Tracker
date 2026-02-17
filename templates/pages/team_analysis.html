@@ -1,0 +1,444 @@
+{% extends "base.html" %}
+
+{% block content %}
+{# Page Header #}
+{% set page_title = "Team Analysis" %}
+{% set page_subtitle = "Real-life call team rankings - each event creates a unique team instance" %}
+{% set page_actions = [{"text": "Export Team Report", "href": "#", "variant": "primary", "icon": "download"}] %}
+{% include "components/page_header.html" %}
+
+{# Stats Overview #}
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6 page-enter page-d1">
+    {# Total Teams/Events #}
+    <div class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl p-4 border border-[rgba(255,255,255,0.07)] shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-purple-900/20 rounded-full flex items-center justify-center">
+                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+            </div>
+            <div>
+                <p class="text-2xl font-semibold text-slate-100">{{ total_teams }}</p>
+                <p class="text-xs text-slate-400">Team Events</p>
+            </div>
+        </div>
+    </div>
+
+    {# Average JcLS Score #}
+    <div class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl p-4 border border-[rgba(255,255,255,0.07)] shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 {% if avg_jcls >= 80 %}bg-green-900/20{% elif avg_jcls >= 60 %}bg-amber-900/20{% else %}bg-red-900/20{% endif %} rounded-full flex items-center justify-center">
+                <svg class="w-5 h-5 {% if avg_jcls >= 80 %}text-green-400{% elif avg_jcls >= 60 %}text-yellow-400{% else %}text-red-400{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+            </div>
+            <div>
+                <p class="text-2xl font-semibold {% if avg_jcls >= 80 %}text-green-400{% elif avg_jcls >= 60 %}text-yellow-400{% else %}text-red-400{% endif %}">{{ avg_jcls }}</p>
+                <p class="text-xs text-slate-400">Avg JcLS Score</p>
+            </div>
+        </div>
+    </div>
+
+    {# Average CCF #}
+    <div class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl p-4 border border-[rgba(255,255,255,0.07)] shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 {% if avg_ccf >= 85 %}bg-emerald-900/20{% elif avg_ccf >= 60 %}bg-amber-900/20{% else %}bg-red-900/20{% endif %} rounded-full flex items-center justify-center">
+                <svg class="w-5 h-5 {% if avg_ccf >= 85 %}text-emerald-600{% elif avg_ccf >= 60 %}text-amber-600{% else %}text-[#dc2626]{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                </svg>
+            </div>
+            <div>
+                <p class="text-2xl font-semibold text-slate-100">{{ avg_ccf }}%</p>
+                <p class="text-xs text-slate-400">Avg CCF</p>
+            </div>
+        </div>
+        <div class="mt-2 text-xs {% if avg_ccf >= 85 %}text-emerald-600{% elif avg_ccf >= 60 %}text-amber-600{% else %}text-red-500{% endif %}">
+            Target: &gt;85%
+        </div>
+    </div>
+
+    {# Best Team Overall #}
+    <div class="bg-[#3e3a46] rounded-2xl p-4 border border-yellow-500/30 shadow-sm bg-gradient-to-br from-yellow-900/20 to-amber-900/15">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center shadow">
+                <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                </svg>
+            </div>
+            <div>
+                <p class="text-2xl font-semibold text-amber-400">{{ best_team.jcls_score if best_team.jcls_score else "--" }}</p>
+                <p class="text-xs text-amber-400">Best JcLS Score</p>
+            </div>
+        </div>
+        {% if best_team %}
+        <div class="mt-2 text-xs text-amber-400 truncate font-medium">
+            🏆 {{ best_team.team_lead }} ({{ best_team.date }})
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{# Most Compressions Fun Stat #}
+{% if max_compressions and max_compressions > 0 %}
+<div class="bg-gradient-to-r from-orange-900/20 to-red-900/15 rounded-2xl p-4 border border-orange-500/30 shadow-sm mb-6 page-enter page-d2">
+    <div class="flex items-center gap-4">
+        <div class="w-12 h-12 bg-orange-400 rounded-full flex items-center justify-center flex-shrink-0 shadow">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+            </svg>
+        </div>
+        <div class="flex-1">
+            <div class="flex items-center gap-3 mb-1">
+                <h3 class="text-lg font-semibold text-orange-400">Most Compressions in a Single Call</h3>
+                <span class="px-2 py-0.5 text-xs font-medium bg-orange-200 text-orange-400 rounded-full">Fun Stat</span>
+            </div>
+            <div class="flex items-baseline gap-2">
+                <span class="text-3xl font-bold text-orange-400">{{ "{:,}".format(max_compressions) }}</span>
+                <span class="text-sm text-orange-600">compressions</span>
+                {% if top_compressions_team %}
+                <span class="text-slate-400 mx-2">|</span>
+                <span class="text-sm text-orange-400">by {{ top_compressions_team.team_lead }}</span>
+                <span class="text-xs text-orange-600">({{ top_compressions_team.date }})</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{# Performance Trend Chart #}
+{% if chart_labels and chart_labels | length > 0 %}
+<div class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] p-4 mb-6 shadow-sm page-enter page-d3">
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h2 class="text-[20px] font-semibold text-slate-100">Performance Trend Over Time</h2>
+            <p class="text-sm text-slate-400">Track quality metrics across {{ chart_labels | length }} real-life call{% if chart_labels | length != 1 %}s{% endif %}</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <label class="text-sm text-slate-300">Show:</label>
+            <select id="trend-metric-select" class="text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#dc2626]">
+                <option value="all">All Metrics</option>
+                <option value="ccf">CCF</option>
+                <option value="jcls">JcLS Score</option>
+                <option value="depth">Depth %</option>
+                <option value="rate">Rate %</option>
+            </select>
+        </div>
+    </div>
+    <div class="h-72">
+        <canvas id="trend-chart"></canvas>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('trend-chart');
+    if (!ctx) return;
+
+    const labels = {{ chart_labels | tojson }};
+    const ccfData = {{ chart_ccf | tojson }};
+    const jclsData = {{ chart_jcls | tojson }};
+    const depthData = {{ chart_depth | tojson }};
+    const rateData = {{ chart_rate | tojson }};
+
+    const allDatasets = [
+        {
+            label: 'CCF',
+            data: ccfData,
+            borderColor: 'rgb(34, 197, 94)',
+            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            tension: 0.3,
+            fill: false,
+            pointRadius: 6,
+            pointHoverRadius: 8,
+        },
+        {
+            label: 'JcLS Score',
+            data: jclsData,
+            borderColor: 'rgb(220, 38, 38)',
+            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+            tension: 0.3,
+            fill: false,
+            pointRadius: 6,
+            pointHoverRadius: 8,
+        },
+        {
+            label: 'Depth %',
+            data: depthData,
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.3,
+            fill: false,
+            pointRadius: 6,
+            pointHoverRadius: 8,
+        },
+        {
+            label: 'Rate %',
+            data: rateData,
+            borderColor: 'rgb(249, 115, 22)',
+            backgroundColor: 'rgba(249, 115, 22, 0.1)',
+            tension: 0.3,
+            fill: false,
+            pointRadius: 6,
+            pointHoverRadius: 8,
+        }
+    ];
+
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: allDatasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 20,
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y + '%';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Percentage (%)'
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    },
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+
+    // Metric filter functionality
+    const select = document.getElementById('trend-metric-select');
+    select.addEventListener('change', function() {
+        const value = this.value;
+        chart.data.datasets.forEach((dataset, index) => {
+            if (value === 'all') {
+                dataset.hidden = false;
+            } else if (value === 'ccf') {
+                dataset.hidden = index !== 0;
+            } else if (value === 'jcls') {
+                dataset.hidden = index !== 1;
+            } else if (value === 'depth') {
+                dataset.hidden = index !== 2;
+            } else if (value === 'rate') {
+                dataset.hidden = index !== 3;
+            }
+        });
+        chart.update();
+    });
+});
+</script>
+{% endif %}
+
+{# Sort Options #}
+<div class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] p-4 mb-6 shadow-sm page-enter page-d4">
+    <div class="flex flex-wrap items-center gap-3">
+        <span class="text-sm text-slate-300 font-medium">Sort by:</span>
+        <a href="/teams?sort_by=jcls_score"
+           class="px-3 py-1.5 text-sm rounded-[6px] {% if current_sort == 'jcls_score' %}bg-[#dc2626] text-white{% else %}bg-[#46424e] text-slate-300 hover:bg-[rgba(255,255,255,0.10)]{% endif %}">
+            JcLS Score
+        </a>
+        <a href="/teams?sort_by=ccf"
+           class="px-3 py-1.5 text-sm rounded-[6px] {% if current_sort == 'ccf' %}bg-[#dc2626] text-white{% else %}bg-[#46424e] text-slate-300 hover:bg-[rgba(255,255,255,0.10)]{% endif %}">
+            CCF
+        </a>
+        <a href="/teams?sort_by=depth_compliance"
+           class="px-3 py-1.5 text-sm rounded-[6px] {% if current_sort == 'depth_compliance' %}bg-[#dc2626] text-white{% else %}bg-[#46424e] text-slate-300 hover:bg-[rgba(255,255,255,0.10)]{% endif %}">
+            Depth %
+        </a>
+        <a href="/teams?sort_by=rate_compliance"
+           class="px-3 py-1.5 text-sm rounded-[6px] {% if current_sort == 'rate_compliance' %}bg-[#dc2626] text-white{% else %}bg-[#46424e] text-slate-300 hover:bg-[rgba(255,255,255,0.10)]{% endif %}">
+            Rate %
+        </a>
+        <a href="/teams?sort_by=total_compressions"
+           class="px-3 py-1.5 text-sm rounded-[6px] {% if current_sort == 'total_compressions' %}bg-[#dc2626] text-white{% else %}bg-[#46424e] text-slate-300 hover:bg-[rgba(255,255,255,0.10)]{% endif %}">
+            Compressions
+        </a>
+        <a href="/teams?sort_by=date"
+           class="px-3 py-1.5 text-sm rounded-[6px] {% if current_sort == 'date' %}bg-[#dc2626] text-white{% else %}bg-[#46424e] text-slate-300 hover:bg-[rgba(255,255,255,0.10)]{% endif %}">
+            Date
+        </a>
+    </div>
+</div>
+
+{# Team Rankings Table #}
+<div class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] shadow-sm page-enter page-d5">
+    <div class="p-4 border-b border-[rgba(255,255,255,0.07)]">
+        <h2 class="text-[20px] font-semibold text-slate-100">Team Rankings</h2>
+        <p class="text-sm text-slate-400 mt-1">Each real-life call creates a team instance ranked by weighted performance</p>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-[#36323e] text-slate-300 text-left sticky top-0">
+                <tr>
+                    <th class="px-4 py-3 font-medium w-12">Rank</th>
+                    <th class="px-4 py-3 font-medium">Team Lead</th>
+                    <th class="px-4 py-3 font-medium">Providers</th>
+                    <th class="px-4 py-3 font-medium">Date</th>
+                    <th class="px-4 py-3 font-medium">JcLS</th>
+                    <th class="px-4 py-3 font-medium">CCF</th>
+                    <th class="px-4 py-3 font-medium">Depth %</th>
+                    <th class="px-4 py-3 font-medium">Rate %</th>
+                    <th class="px-4 py-3 font-medium">Compressions</th>
+                    <th class="px-4 py-3 font-medium">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-[rgba(255,255,255,0.04)]">
+                {% for team in team_instances %}
+                <tr class="bg-purple-900/15 hover:bg-[rgba(255,255,255,0.08)]">
+                    {# Rank #}
+                    <td class="px-4 py-3">
+                        {% if team.rank == 1 %}
+                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-400 text-yellow-900 font-bold text-sm">
+                            1
+                        </span>
+                        {% elif team.rank == 2 %}
+                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-600 text-slate-200 font-bold text-sm">
+                            2
+                        </span>
+                        {% elif team.rank == 3 %}
+                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-600 text-white font-bold text-sm">
+                            3
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#46424e] text-slate-300 font-medium text-sm">
+                            {{ team.rank }}
+                        </span>
+                        {% endif %}
+                    </td>
+
+                    {# Team Lead #}
+                    <td class="px-4 py-3">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-purple-500" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                            </svg>
+                            <a href="/providers/{{ team.team_lead_id }}" class="font-medium text-slate-100 hover:text-[#dc2626]">
+                                {{ team.team_lead }}
+                            </a>
+                        </div>
+                    </td>
+
+                    {# Providers #}
+                    <td class="px-4 py-3">
+                        {% if team.providers %}
+                        <div class="flex flex-col gap-0.5">
+                            {% for provider in team.providers[:3] %}
+                            <a href="/providers/{{ provider.id }}" class="text-xs text-slate-300 hover:text-[#dc2626]">
+                                {{ provider.name }}
+                            </a>
+                            {% endfor %}
+                            {% if team.providers|length > 3 %}
+                            <span class="text-xs text-slate-400">+{{ team.providers|length - 3 }} more</span>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <span class="text-slate-400">—</span>
+                        {% endif %}
+                    </td>
+
+                    {# Date #}
+                    <td class="px-4 py-3 text-slate-200">{{ team.date }}</td>
+
+                    {# JcLS Score #}
+                    <td class="px-4 py-3">
+                        {% if team.jcls_score %}
+                        <span class="font-semibold {% if team.jcls_score >= 80 %}text-green-400{% elif team.jcls_score >= 60 %}text-yellow-400{% else %}text-red-400{% endif %}">
+                            {{ team.jcls_score }}
+                        </span>
+                        {% else %}
+                        <span class="text-slate-400">&mdash;</span>
+                        {% endif %}
+                    </td>
+
+                    {# CCF #}
+                    <td class="px-4 py-3">
+                        {% if team.ccf %}
+                        <span class="font-medium {% if team.ccf >= 85 %}text-[#16a34a]{% elif team.ccf >= 60 %}text-amber-500{% else %}text-[#dc2626]{% endif %}">
+                            {{ team.ccf }}%
+                        </span>
+                        {% else %}
+                        <span class="text-slate-400">—</span>
+                        {% endif %}
+                    </td>
+
+                    {# Depth % #}
+                    <td class="px-4 py-3 text-slate-200">{{ team.depth_compliance }}%</td>
+
+                    {# Rate % #}
+                    <td class="px-4 py-3 text-slate-200">{{ team.rate_compliance }}%</td>
+
+                    {# Compressions #}
+                    <td class="px-4 py-3 text-slate-200">
+                        {% if team.total_compressions %}
+                        {{ "{:,}".format(team.total_compressions) }}
+                        {% else %}
+                        —
+                        {% endif %}
+                    </td>
+
+                    {# Actions #}
+                    <td class="px-4 py-3">
+                        <button hx-get="/partials/sessions/{{ team.session_id }}/detail"
+                                hx-target="#modal-container"
+                                hx-swap="innerHTML"
+                                class="text-slate-400 hover:text-slate-300"
+                                title="View Session Details">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="px-4 py-12">
+                        {% set empty_icon = "users" %}
+                        {% set empty_title = "No team data available" %}
+                        {% set empty_message = "Import real-life call sessions with team participants to see rankings" %}
+                        {% set empty_cta_text = "Add Session" %}
+                        {% set empty_cta_href = "/sessions" %}
+                        {% include "components/empty_state.html" %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# Modal Container #}
+<div id="modal-container"></div>
+{% endblock %}

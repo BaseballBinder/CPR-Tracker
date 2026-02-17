@@ -1,0 +1,781 @@
+{% extends "base.html" %}
+
+{% block content %}
+{# Page Header #}
+{% set page_title = "Settings" %}
+{% set page_subtitle = "System configuration and data definitions" %}
+{% include "components/page_header.html" %}
+
+{# Settings Manager #}
+<div x-data="settingsManager()" x-init="init()">
+
+    {# Status Banner #}
+    <template x-if="message">
+        <div
+            :class="messageType === 'success' ? 'bg-green-900/20 border-green-500/30 text-green-400' : 'bg-red-900/20 border-red-500/30 text-red-400'"
+            class="border rounded-[6px] px-4 py-3 mb-6 text-sm flex items-center justify-between"
+        >
+            <span x-text="message"></span>
+            <button @click="message = ''" class="ml-4 text-current opacity-60 hover:opacity-100">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+    </template>
+
+    {# Tab Navigation #}
+    <div class="flex border-b border-[rgba(255,255,255,0.07)] mb-6 page-enter page-d1">
+        <button
+            @click="tab = 'general'"
+            :class="tab === 'general' ? 'border-[#dc2626] text-[#dc2626]' : 'border-transparent text-slate-400 hover:text-slate-200'"
+            class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+        >
+            General
+        </button>
+        <button
+            @click="tab = 'metrics'"
+            :class="tab === 'metrics' ? 'border-[#dc2626] text-[#dc2626]' : 'border-transparent text-slate-400 hover:text-slate-200'"
+            class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+        >
+            Metric Targets
+        </button>
+        <button
+            @click="tab = 'teams'"
+            :class="tab === 'teams' ? 'border-[#dc2626] text-[#dc2626]' : 'border-transparent text-slate-400 hover:text-slate-200'"
+            class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+        >
+            Teams
+        </button>
+        <button
+            @click="tab = 'export'"
+            :class="tab === 'export' ? 'border-[#dc2626] text-[#dc2626]' : 'border-transparent text-slate-400 hover:text-slate-200'"
+            class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+        >
+            Export
+        </button>
+        <button
+            @click="tab = 'backup'"
+            :class="tab === 'backup' ? 'border-[#dc2626] text-[#dc2626]' : 'border-transparent text-slate-400 hover:text-slate-200'"
+            class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+        >
+            Backup &amp; Restore
+        </button>
+    </div>
+
+    {# ================================================================
+       General Tab
+       ================================================================ #}
+    <div x-show="tab === 'general'">
+        <div class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] p-6 shadow-sm">
+            <h2 class="text-[20px] font-semibold text-slate-100 mb-4">General Settings</h2>
+            <div class="space-y-4 max-w-lg">
+                <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-2">Department Name</label>
+                    <input
+                        type="text"
+                        x-model="settings.general.department_name"
+                        placeholder="Enter your department name"
+                        class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] bg-[#46424e] text-slate-100 placeholder-slate-500"
+                    >
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-2">Timezone</label>
+                    <select
+                        x-model="settings.general.timezone"
+                        class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] bg-[#46424e] text-slate-100"
+                    >
+                        <option value="America/St_Johns">Newfoundland (NT)</option>
+                        <option value="America/Halifax">Atlantic (AT)</option>
+                        <option value="America/Toronto">Eastern (ET)</option>
+                        <option value="America/Winnipeg">Central (CT)</option>
+                        <option value="America/Edmonton">Mountain (MT)</option>
+                        <option value="America/Vancouver">Pacific (PT)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-2">Platoon Labels</label>
+                    <p class="text-xs text-slate-400 mb-2">Comma-separated labels for your platoon/shift identifiers.</p>
+                    <input
+                        type="text"
+                        x-model="platoonLabelsStr"
+                        placeholder="A, B, C, D"
+                        class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] bg-[#46424e] text-slate-100 placeholder-slate-500"
+                    >
+                </div>
+
+                <div class="pt-4">
+                    <button
+                        @click="saveSection('general')"
+                        :disabled="saving"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-[#dc2626] text-white text-sm font-medium rounded-[6px] hover:bg-[#b91c1c] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <template x-if="saving && savingSection === 'general'">
+                            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                        </template>
+                        Save General Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ================================================================
+       Metric Targets Tab
+       ================================================================ #}
+    <div x-show="tab === 'metrics'">
+        <div class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] p-6 shadow-sm">
+            <h2 class="text-[20px] font-semibold text-slate-100 mb-1">Metric Targets</h2>
+            <p class="text-sm text-slate-400 mb-6">These targets are used to calculate compliance scores and color-code performance indicators across the dashboard and reports.</p>
+
+            <div class="space-y-6 max-w-lg">
+                {# Compression Rate #}
+                <div class="p-4 border border-[rgba(255,255,255,0.07)] rounded-xl">
+                    <h3 class="text-sm font-medium text-slate-100 mb-3">Compression Rate (per minute)</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Minimum</label>
+                            <input type="number" x-model.number="settings.metrics.target_compression_rate_min"
+                                   class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] bg-[#46424e] text-slate-100">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Maximum</label>
+                            <input type="number" x-model.number="settings.metrics.target_compression_rate_max"
+                                   class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] bg-[#46424e] text-slate-100">
+                        </div>
+                    </div>
+                </div>
+
+                {# Compression Depth #}
+                <div class="p-4 border border-[rgba(255,255,255,0.07)] rounded-xl">
+                    <h3 class="text-sm font-medium text-slate-100 mb-3">Compression Depth (cm)</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Minimum</label>
+                            <input type="number" step="0.1" x-model.number="settings.metrics.target_compression_depth_min"
+                                   class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] bg-[#46424e] text-slate-100">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Maximum</label>
+                            <input type="number" step="0.1" x-model.number="settings.metrics.target_compression_depth_max"
+                                   class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] bg-[#46424e] text-slate-100">
+                        </div>
+                    </div>
+                </div>
+
+                {# CCF Target #}
+                <div class="p-4 border border-[rgba(255,255,255,0.07)] rounded-xl">
+                    <h3 class="text-sm font-medium text-slate-100 mb-3">Chest Compression Fraction (CCF) Target %</h3>
+                    <input type="number" step="1" x-model.number="settings.metrics.target_ccf"
+                           class="w-full max-w-[200px] text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] bg-[#46424e] text-slate-100">
+                </div>
+
+                {# Compliance Targets #}
+                <div class="p-4 border border-[rgba(255,255,255,0.07)] rounded-xl">
+                    <h3 class="text-sm font-medium text-slate-100 mb-3">Compliance Targets %</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Depth Compliance</label>
+                            <input type="number" step="1" x-model.number="settings.metrics.target_depth_compliance"
+                                   class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] bg-[#46424e] text-slate-100">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Rate Compliance</label>
+                            <input type="number" step="1" x-model.number="settings.metrics.target_rate_compliance"
+                                   class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] bg-[#46424e] text-slate-100">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button
+                        @click="saveSection('metrics')"
+                        :disabled="saving"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-[#dc2626] text-white text-sm font-medium rounded-[6px] hover:bg-[#b91c1c] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <template x-if="saving && savingSection === 'metrics'">
+                            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                        </template>
+                        Save Metric Targets
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ================================================================
+       Teams Tab
+       ================================================================ #}
+    <div x-show="tab === 'teams'">
+        <div class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] shadow-sm">
+            <div class="p-4 border-b border-[rgba(255,255,255,0.07)] flex items-center justify-between">
+                <h2 class="text-[20px] font-semibold text-slate-100">Manage Teams</h2>
+                <button class="inline-flex items-center gap-2 px-3 py-1.5 bg-[#dc2626] text-white text-sm font-medium rounded-[6px] hover:bg-[#b91c1c] transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Add Team
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-[#36323e] text-slate-300 text-left">
+                        <tr>
+                            <th class="px-4 py-3 font-medium">Team Name</th>
+                            <th class="px-4 py-3 font-medium">Station</th>
+                            <th class="px-4 py-3 font-medium">Members</th>
+                            <th class="px-4 py-3 font-medium">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-[rgba(255,255,255,0.04)]">
+                        {% for team in teams %}
+                        <tr class="hover:bg-[#36323e]">
+                            <td class="px-4 py-3 text-slate-100 font-medium">{{ team.name }}</td>
+                            <td class="px-4 py-3 text-slate-200">{{ team.station }}</td>
+                            <td class="px-4 py-3 text-slate-200">{{ team.members }}</td>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center gap-2">
+                                    <button class="text-slate-400 hover:text-slate-300" title="Edit">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                    </button>
+                                    <button class="text-slate-400 hover:text-[#b91c1c]" title="Delete">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="px-4 py-12">
+                                {% set empty_icon = "users" %}
+                                {% set empty_title = "No teams configured" %}
+                                {% set empty_message = "Add your first team to start organizing providers" %}
+                                {% set empty_cta_text = "Add Team" %}
+                                {% set empty_cta_href = "#" %}
+                                {% include "components/empty_state.html" %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {# ================================================================
+       Export Tab
+       ================================================================ #}
+    <div x-show="tab === 'export'">
+        <div class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] p-6 shadow-sm">
+            <h2 class="text-[20px] font-semibold text-slate-100 mb-4">Export Settings</h2>
+            <div class="space-y-4 max-w-lg">
+                <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-2">Default Export Format</label>
+                    <select
+                        x-model="settings.export.default_format"
+                        class="w-full max-w-xs text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] bg-[#46424e] text-slate-100"
+                    >
+                        <option value="xlsx">Excel (XLSX)</option>
+                        <option value="csv">CSV</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" x-model="settings.export.include_headers"
+                               class="rounded border-[rgba(255,255,255,0.15)] text-[#dc2626] focus:ring-[#dc2626] bg-[#46424e]">
+                        <span class="text-sm text-slate-200">Include column headers in exports</span>
+                    </label>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-2">Date Format</label>
+                    <select
+                        x-model="settings.export.date_format"
+                        class="w-full max-w-xs text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] bg-[#46424e] text-slate-100"
+                    >
+                        <option value="YYYY-MM-DD">YYYY-MM-DD (ISO)</option>
+                        <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                        <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                    </select>
+                </div>
+
+                <div class="pt-4">
+                    <button
+                        @click="saveSection('export')"
+                        :disabled="saving"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-[#dc2626] text-white text-sm font-medium rounded-[6px] hover:bg-[#b91c1c] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <template x-if="saving && savingSection === 'export'">
+                            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                        </template>
+                        Save Export Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ================================================================
+       Backup & Restore Tab
+       ================================================================ #}
+    <div x-show="tab === 'backup'" x-data="backupManager()" x-init="loadConfig()">
+        {# Configuration Card #}
+        <div class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] p-6 shadow-sm mb-6">
+            <h2 class="text-[20px] font-semibold text-slate-100 mb-1">Backup &amp; Restore</h2>
+            <p class="text-sm text-slate-400 mb-6">Encrypt and back up your session and provider data to a private GitHub repository.</p>
+
+            {# Status Banner #}
+            <template x-if="message">
+                <div
+                    :class="messageType === 'success' ? 'bg-green-900/20 border-green-500/30 text-green-400' : messageType === 'error' ? 'bg-red-900/20 border-red-500/30 text-red-400' : 'bg-blue-900/20 border-blue-500/30 text-blue-400'"
+                    class="border rounded-[6px] px-4 py-3 mb-6 text-sm flex items-center justify-between"
+                >
+                    <span x-text="message"></span>
+                    <button @click="message = ''" class="ml-4 text-current opacity-60 hover:opacity-100">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </template>
+
+            {# Configuration Form #}
+            <div class="space-y-4 max-w-lg">
+                <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-2">GitHub Repository Owner</label>
+                    <input
+                        type="text"
+                        x-model="repoOwner"
+                        placeholder="e.g. your-github-username"
+                        class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] bg-[#46424e] text-slate-100 placeholder-slate-500"
+                    >
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-2">GitHub Repository Name</label>
+                    <input
+                        type="text"
+                        x-model="repoName"
+                        placeholder="e.g. cpr-backups"
+                        class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] bg-[#46424e] text-slate-100 placeholder-slate-500"
+                    >
+                    <p class="text-xs text-slate-400 mt-1">Must be a private repository you own or have write access to.</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-2">GitHub Personal Access Token</label>
+                    <input
+                        type="password"
+                        x-model="githubToken"
+                        placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                        class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] bg-[#46424e] text-slate-100 font-mono placeholder-slate-500"
+                    >
+                    <p class="text-xs text-slate-400 mt-1">Requires <code class="bg-[#2c2834] px-1 rounded text-slate-300">repo</code> scope. Token is encrypted before storage.</p>
+                </div>
+
+                <div class="flex items-center gap-3 pt-2">
+                    <button
+                        @click="configure()"
+                        :disabled="loading"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-[#dc2626] text-white text-sm font-medium rounded-[6px] hover:bg-[#b91c1c] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <template x-if="loading">
+                            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                        </template>
+                        <template x-if="!loading">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                        </template>
+                        <span x-text="configured ? 'Update Configuration' : 'Configure Backup'"></span>
+                    </button>
+
+                    <template x-if="configured">
+                        <span class="inline-flex items-center gap-1 text-sm text-green-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Configured
+                        </span>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        {# Backup Actions Card #}
+        <template x-if="configured">
+            <div class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] p-6 shadow-sm mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-[16px] font-semibold text-slate-100">Create Backup</h3>
+                    <span class="text-xs text-slate-400" x-text="configuredAt ? 'Configured ' + configuredAt : ''"></span>
+                </div>
+                <p class="text-sm text-slate-400 mb-4">Push an encrypted snapshot of your sessions and providers to GitHub. Your data is encrypted with Fernet before upload.</p>
+
+                <div class="flex items-center gap-3">
+                    <button
+                        @click="backupNow()"
+                        :disabled="loading"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-[#dc2626] text-white text-sm font-medium rounded-[6px] hover:bg-[#b91c1c] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <template x-if="loading">
+                            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                        </template>
+                        <template x-if="!loading">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                        </template>
+                        Backup Now
+                    </button>
+                    <button
+                        @click="loadBackups()"
+                        :disabled="loading"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-[#3e3a46] text-slate-200 text-sm font-medium rounded-[6px] border border-[rgba(255,255,255,0.15)] hover:bg-[#36323e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Refresh List
+                    </button>
+                </div>
+            </div>
+        </template>
+
+        {# Available Backups #}
+        <template x-if="configured">
+            <div class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] shadow-sm">
+                <div class="p-4 border-b border-[rgba(255,255,255,0.07)]">
+                    <h3 class="text-[16px] font-semibold text-slate-100">Available Backups</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <template x-if="backups.length === 0 && !loading">
+                        <div class="px-4 py-12 text-center">
+                            <svg class="w-12 h-12 mx-auto text-slate-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p class="text-sm font-medium text-slate-400">No backups found</p>
+                            <p class="text-xs text-slate-500 mt-1">Create your first backup using the button above.</p>
+                        </div>
+                    </template>
+                    <template x-if="backups.length > 0">
+                        <table class="w-full text-sm">
+                            <thead class="bg-[#36323e] text-slate-300 text-left">
+                                <tr>
+                                    <th class="px-4 py-3 font-medium">Backup Name</th>
+                                    <th class="px-4 py-3 font-medium">Size</th>
+                                    <th class="px-4 py-3 font-medium text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-[rgba(255,255,255,0.04)]">
+                                <template x-for="backup in backups" :key="backup.sha">
+                                    <tr class="hover:bg-[#36323e]">
+                                        <td class="px-4 py-3 text-slate-100 font-medium">
+                                            <div class="flex items-center gap-2">
+                                                <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                </svg>
+                                                <span x-text="backup.name"></span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3 text-slate-400" x-text="formatBytes(backup.size)"></td>
+                                        <td class="px-4 py-3 text-right">
+                                            <button
+                                                @click="restoreBackup(backup.path)"
+                                                :disabled="loading"
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#dc2626] bg-red-900/20 rounded-[6px] hover:bg-red-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                                </svg>
+                                                Restore
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>
+
+<script>
+function settingsManager() {
+    return {
+        tab: 'general',
+        saving: false,
+        savingSection: '',
+        message: '',
+        messageType: 'success',
+        platoonLabelsStr: 'A, B, C, D',
+        settings: {
+            general: {
+                department_name: '',
+                timezone: 'America/Edmonton',
+                platoon_labels: ['A', 'B', 'C', 'D'],
+            },
+            metrics: {
+                target_compression_rate_min: 100,
+                target_compression_rate_max: 120,
+                target_compression_depth_min: 5.0,
+                target_compression_depth_max: 6.0,
+                target_ccf: 80.0,
+                target_depth_compliance: 80.0,
+                target_rate_compliance: 80.0,
+            },
+            export: {
+                default_format: 'xlsx',
+                include_headers: true,
+                date_format: 'YYYY-MM-DD',
+            },
+        },
+
+        async init() {
+            try {
+                const resp = await fetch('/api/settings/data');
+                if (resp.ok) {
+                    const data = await resp.json();
+                    // Deep merge with defaults
+                    if (data.general) Object.assign(this.settings.general, data.general);
+                    if (data.metrics) Object.assign(this.settings.metrics, data.metrics);
+                    if (data.export) Object.assign(this.settings.export, data.export);
+
+                    // Sync platoon labels string
+                    if (Array.isArray(this.settings.general.platoon_labels)) {
+                        this.platoonLabelsStr = this.settings.general.platoon_labels.join(', ');
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load settings:', e);
+            }
+        },
+
+        async saveSection(section) {
+            this.saving = true;
+            this.savingSection = section;
+            this.message = '';
+
+            // Sync platoon labels from string to array before saving general
+            if (section === 'general') {
+                this.settings.general.platoon_labels = this.platoonLabelsStr
+                    .split(',')
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0);
+            }
+
+            try {
+                const resp = await fetch(`/api/settings/${section}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.settings[section]),
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    this.message = `${section.charAt(0).toUpperCase() + section.slice(1)} settings saved successfully.`;
+                    this.messageType = 'success';
+                } else {
+                    this.message = 'Failed to save settings.';
+                    this.messageType = 'error';
+                }
+            } catch (e) {
+                this.message = 'Failed to save settings: ' + e.message;
+                this.messageType = 'error';
+            } finally {
+                this.saving = false;
+                this.savingSection = '';
+            }
+        },
+    };
+}
+
+function backupManager() {
+    return {
+        configured: false,
+        configuredAt: '',
+        repoOwner: '',
+        repoName: '',
+        githubToken: '',
+        backups: [],
+        loading: false,
+        message: '',
+        messageType: 'info',
+
+        async loadConfig() {
+            try {
+                const resp = await fetch('/api/backup/config');
+                if (resp.ok) {
+                    const data = await resp.json();
+                    this.configured = data.configured || false;
+                    if (data.configured) {
+                        this.repoOwner = data.repo_owner || '';
+                        this.repoName = data.repo_name || '';
+                        this.configuredAt = data.configured_at ? new Date(data.configured_at).toLocaleDateString() : '';
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load backup config:', e);
+            }
+        },
+
+        async configure() {
+            if (!this.repoOwner || !this.repoName || !this.githubToken) {
+                this.message = 'Please fill in all fields: repository owner, repository name, and token.';
+                this.messageType = 'error';
+                return;
+            }
+
+            this.loading = true;
+            this.message = '';
+            try {
+                const resp = await fetch('/api/backup/configure', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        github_token: this.githubToken,
+                        repo_owner: this.repoOwner,
+                        repo_name: this.repoName,
+                    }),
+                });
+                const data = await resp.json();
+                if (data.verified) {
+                    this.configured = true;
+                    this.configuredAt = new Date().toLocaleDateString();
+                    this.message = 'Backup configured successfully. Repository verified.';
+                    this.messageType = 'success';
+                    this.loadBackups();
+                } else {
+                    this.configured = true;
+                    this.message = 'Configuration saved but repository verification failed: ' + (data.error || 'Unknown error');
+                    this.messageType = 'error';
+                }
+            } catch (e) {
+                this.message = 'Failed to configure backup: ' + e.message;
+                this.messageType = 'error';
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async backupNow() {
+            if (!this.githubToken) {
+                this.message = 'Please enter your GitHub token above before creating a backup.';
+                this.messageType = 'error';
+                return;
+            }
+
+            this.loading = true;
+            this.message = '';
+            try {
+                const resp = await fetch('/api/backup/push', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ github_token: this.githubToken }),
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    this.message = 'Backup created successfully (' + this.formatBytes(data.size) + ' encrypted).';
+                    this.messageType = 'success';
+                    this.loadBackups();
+                } else {
+                    this.message = 'Backup failed: ' + (data.error || 'Unknown error');
+                    this.messageType = 'error';
+                }
+            } catch (e) {
+                this.message = 'Backup failed: ' + e.message;
+                this.messageType = 'error';
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async loadBackups() {
+            if (!this.githubToken) return;
+            this.loading = true;
+            try {
+                const resp = await fetch('/api/backup/list?token=' + encodeURIComponent(this.githubToken));
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data.success) {
+                        this.backups = data.backups || [];
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load backups:', e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async restoreBackup(backupPath) {
+            if (!this.githubToken) {
+                this.message = 'Please enter your GitHub token above before restoring.';
+                this.messageType = 'error';
+                return;
+            }
+
+            if (!confirm('Are you sure you want to restore from this backup? This will replace your current data.')) return;
+
+            this.loading = true;
+            this.message = '';
+            try {
+                const resp = await fetch('/api/backup/restore', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        github_token: this.githubToken,
+                        backup_path: backupPath,
+                    }),
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    this.message = 'Restore complete. The page will reload.';
+                    this.messageType = 'success';
+                    setTimeout(() => window.location.reload(), 2000);
+                } else {
+                    this.message = 'Restore failed: ' + (data.error || 'Unknown error');
+                    this.messageType = 'error';
+                }
+            } catch (e) {
+                this.message = 'Restore failed: ' + e.message;
+                this.messageType = 'error';
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        },
+    };
+}
+</script>
+{% endblock %}

@@ -1,0 +1,818 @@
+{% extends "base.html" %}
+
+{% block content %}
+{# Page Header #}
+{% set page_title = "CPR Reports" %}
+{% set page_subtitle = "Generate and export performance reports" %}
+{% include "components/page_header.html" %}
+
+{# Report Type Selector Tabs #}
+<div class="mb-6" x-data="{ reportType: 'team' }">
+    <div class="flex border-b border-[rgba(255,255,255,0.10)] mb-6">
+        <button
+            @click="reportType = 'team'"
+            :class="reportType === 'team' ? 'border-[#dc2626] text-[#dc2626]' : 'border-transparent text-slate-400 hover:text-slate-200'"
+            class="px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2"
+        >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            Team Report
+        </button>
+        <button
+            @click="reportType = 'provider'"
+            :class="reportType === 'provider' ? 'border-[#dc2626] text-[#dc2626]' : 'border-transparent text-slate-400 hover:text-slate-200'"
+            class="px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2"
+        >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+            </svg>
+            Provider Report
+        </button>
+    </div>
+
+    {# ========== TEAM REPORT SECTION ========== #}
+    <div x-show="reportType === 'team'" x-data="teamReportData()">
+        {# Email Notification Toast #}
+        <div x-show="showEmailNotification"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-2"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed top-4 right-4 z-50 max-w-md bg-blue-600 text-white rounded-lg shadow-xl p-4 flex items-start gap-3">
+            <svg class="w-6 h-6 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div class="flex-1">
+                <p class="font-medium" x-text="emailNotificationMessage"></p>
+            </div>
+            <button @click="showEmailNotification = false" class="text-white/80 hover:text-white">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {# Report Configuration Panel #}
+            <div class="bg-[#3e3a46] rounded-[6px] border border-[rgba(255,255,255,0.10)] p-6 shadow-sm">
+                <h2 class="text-[20px] font-semibold text-slate-100 mb-4">Select Session</h2>
+
+                {# Session Selection #}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-200 mb-2">Real-Life Call Session</label>
+                    <select x-model="selectedSessionId" @change="loadSession()" class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] bg-[#3e3a46]">
+                        <option value="">-- Select a Real Call --</option>
+                        {% for session in real_call_sessions %}
+                        <option value="{{ session.id }}">{{ session.date }} - {{ session.provider_name }} {% if session.outcome %}({{ session.outcome }}){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {# Logo Status Info #}
+                <div class="mb-4 p-3 bg-[#36323e] rounded-[6px] border border-[rgba(255,255,255,0.10)]">
+                    <p class="text-xs text-slate-400 uppercase tracking-wide mb-2">Report Logos</p>
+                    <div class="space-y-1 text-sm text-slate-300">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Header: <span class="font-medium">COSG.png</span></span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>Footer: <span class="font-medium">JcLS.png</span></span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-2">Place logos in: <code class="bg-[#46424e] px-1 rounded">static/images/logos/</code></p>
+                </div>
+
+                {# Export Buttons #}
+                <div class="space-y-2 mt-6">
+                    <div class="flex gap-2">
+                        <button @click="exportPDF()"
+                                :disabled="!selectedSessionId"
+                                :class="selectedSessionId ? 'bg-[#dc2626] hover:bg-[#b91c1c]' : 'bg-slate-600 cursor-not-allowed'"
+                                class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-white text-sm font-medium rounded-[6px] transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                            Export PDF
+                        </button>
+                        <button @click="emailTeam()"
+                                :disabled="!selectedSessionId"
+                                :class="selectedSessionId ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-600 cursor-not-allowed'"
+                                class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-white text-sm font-medium rounded-[6px] transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            </svg>
+                            Email
+                        </button>
+                    </div>
+                    <button @click="window.print()"
+                            :disabled="!selectedSessionId"
+                            :class="selectedSessionId ? 'border-[#dc2626] text-[#dc2626] hover:bg-red-900/20' : 'border-[rgba(255,255,255,0.15)] text-slate-400 cursor-not-allowed'"
+                            class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 border text-sm font-medium rounded-[6px] transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                        </svg>
+                        Print Report
+                    </button>
+                </div>
+            </div>
+
+            {# Report Preview - Printable Template #}
+            <div class="lg:col-span-2">
+                <div class="bg-[#3e3a46] rounded-[6px] border border-[rgba(255,255,255,0.10)] shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-[rgba(255,255,255,0.10)] print:hidden">
+                        <h2 class="text-[20px] font-semibold text-slate-100">Report Preview</h2>
+                    </div>
+
+                    {# Printable Report Template — white "paper" preview #}
+                    <div id="team-report-template" class="bg-white p-8 print:p-6" style="min-height: 11in;">
+                        <template x-if="!selectedSessionId">
+                            <div class="flex items-center justify-center h-96">
+                                <div class="text-center">
+                                    <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    <p class="text-gray-400 font-medium">Select a session to generate report</p>
+                                    <p class="text-sm text-gray-400 mt-1">Choose a real-life call from the dropdown</p>
+                                </div>
+                            </div>
+                        </template>
+
+                        <template x-if="selectedSessionId && sessionData">
+                            <div class="space-y-3 print:space-y-2">
+                                {# ===== HEADER SECTION - COSG Logo Centered at Top ===== #}
+                                <div class="text-center pb-4 border-b-2 border-gray-300">
+                                    <img src="/static/images/logos/COSG.png" alt="City of Spruce Grove" class="h-20 mx-auto mb-3 object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div class="h-20 items-center justify-center mb-3 hidden">
+                                        <span class="text-gray-400 text-sm italic border-2 border-dashed border-gray-300 px-8 py-6 rounded-lg">Add COSG.png to static/images/logos/</span>
+                                    </div>
+                                    <h1 class="text-2xl font-bold text-gray-900">CPR Performance Report</h1>
+                                    <p class="text-sm text-gray-500">Team Debriefing Document</p>
+                                </div>
+
+                                {# ===== CALL INFORMATION ===== #}
+                                <div class="grid grid-cols-5 gap-4 bg-gray-50 rounded-lg p-3 print:p-2 border border-gray-200">
+                                    <div>
+                                        <p class="text-xs text-gray-500 uppercase tracking-wide">Date of Call</p>
+                                        <p class="text-lg font-semibold text-gray-900" x-text="sessionData.date"></p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500 uppercase tracking-wide">Event Type</p>
+                                        <p class="text-lg font-semibold text-gray-900" x-text="sessionData.event_type || 'Cardiac Arrest'"></p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500 uppercase tracking-wide">Team Lead</p>
+                                        <p class="text-lg font-semibold text-gray-900" x-text="sessionData.provider_name"></p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500 uppercase tracking-wide">Duration</p>
+                                        <p class="text-lg font-semibold text-gray-900" x-text="formatDurationMinutes(sessionData.metrics?.duration)"></p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500 uppercase tracking-wide">Outcome</p>
+                                        <p class="text-lg font-semibold" :class="sessionData.outcome === 'ROSC' ? 'text-emerald-600' : 'text-gray-900'" x-text="sessionData.outcome || 'N/A'"></p>
+                                    </div>
+                                </div>
+
+                                {# ===== TEAM MEMBERS ===== #}
+                                <div x-show="sessionData.participants && sessionData.participants.length > 0">
+                                    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">Team Members</h3>
+                                    <div class="flex flex-wrap gap-2">
+                                        <template x-for="participant in sessionData.participants" :key="participant.provider_id">
+                                            <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm border border-gray-200" x-text="participant.provider_name"></span>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                {# ===== JcLS HERO SCORE ===== #}
+                                <div class="rounded-lg p-4 text-center border"
+                                     :class="(() => {
+                                         const s = sessionData.metrics?.jcls_score;
+                                         if (s == null) return 'bg-gray-50 border-gray-200';
+                                         if (s >= 80) return 'bg-emerald-50 border-emerald-300';
+                                         if (s >= 60) return 'bg-amber-50 border-amber-300';
+                                         return 'bg-red-50 border-red-300';
+                                     })()">
+                                    <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">JcLS Score</p>
+                                    <p class="text-5xl font-bold leading-none"
+                                       :class="(() => {
+                                           const s = sessionData.metrics?.jcls_score;
+                                           if (s == null) return 'text-gray-400';
+                                           if (s >= 80) return 'text-emerald-600';
+                                           if (s >= 60) return 'text-amber-600';
+                                           return 'text-red-600';
+                                       })()"
+                                       x-text="sessionData.metrics?.jcls_score ?? '—'"></p>
+                                    <p class="text-sm font-semibold mt-1"
+                                       :class="(() => {
+                                           const s = sessionData.metrics?.jcls_score;
+                                           if (s == null) return 'text-gray-400';
+                                           if (s >= 80) return 'text-emerald-700';
+                                           if (s >= 60) return 'text-amber-700';
+                                           return 'text-red-700';
+                                       })()"
+                                       x-text="(() => {
+                                           const s = sessionData.metrics?.jcls_score;
+                                           if (s == null) return 'No JcLS Data';
+                                           if (s >= 80) return 'Excellent';
+                                           if (s >= 60) return 'Proficient';
+                                           if (s >= 40) return 'Developing';
+                                           return 'Needs Improvement';
+                                       })()"></p>
+                                    <p class="text-xs text-gray-400 mt-1">Jordan's Clinical Scoring</p>
+
+                                    {# Tier Breakdown #}
+                                    <template x-if="sessionData.metrics?.jcls_breakdown">
+                                        <div class="mt-4 pt-3 border-t border-gray-200 text-left">
+                                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 text-center">Score Breakdown</p>
+                                            <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                                                {# Tier 1 #}
+                                                <div class="flex justify-between items-center">
+                                                    <span class="text-gray-600 text-xs">Compression Quality</span>
+                                                    <span class="font-semibold text-xs"
+                                                          :class="sessionData.metrics.jcls_breakdown.tier1.earned >= sessionData.metrics.jcls_breakdown.tier1.max * 0.8 ? 'text-emerald-600' : sessionData.metrics.jcls_breakdown.tier1.earned >= sessionData.metrics.jcls_breakdown.tier1.max * 0.6 ? 'text-amber-600' : 'text-red-600'"
+                                                          x-text="sessionData.metrics.jcls_breakdown.tier1.earned + '/' + sessionData.metrics.jcls_breakdown.tier1.max"></span>
+                                                </div>
+                                                {# Tier 2 #}
+                                                <div class="flex justify-between items-center">
+                                                    <span class="text-gray-600 text-xs">Perfusion Continuity</span>
+                                                    <span class="font-semibold text-xs"
+                                                          :class="sessionData.metrics.jcls_breakdown.tier2.earned >= sessionData.metrics.jcls_breakdown.tier2.max * 0.8 ? 'text-emerald-600' : sessionData.metrics.jcls_breakdown.tier2.earned >= sessionData.metrics.jcls_breakdown.tier2.max * 0.6 ? 'text-amber-600' : 'text-red-600'"
+                                                          x-text="sessionData.metrics.jcls_breakdown.tier2.earned + '/' + sessionData.metrics.jcls_breakdown.tier2.max"></span>
+                                                </div>
+                                                {# Tier 3 #}
+                                                <div class="flex justify-between items-center">
+                                                    <span class="text-gray-600 text-xs">Recoil Quality</span>
+                                                    <span class="font-semibold text-xs"
+                                                          :class="sessionData.metrics.jcls_breakdown.tier3.earned >= sessionData.metrics.jcls_breakdown.tier3.max * 0.8 ? 'text-emerald-600' : sessionData.metrics.jcls_breakdown.tier3.earned >= sessionData.metrics.jcls_breakdown.tier3.max * 0.6 ? 'text-amber-600' : 'text-red-600'"
+                                                          x-text="sessionData.metrics.jcls_breakdown.tier3.earned + '/' + sessionData.metrics.jcls_breakdown.tier3.max"></span>
+                                                </div>
+                                                {# Tier 4 #}
+                                                <div class="flex justify-between items-center">
+                                                    <span class="text-gray-600 text-xs">System Performance</span>
+                                                    <span class="font-semibold text-xs"
+                                                          :class="sessionData.metrics.jcls_breakdown.tier4.earned >= sessionData.metrics.jcls_breakdown.tier4.max * 0.8 ? 'text-emerald-600' : sessionData.metrics.jcls_breakdown.tier4.earned >= sessionData.metrics.jcls_breakdown.tier4.max * 0.6 ? 'text-amber-600' : 'text-red-600'"
+                                                          x-text="sessionData.metrics.jcls_breakdown.tier4.earned + '/' + sessionData.metrics.jcls_breakdown.tier4.max"></span>
+                                                </div>
+                                            </div>
+
+                                            {# Sub-metric detail rows #}
+                                            <div class="mt-2 pt-2 border-t border-gray-100 space-y-0.5">
+                                                <div class="flex justify-between text-xs">
+                                                    <span class="text-gray-400 pl-2">Depth Compliance</span>
+                                                    <span class="text-gray-600" x-text="sessionData.metrics.jcls_breakdown.tier1.depth_compliance.earned + '/' + sessionData.metrics.jcls_breakdown.tier1.depth_compliance.max"></span>
+                                                </div>
+                                                <div class="flex justify-between text-xs">
+                                                    <span class="text-gray-400 pl-2">Rate Compliance</span>
+                                                    <span class="text-gray-600" x-text="sessionData.metrics.jcls_breakdown.tier1.rate_compliance.earned + '/' + sessionData.metrics.jcls_breakdown.tier1.rate_compliance.max"></span>
+                                                </div>
+                                                <div class="flex justify-between text-xs">
+                                                    <span class="text-gray-400 pl-2">Combined Compliance (CiT)</span>
+                                                    <span class="text-gray-600" x-text="sessionData.metrics.jcls_breakdown.tier1.combined_compliance.earned + '/' + sessionData.metrics.jcls_breakdown.tier1.combined_compliance.max"></span>
+                                                </div>
+                                                <div class="flex justify-between text-xs">
+                                                    <span class="text-gray-400 pl-2">CCF</span>
+                                                    <span class="text-gray-600" x-text="sessionData.metrics.jcls_breakdown.tier2.ccf.earned + '/' + sessionData.metrics.jcls_breakdown.tier2.ccf.max"></span>
+                                                </div>
+                                                <div class="flex justify-between text-xs">
+                                                    <span class="text-gray-400 pl-2">Pause Quality</span>
+                                                    <span class="text-gray-600" x-text="sessionData.metrics.jcls_breakdown.tier2.pause_quality.earned + '/' + sessionData.metrics.jcls_breakdown.tier2.pause_quality.max"></span>
+                                                </div>
+                                                <div class="flex justify-between text-xs">
+                                                    <span class="text-gray-400 pl-2">Release Velocity</span>
+                                                    <span class="text-gray-600" x-text="sessionData.metrics.jcls_breakdown.tier3.release_velocity.earned + '/' + sessionData.metrics.jcls_breakdown.tier3.release_velocity.max"></span>
+                                                </div>
+                                                <div class="flex justify-between text-xs">
+                                                    <span class="text-gray-400 pl-2">Time to First Compression</span>
+                                                    <span class="text-gray-600" x-text="sessionData.metrics.jcls_breakdown.tier4.time_to_first_compression.earned + '/' + sessionData.metrics.jcls_breakdown.tier4.time_to_first_compression.max"></span>
+                                                </div>
+                                                <div class="flex justify-between text-xs">
+                                                    <span class="text-gray-400 pl-2">Time to First Shock</span>
+                                                    <span class="text-gray-600" x-text="sessionData.metrics.jcls_breakdown.tier4.time_to_first_shock.earned + '/' + sessionData.metrics.jcls_breakdown.tier4.time_to_first_shock.max"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                {# ===== KEY PERFORMANCE METRICS (6-card consolidated grid) ===== #}
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">Key Performance Metrics</h3>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        {# CCF #}
+                                        <div class="bg-blue-50 rounded-lg p-2 text-center border border-blue-200">
+                                            <p class="text-xs text-blue-700 font-medium">CCF</p>
+                                            <p class="text-2xl font-bold text-blue-600" x-text="(sessionData.metrics?.compression_fraction || 0) + '%'"></p>
+                                            <p class="text-xs text-blue-500">Target: &gt;80%</p>
+                                        </div>
+                                        {# Depth Compliance #}
+                                        <div class="bg-emerald-50 rounded-lg p-2 text-center border border-emerald-200">
+                                            <p class="text-xs text-emerald-700 font-medium">Depth Compliance</p>
+                                            <p class="text-2xl font-bold text-emerald-600" x-text="(sessionData.metrics?.correct_depth_percent || 0) + '%'"></p>
+                                            <p class="text-xs text-emerald-500" x-text="(sessionData.metrics?.compression_depth || '—') + ' cm avg'"></p>
+                                        </div>
+                                        {# Rate Compliance #}
+                                        <div class="bg-amber-50 rounded-lg p-2 text-center border border-amber-200">
+                                            <p class="text-xs text-amber-700 font-medium">Rate Compliance</p>
+                                            <p class="text-2xl font-bold text-amber-600" x-text="(sessionData.metrics?.correct_rate_percent || 0) + '%'"></p>
+                                            <p class="text-xs text-amber-500" x-text="(sessionData.metrics?.compression_rate || '—') + ' CPM avg'"></p>
+                                        </div>
+                                        {# Total Compressions #}
+                                        <div class="bg-purple-50 rounded-lg p-2 text-center border border-purple-200">
+                                            <p class="text-xs text-purple-700 font-medium">Compressions</p>
+                                            <p class="text-2xl font-bold text-purple-600" x-text="sessionData.metrics?.total_compressions?.toLocaleString() || '—'"></p>
+                                            <p class="text-xs text-purple-500">Total Count</p>
+                                        </div>
+                                        {# Shocks #}
+                                        <div class="bg-yellow-50 rounded-lg p-2 text-center border border-yellow-200">
+                                            <p class="text-xs text-yellow-700 font-medium">Shocks</p>
+                                            <p class="text-2xl font-bold text-yellow-600" x-text="sessionData.shocks_delivered || 0"></p>
+                                            <p class="text-xs text-yellow-600" x-text="((sessionData.shocks_delivered || 0) * 200) + ' Joules'"></p>
+                                        </div>
+                                        {# EtCO2 #}
+                                        <div class="rounded-lg p-2 text-center border"
+                                             :class="isValidEtCO2(sessionData.metrics?.etco2) ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'">
+                                            <p class="text-xs font-medium" :class="isValidEtCO2(sessionData.metrics?.etco2) ? 'text-emerald-700' : 'text-red-700'">EtCO2</p>
+                                            <p class="text-2xl font-bold" :class="isValidEtCO2(sessionData.metrics?.etco2) ? 'text-emerald-600' : 'text-red-600'" x-text="isValidEtCO2(sessionData.metrics?.etco2) ? sessionData.metrics.etco2 + ' mmHg' : '—'"></p>
+                                            <p class="text-xs font-medium" :class="isValidEtCO2(sessionData.metrics?.etco2) ? 'text-emerald-500' : 'text-red-500'" x-text="isValidEtCO2(sessionData.metrics?.etco2) ? '✓ Recorded' : '! Remember EtCO2'"></p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {# ===== ZOLL RESCUENET GRAPHIC UPLOAD ===== #}
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">CPR Performance Graph (Zoll RescueNet)</h3>
+                                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[150px] print:min-h-0 flex items-center justify-center cursor-pointer hover:border-[#dc2626] transition-colors print:border-solid"
+                                         @click="$refs.zollGraphInput.click()"
+                                         @dragover.prevent="zollDragOver = true"
+                                         @dragleave.prevent="zollDragOver = false"
+                                         @drop.prevent="handleZollGraphDrop($event)"
+                                         :class="{ 'border-[#dc2626] bg-red-50': zollDragOver }">
+                                        <input type="file" x-ref="zollGraphInput" @change="handleZollGraphSelect($event)" accept="image/*" class="hidden">
+                                        <template x-if="!zollGraph">
+                                            <div class="text-center print:hidden">
+                                                <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                                </svg>
+                                                <p class="text-gray-500 font-medium">Drag & Drop Zoll RescueNet Image</p>
+                                                <p class="text-sm text-gray-400 mt-1">or click to browse files</p>
+                                            </div>
+                                        </template>
+                                        <template x-if="zollGraph">
+                                            <div class="relative w-full">
+                                                <img :src="zollGraph" class="max-w-full mx-auto rounded">
+                                                <button @click.stop="zollGraph = null" class="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 print:hidden">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                {# ===== VITAL SIGNS TRENDING GRAPHIC UPLOAD ===== #}
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">Vital Signs Trending Graph</h3>
+                                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[150px] print:min-h-0 flex items-center justify-center cursor-pointer hover:border-[#dc2626] transition-colors print:border-solid"
+                                         @click="$refs.vitalsGraphInput.click()"
+                                         @dragover.prevent="vitalsDragOver = true"
+                                         @dragleave.prevent="vitalsDragOver = false"
+                                         @drop.prevent="handleVitalsGraphDrop($event)"
+                                         :class="{ 'border-[#dc2626] bg-red-50': vitalsDragOver }">
+                                        <input type="file" x-ref="vitalsGraphInput" @change="handleVitalsGraphSelect($event)" accept="image/*" class="hidden">
+                                        <template x-if="!vitalsGraph">
+                                            <div class="text-center print:hidden">
+                                                <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                                                </svg>
+                                                <p class="text-gray-500 font-medium">Drag & Drop Vital Signs Trending Image</p>
+                                                <p class="text-sm text-gray-400 mt-1">or click to browse files</p>
+                                            </div>
+                                        </template>
+                                        <template x-if="vitalsGraph">
+                                            <div class="relative w-full">
+                                                <img :src="vitalsGraph" class="max-w-full mx-auto rounded">
+                                                <button @click.stop="vitalsGraph = null" class="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 print:hidden">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                {# ===== LEARNING OPPORTUNITIES ===== #}
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">Learning Opportunities</h3>
+                                    <textarea x-model="learningOpportunities"
+                                              placeholder="Areas for improvement, skill gaps identified, training needs, action items, follow-up tasks..."
+                                              class="w-full border border-gray-300 rounded-lg p-3 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 print:hidden resize-none placeholder:text-gray-400"
+                                              rows="6"></textarea>
+                                    <div class="hidden print:block border border-gray-300 rounded-lg p-3 text-sm text-gray-800 min-h-[80px] whitespace-pre-wrap" x-text="learningOpportunities || 'No learning opportunities documented.'"></div>
+                                </div>
+
+                                {# ===== FOOTER with JcLS Logo Centered ===== #}
+                                <div class="flex justify-center pt-4 border-t border-gray-200 mt-4">
+                                    <img src="/static/images/logos/JcLS.png" alt="JcLS" class="h-24 object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <span class="text-gray-400 text-xs italic hidden items-center">Add JcLS.png</span>
+                                </div>
+
+                                {# ===== PAGE 2: METRIC REFERENCE ===== #}
+                                <div class="mt-8" style="page-break-before: always;">
+                                    <h2 class="text-xl font-bold text-gray-900 mb-4 text-center">Metric Definitions & Scoring Reference</h2>
+
+                                    {# JcLS Rubric #}
+                                    <div class="mb-6">
+                                        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">JcLS Scoring Rubric (100 Points)</h3>
+                                        <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+                                            <thead class="bg-gray-100">
+                                                <tr>
+                                                    <th class="text-left px-3 py-2 text-gray-600 font-medium">Tier</th>
+                                                    <th class="text-left px-3 py-2 text-gray-600 font-medium">Component</th>
+                                                    <th class="text-right px-3 py-2 text-gray-600 font-medium">Points</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-gray-200">
+                                                <tr class="bg-gray-50 font-semibold">
+                                                    <td class="px-3 py-1.5 text-gray-800" rowspan="4">Tier 1: Compression Quality</td>
+                                                    <td class="px-3 py-1.5 text-gray-800" colspan="2"><span class="float-right font-bold">55</span></td>
+                                                </tr>
+                                                <tr><td class="px-3 py-1 text-gray-600 pl-6">1A. Depth Compliance</td><td class="px-3 py-1 text-right text-gray-700">20</td></tr>
+                                                <tr><td class="px-3 py-1 text-gray-600 pl-6">1B. Rate Compliance</td><td class="px-3 py-1 text-right text-gray-700">15</td></tr>
+                                                <tr><td class="px-3 py-1 text-gray-600 pl-6">1C. Combined Compliance (CiT)</td><td class="px-3 py-1 text-right text-gray-700">20</td></tr>
+
+                                                <tr class="bg-gray-50 font-semibold">
+                                                    <td class="px-3 py-1.5 text-gray-800" rowspan="3">Tier 2: Perfusion Continuity</td>
+                                                    <td class="px-3 py-1.5 text-gray-800" colspan="2"><span class="float-right font-bold">25</span></td>
+                                                </tr>
+                                                <tr><td class="px-3 py-1 text-gray-600 pl-6">2A. CCF</td><td class="px-3 py-1 text-right text-gray-700">15</td></tr>
+                                                <tr><td class="px-3 py-1 text-gray-600 pl-6">2B. Pause Quality</td><td class="px-3 py-1 text-right text-gray-700">10</td></tr>
+
+                                                <tr class="bg-gray-50 font-semibold">
+                                                    <td class="px-3 py-1.5 text-gray-800" rowspan="2">Tier 3: Recoil Quality</td>
+                                                    <td class="px-3 py-1.5 text-gray-800" colspan="2"><span class="float-right font-bold">10</span></td>
+                                                </tr>
+                                                <tr><td class="px-3 py-1 text-gray-600 pl-6">3A. Release Velocity</td><td class="px-3 py-1 text-right text-gray-700">10</td></tr>
+
+                                                <tr class="bg-gray-50 font-semibold">
+                                                    <td class="px-3 py-1.5 text-gray-800" rowspan="3">Tier 4: System Performance</td>
+                                                    <td class="px-3 py-1.5 text-gray-800" colspan="2"><span class="float-right font-bold">10</span></td>
+                                                </tr>
+                                                <tr><td class="px-3 py-1 text-gray-600 pl-6">4A. Time to First Compression</td><td class="px-3 py-1 text-right text-gray-700">5</td></tr>
+                                                <tr><td class="px-3 py-1 text-gray-600 pl-6">4B. Time to First Shock</td><td class="px-3 py-1 text-right text-gray-700">5</td></tr>
+                                            </tbody>
+                                        </table>
+
+                                        {# Score bands #}
+                                        <div class="flex items-center gap-4 mt-2 text-xs text-gray-600">
+                                            <div class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-emerald-500"></span> ≥80 Excellent</div>
+                                            <div class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-amber-500"></span> 60–79 Proficient</div>
+                                            <div class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-orange-500"></span> 40–59 Developing</div>
+                                            <div class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-red-500"></span> &lt;40 Needs Improvement</div>
+                                        </div>
+                                        <p class="text-xs text-gray-400 mt-1 italic">Score scales proportionally when metrics are unavailable.</p>
+                                    </div>
+
+                                    {# Metric Definitions #}
+                                    <div class="mb-6">
+                                        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">Individual Metric Definitions</h3>
+                                        <table class="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+                                            <thead class="bg-gray-100">
+                                                <tr>
+                                                    <th class="text-left px-3 py-2 text-gray-600 font-medium w-1/4">Metric</th>
+                                                    <th class="text-left px-3 py-2 text-gray-600 font-medium">Definition</th>
+                                                    <th class="text-left px-3 py-2 text-gray-600 font-medium w-1/5">Target</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-gray-200">
+                                                <tr>
+                                                    <td class="px-3 py-2 text-gray-800 font-medium">CCF</td>
+                                                    <td class="px-3 py-2 text-gray-600">Chest Compression Fraction — percentage of cardiac arrest time with active chest compressions</td>
+                                                    <td class="px-3 py-2 text-gray-700">≥80%</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="px-3 py-2 text-gray-800 font-medium">Depth Compliance</td>
+                                                    <td class="px-3 py-2 text-gray-600">Percentage of compressions achieving the guideline target depth of 5.0–6.0 cm</td>
+                                                    <td class="px-3 py-2 text-gray-700">Higher is better</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="px-3 py-2 text-gray-800 font-medium">Rate Compliance</td>
+                                                    <td class="px-3 py-2 text-gray-600">Percentage of compressions within the guideline target rate of 100–120 compressions per minute</td>
+                                                    <td class="px-3 py-2 text-gray-700">Higher is better</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="px-3 py-2 text-gray-800 font-medium">EtCO2</td>
+                                                    <td class="px-3 py-2 text-gray-600">End-tidal carbon dioxide — capnography measurement indicating perfusion quality during CPR</td>
+                                                    <td class="px-3 py-2 text-gray-700">10–20+ mmHg</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    {# Citations #}
+                                    <div>
+                                        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">References</h3>
+                                        <p class="text-xs text-gray-500 mb-3 italic">JcLS (Jordan's Clinical Scoring) is a 100-point evidence-based CPR quality rubric. Tier weights are derived from adjusted odds ratios for neurologically intact survival (CPC 1-2) reported in the studies below.</p>
+                                        <ol class="list-decimal list-inside text-xs text-gray-600 space-y-2">
+                                            <li>Cheskes S, Schmicker RH, Christenson J, et al. Perishock Pause: An Independent Predictor of Survival From Out-of-Hospital Shockable Cardiac Arrest. <em>Circulation.</em> 2011;124(1):58-66.</li>
+                                            <li>Idris AH, Guffey D, Pepe PE, et al. Chest Compression Rates and Survival Following Out-of-Hospital Cardiac Arrest. <em>Critical Care Medicine.</em> 2015;43(4):840-848.</li>
+                                            <li>Panchal AR, Bartos JA, Cabañas JG, et al. Part 3: Adult Basic and Advanced Life Support: 2020 American Heart Association Guidelines for Cardiopulmonary Resuscitation and Emergency Cardiovascular Care. <em>Circulation.</em> 2020;142(16_suppl_2):S366-S468.</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ========== PROVIDER REPORT SECTION ========== #}
+    <div x-show="reportType === 'provider'">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {# Report Configuration Panel #}
+            <form id="report-form" class="bg-[#3e3a46] rounded-[6px] border border-[rgba(255,255,255,0.10)] p-6 shadow-sm"
+                  hx-post="/partials/reports/generate"
+                  hx-target="#report-preview"
+                  hx-swap="innerHTML"
+                  hx-indicator="#report-loading">
+                <h2 class="text-[20px] font-semibold text-slate-100 mb-4">Report Configuration</h2>
+
+                <input type="hidden" name="report_type" value="provider">
+
+                {# Target Selection #}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-200 mb-2">Select Provider</label>
+                    <select name="provider_id" class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] bg-[#3e3a46]">
+                        <option value="">-- Select Provider --</option>
+                        {% for provider in providers %}
+                        <option value="{{ provider.id }}">{{ provider.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {# Date Range #}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-200 mb-2">Date Range</label>
+                    <select name="date_range" class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] bg-[#3e3a46]">
+                        <option value="7d">Last 7 days</option>
+                        <option value="30d" selected>Last 30 days</option>
+                        <option value="90d">Last 90 days</option>
+                        <option value="year">This year</option>
+                        <option value="all">All time</option>
+                    </select>
+                </div>
+
+                {# Session Type Filter #}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-200 mb-2">Session Type</label>
+                    <select name="session_type" class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] bg-[#3e3a46]">
+                        <option value="">All Sessions</option>
+                        <option value="simulated">Simulated Only</option>
+                        <option value="real_call">Real Calls Only</option>
+                    </select>
+                </div>
+
+                {# Include Options #}
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-slate-200 mb-2">Include in Report</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" name="include_summary" value="true" class="rounded border-[rgba(255,255,255,0.15)] text-[#dc2626] focus:ring-[#dc2626]" checked>
+                            <span class="text-sm text-slate-200">Summary metrics</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" name="include_trends" value="true" class="rounded border-[rgba(255,255,255,0.15)] text-[#dc2626] focus:ring-[#dc2626]" checked>
+                            <span class="text-sm text-slate-200">Trend charts</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" name="include_sessions" value="true" class="rounded border-[rgba(255,255,255,0.15)] text-[#dc2626] focus:ring-[#dc2626]" checked>
+                            <span class="text-sm text-slate-200">Session details table</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" name="include_comparison" value="true" class="rounded border-[rgba(255,255,255,0.15)] text-[#dc2626] focus:ring-[#dc2626]">
+                            <span class="text-sm text-slate-200">Comparison to department average</span>
+                        </label>
+                    </div>
+                </div>
+
+                {# Generate Button #}
+                <button type="submit" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#dc2626] text-white text-sm font-medium rounded-[6px] hover:bg-[#b91c1c] transition-colors">
+                    <svg class="w-4 h-4 htmx-hide-on-request" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <svg id="report-loading" class="htmx-indicator animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Generate Report
+                </button>
+            </form>
+
+            {# Report Preview #}
+            <div class="lg:col-span-2 bg-[#3e3a46] rounded-[6px] border border-[rgba(255,255,255,0.10)] shadow-sm">
+                <div class="p-4 border-b border-[rgba(255,255,255,0.10)] flex items-center justify-between">
+                    <h2 class="text-[20px] font-semibold text-slate-100">Report Preview</h2>
+                    <button class="inline-flex items-center gap-2 px-3 py-1.5 bg-[#dc2626] text-white text-sm font-medium rounded-[6px] hover:bg-[#b91c1c] transition-colors" onclick="window.print()">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        Export PDF
+                    </button>
+                </div>
+
+                {# Empty State / Preview Area #}
+                <div id="report-preview">
+                    <div class="p-12">
+                        {% set empty_icon = "chart" %}
+                        {% set empty_title = "No report generated yet" %}
+                        {% set empty_message = "Select a provider and click 'Generate Report'" %}
+                        {% set empty_cta_text = "" %}
+                        {% set empty_cta_href = "" %}
+                        {% include "components/empty_state.html" %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Print Styles #}
+<style>
+@media print {
+    /* Hide everything except the report */
+    body * {
+        visibility: hidden;
+    }
+    #team-report-template, #team-report-template * {
+        visibility: visible;
+    }
+    #team-report-template {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white !important;
+        color: #111827 !important;
+    }
+    /* Ensure backgrounds print */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    /* Page setup */
+    @page {
+        size: letter;
+        margin: 0.5in;
+    }
+}
+</style>
+
+{# Team Report JavaScript #}
+<script>
+function teamReportData() {
+    return {
+        selectedSessionId: '',
+        sessionData: null,
+        zollGraph: null,
+        zollDragOver: false,
+        vitalsGraph: null,
+        vitalsDragOver: false,
+        learningOpportunities: '',
+        showEmailNotification: false,
+        emailNotificationMessage: '',
+
+        // Session data from server
+        sessions: {{ real_call_sessions | tojson }},
+
+        loadSession() {
+            if (!this.selectedSessionId) {
+                this.sessionData = null;
+                return;
+            }
+            // Find session in preloaded data
+            this.sessionData = this.sessions.find(s => s.id === this.selectedSessionId);
+        },
+
+        // Format duration as rounded minutes (e.g., "82.1 minutes")
+        formatDurationMinutes(seconds) {
+            if (!seconds) return '—';
+            const mins = (seconds / 60).toFixed(1);
+            return `${mins} minutes`;
+        },
+
+        // Check if EtCO2 is a valid number
+        isValidEtCO2(value) {
+            if (value === null || value === undefined || value === '') return false;
+            const num = parseFloat(value);
+            return !isNaN(num) && isFinite(num);
+        },
+
+        // Generate provider email from name: first initial + last name @sprucegrove.org
+        generateEmail(name) {
+            if (!name) return null;
+            const parts = name.trim().split(/\s+/);
+            if (parts.length < 2) return null;
+            const firstName = parts[0];
+            const lastName = parts[parts.length - 1];
+            const email = `${firstName[0].toLowerCase()}${lastName.toLowerCase()}@sprucegrove.org`;
+            return email;
+        },
+
+        // Email team members - opens Outlook with all participant emails
+        emailTeam() {
+            if (!this.sessionData) return;
+
+            const emails = [];
+
+            // Add team lead email
+            if (this.sessionData.provider_name) {
+                const leadEmail = this.generateEmail(this.sessionData.provider_name);
+                if (leadEmail) emails.push(leadEmail);
+            }
+
+            // Add participant emails
+            if (this.sessionData.participants && this.sessionData.participants.length > 0) {
+                this.sessionData.participants.forEach(p => {
+                    const email = this.generateEmail(p.provider_name);
+                    if (email && !emails.includes(email)) {
+                        emails.push(email);
+                    }
+                });
+            }
+
+            if (emails.length === 0) {
+                alert('No team members found to email.');
+                return;
+            }
+
+            // Create mailto link with subject line
+            const subject = encodeURIComponent(`CPR Debriefing Report - ${this.sessionData.date}`);
+            const body = encodeURIComponent(`Team,\n\nPlease find the attached CPR Performance Report for the call on ${this.sessionData.date}.\n\nOutcome: ${this.sessionData.outcome || 'N/A'}\n\n**REMINDER: Please attach the PDF report before sending this email.**\n\nTo attach the report:\n1. Click "Export PDF" or "Print Report" to save the PDF\n2. Attach the saved PDF to this email\n3. Send the email\n\nPlease review and let me know if you have any questions.\n\nThank you.`);
+            const mailtoUrl = `mailto:${emails.join(';')}?subject=${subject}&body=${body}`;
+
+            window.location.href = mailtoUrl;
+
+            // Show notification reminder
+            this.emailNotificationMessage = `Email opened with ${emails.length} recipient${emails.length !== 1 ? 's' : ''}. Remember to attach the PDF report before sending!`;
+            this.showEmailNotification = true;
+
+            // Auto-hide after 8 seconds
+            setTimeout(() => {
+                this.showEmailNotification = false;
+            }, 8000);
+        },
+
+        // Zoll RescueNet graph handlers (only drag-drop that changes per call)
+        handleZollGraphSelect(event) {
+            const file = event.target.files[0];
+            if (file) this.readImageFile(file, 'zollGraph');
+        },
+        handleZollGraphDrop(event) {
+            this.zollDragOver = false;
+            const file = event.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                this.readImageFile(file, 'zollGraph');
+            }
+        },
+
+        // Vital signs trending graph handlers
+        handleVitalsGraphSelect(event) {
+            const file = event.target.files[0];
+            if (file) this.readImageFile(file, 'vitalsGraph');
+        },
+        handleVitalsGraphDrop(event) {
+            this.vitalsDragOver = false;
+            const file = event.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                this.readImageFile(file, 'vitalsGraph');
+            }
+        },
+
+        readImageFile(file, target) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                this[target] = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        },
+
+        exportPDF() {
+            // Use browser print with PDF option
+            window.print();
+        }
+    };
+}
+</script>
+{% endblock %}

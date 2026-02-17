@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block content %}
+{# Page Header #}
+{% set page_title = "Rankings" %}
+{% set page_subtitle = "Provider and team rankings by CPR metrics" %}
+{% set page_actions = [{"text": "Export Rankings", "href": "#", "variant": "primary", "icon": "download"}] %}
+{% include "components/page_header.html" %}
+
+{# Rankings Tabs #}
+<div class="mb-6 page-enter page-d1" x-data="{ tab: 'providers' }">
+    {# Tab Buttons #}
+    <div class="flex border-b border-[rgba(255,255,255,0.10)]">
+        <button
+            @click="tab = 'providers'"
+            :class="tab === 'providers' ? 'border-[#dc2626] text-[#dc2626]' : 'border-transparent text-slate-400 hover:text-slate-200'"
+            class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+        >
+            Provider Rankings
+        </button>
+        <button
+            @click="tab = 'teams'"
+            :class="tab === 'teams' ? 'border-[#dc2626] text-[#dc2626]' : 'border-transparent text-slate-400 hover:text-slate-200'"
+            class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
+        >
+            Team Rankings
+        </button>
+    </div>
+
+    {# Provider Rankings Tab Content #}
+    <div x-show="tab === 'providers'" class="mt-4" x-data="{ providerTab: 'real' }">
+        {# Sub-tabs for Simulated vs Real Life #}
+        <div class="flex gap-2 mb-4">
+            <button
+                @click="providerTab = 'simulated'"
+                :class="providerTab === 'simulated' ? 'bg-blue-600 text-white' : 'bg-[#46424e] text-slate-300 hover:bg-[rgba(255,255,255,0.10)]'"
+                class="px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+            >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+                Simulated
+                <span class="px-1.5 py-0.5 text-xs rounded-full {% if providerTab == 'simulated' %}bg-blue-900/200{% else %}bg-[#46424e]{% endif %}">{{ ranked_providers_simulated|length }}</span>
+            </button>
+            <button
+                @click="providerTab = 'real'"
+                :class="providerTab === 'real' ? 'bg-[#dc2626] text-white' : 'bg-[#46424e] text-slate-300 hover:bg-[rgba(255,255,255,0.10)]'"
+                class="px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+            >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                </svg>
+                Real Life
+                <span class="px-1.5 py-0.5 text-xs rounded-full {% if providerTab == 'real' %}bg-red-900/200{% else %}bg-[#46424e]{% endif %}">{{ ranked_providers_real|length }}</span>
+            </button>
+        </div>
+
+        {# Simulated Rankings Table #}
+        <div x-show="providerTab === 'simulated'">
+            <div class="bg-blue-900/20 border border-blue-500/30 rounded-xl p-3 mb-4">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                    <p class="text-sm text-blue-400">
+                        Rankings based on <span class="font-medium">simulated/training sessions</span> only.
+                    </p>
+                </div>
+            </div>
+            <div class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] shadow-sm">
+                <div class="overflow-x-auto" id="provider-rankings-simulated">
+                    <table class="w-full text-sm">
+                        <thead class="bg-[#36323e] text-slate-300 text-left sticky top-0">
+                            <tr>
+                                <th class="px-4 py-3 font-medium w-16">Rank</th>
+                                <th class="px-4 py-3 font-medium">Provider</th>
+                                <th class="px-4 py-3 font-medium">Sessions</th>
+                                <th class="px-4 py-3 font-medium">Depth %</th>
+                                <th class="px-4 py-3 font-medium">Rate %</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[rgba(255,255,255,0.04)]">
+                            {% for provider in ranked_providers_simulated %}
+                            {% set rank = loop.index %}
+                            <tr class="hover:bg-[#36323e]">
+                                <td class="px-4 py-3">
+                                    {% if rank == 1 %}
+                                    <span class="w-6 h-6 bg-blue-600 text-white text-xs font-bold rounded-full flex items-center justify-center">1</span>
+                                    {% elif rank == 2 %}
+                                    <span class="w-6 h-6 bg-slate-400 text-white text-xs font-bold rounded-full flex items-center justify-center">2</span>
+                                    {% elif rank == 3 %}
+                                    <span class="w-6 h-6 bg-[#f97316] text-white text-xs font-bold rounded-full flex items-center justify-center">3</span>
+                                    {% else %}
+                                    <span class="w-6 h-6 bg-[#46424e] text-slate-300 text-xs font-bold rounded-full flex items-center justify-center">{{ rank }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3">
+                                    <a href="/providers/{{ provider.id }}" class="text-slate-100 font-medium hover:text-blue-600">
+                                        {{ provider.name }}
+                                    </a>
+                                </td>
+                                <td class="px-4 py-3 text-slate-200">{{ provider.session_count }}</td>
+                                <td class="px-4 py-3 text-slate-200">{{ provider.avg_depth_compliance }}%</td>
+                                <td class="px-4 py-3 text-slate-200">{{ provider.avg_rate_compliance }}%</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="px-4 py-12">
+                                    {% set empty_icon = "users" %}
+                                    {% set empty_title = "No simulated session rankings" %}
+                                    {% set empty_message = "Add simulated training sessions to see rankings" %}
+                                    {% set empty_cta_text = "Add Session" %}
+                                    {% set empty_cta_href = "/sessions" %}
+                                    {% include "components/empty_state.html" %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {# Real Life Rankings Table #}
+        <div x-show="providerTab === 'real'">
+            <div class="bg-red-900/20 border border-red-500/30 rounded-xl p-3 mb-4">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-[#dc2626]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                    </svg>
+                    <p class="text-sm text-red-400">
+                        Rankings based on <span class="font-medium">real-life call sessions</span> only.
+                    </p>
+                </div>
+            </div>
+            <div class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] shadow-sm">
+                <div class="overflow-x-auto" id="provider-rankings-real">
+                    <table class="w-full text-sm">
+                        <thead class="bg-[#36323e] text-slate-300 text-left sticky top-0">
+                            <tr>
+                                <th class="px-4 py-3 font-medium w-16">Rank</th>
+                                <th class="px-4 py-3 font-medium">Provider</th>
+                                <th class="px-4 py-3 font-medium">Calls</th>
+                                <th class="px-4 py-3 font-medium">JcLS</th>
+                                <th class="px-4 py-3 font-medium">Depth %</th>
+                                <th class="px-4 py-3 font-medium">Rate %</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[rgba(255,255,255,0.04)]">
+                            {% for provider in ranked_providers_real %}
+                            {% set rank = loop.index %}
+                            <tr class="hover:bg-[#36323e]">
+                                <td class="px-4 py-3">
+                                    {% if rank == 1 %}
+                                    <span class="w-6 h-6 bg-[#dc2626] text-white text-xs font-bold rounded-full flex items-center justify-center">1</span>
+                                    {% elif rank == 2 %}
+                                    <span class="w-6 h-6 bg-slate-400 text-white text-xs font-bold rounded-full flex items-center justify-center">2</span>
+                                    {% elif rank == 3 %}
+                                    <span class="w-6 h-6 bg-[#f97316] text-white text-xs font-bold rounded-full flex items-center justify-center">3</span>
+                                    {% else %}
+                                    <span class="w-6 h-6 bg-[#46424e] text-slate-300 text-xs font-bold rounded-full flex items-center justify-center">{{ rank }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3">
+                                    <a href="/providers/{{ provider.id }}" class="text-slate-100 font-medium hover:text-[#dc2626]">
+                                        {{ provider.name }}
+                                    </a>
+                                </td>
+                                <td class="px-4 py-3 text-slate-200">{{ provider.session_count }}</td>
+                                <td class="px-4 py-3">
+                                    {% if provider.avg_jcls_score %}
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full flex-shrink-0
+                                            {% if provider.avg_jcls_score >= 80 %}bg-green-500
+                                            {% elif provider.avg_jcls_score >= 60 %}bg-yellow-500
+                                            {% else %}bg-red-500{% endif %}"></span>
+                                        <span class="font-bold text-slate-200">{{ provider.avg_jcls_score }}</span>
+                                    </div>
+                                    {% else %}
+                                    <span class="text-slate-400">&mdash;</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 text-slate-200">{{ provider.avg_depth_compliance }}%</td>
+                                <td class="px-4 py-3 text-slate-200">{{ provider.avg_rate_compliance }}%</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="px-4 py-12">
+                                    {% set empty_icon = "heart" %}
+                                    {% set empty_title = "No real-life call rankings" %}
+                                    {% set empty_message = "Add real-life call sessions to see rankings" %}
+                                    {% set empty_cta_text = "Add Session" %}
+                                    {% set empty_cta_href = "/sessions" %}
+                                    {% include "components/empty_state.html" %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Team Rankings Table (Real-Life Calls) #}
+    <div x-show="tab === 'teams'" class="mt-4">
+        <div class="bg-amber-900/20 border border-amber-500/30 rounded-xl p-3 mb-4">
+            <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="text-sm text-amber-400">
+                    Team rankings are based on <span class="font-medium">real-life calls</span> only. Each call's participants form a team.
+                </p>
+            </div>
+        </div>
+        <div class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] shadow-sm">
+            <div class="overflow-x-auto" id="team-rankings">
+                <table class="w-full text-sm">
+                    <thead class="bg-[#36323e] text-slate-300 text-left sticky top-0">
+                        <tr>
+                            <th class="px-4 py-3 font-medium w-16">Rank</th>
+                            <th class="px-4 py-3 font-medium">Team Lead</th>
+                            <th class="px-4 py-3 font-medium">Team Members</th>
+                            <th class="px-4 py-3 font-medium">Date</th>
+                            <th class="px-4 py-3 font-medium">JcLS</th>
+                            <th class="px-4 py-3 font-medium">Depth %</th>
+                            <th class="px-4 py-3 font-medium">Rate %</th>
+                            <th class="px-4 py-3 font-medium">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-[rgba(255,255,255,0.04)]">
+                        {% for team in real_call_teams %}
+                        {% set rank = loop.index %}
+                        <tr class="hover:bg-[#36323e]">
+                            <td class="px-4 py-3">
+                                {% if rank == 1 %}
+                                <span class="w-6 h-6 bg-[#dc2626] text-white text-xs font-bold rounded-full flex items-center justify-center">1</span>
+                                {% elif rank == 2 %}
+                                <span class="w-6 h-6 bg-slate-400 text-white text-xs font-bold rounded-full flex items-center justify-center">2</span>
+                                {% elif rank == 3 %}
+                                <span class="w-6 h-6 bg-[#f97316] text-white text-xs font-bold rounded-full flex items-center justify-center">3</span>
+                                {% else %}
+                                <span class="w-6 h-6 bg-[#46424e] text-slate-300 text-xs font-bold rounded-full flex items-center justify-center">{{ rank }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3">
+                                {% if team.team_lead_id %}
+                                <a href="/providers/{{ team.team_lead_id }}" class="text-slate-100 font-medium hover:text-[#dc2626]">
+                                    {{ team.team_lead }}
+                                </a>
+                                {% else %}
+                                <span class="text-slate-100 font-medium">{{ team.team_lead }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3 text-slate-300 text-xs max-w-xs truncate" title="{{ team.members }}">
+                                {{ team.members }}
+                            </td>
+                            <td class="px-4 py-3 text-slate-200">{{ team.date }}</td>
+                            <td class="px-4 py-3">
+                                {% if team.jcls_score %}
+                                <span class="font-bold {% if team.jcls_score >= 80 %}text-[#16a34a]{% elif team.jcls_score >= 60 %}text-amber-500{% else %}text-[#dc2626]{% endif %}">
+                                    {{ team.jcls_score }}
+                                </span>
+                                {% else %}
+                                <span class="text-slate-400">&mdash;</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3 text-slate-200">{{ team.depth_compliance }}%</td>
+                            <td class="px-4 py-3 text-slate-200">{{ team.rate_compliance }}%</td>
+                            <td class="px-4 py-3">
+                                <button hx-get="/partials/sessions/{{ team.session_id }}/detail"
+                                        hx-target="#modal-container"
+                                        hx-swap="innerHTML"
+                                        class="text-slate-400 hover:text-slate-300"
+                                        title="View Call Details">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                </button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="px-4 py-12">
+                                {% set empty_icon = "users" %}
+                                {% set empty_title = "No team rankings yet" %}
+                                {% set empty_message = "Add a real-life call session to see team rankings" %}
+                                {% set empty_cta_text = "Add Session" %}
+                                {% set empty_cta_href = "/sessions" %}
+                                {% include "components/empty_state.html" %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Modal Container #}
+<div id="modal-container"></div>
+{% endblock %}

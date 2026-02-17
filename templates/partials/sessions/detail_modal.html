@@ -1,0 +1,691 @@
+{# Session Detail Modal - Complete Case Statistics View #}
+{# Modal Overlay #}
+<div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onclick="if(event.target === this) document.getElementById('modal-container').innerHTML = ''">
+<div class="bg-[#3e3a46] rounded-[6px] border border-[rgba(255,255,255,0.10)] shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto" x-data="{ activeTab: '{{ 'jcls' if session.session_type == 'real_call' and session.metrics and session.metrics.get('jcls_breakdown') else 'overview' }}' }">
+    {# Modal Header #}
+    <div class="flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.10)]">
+        <div>
+            <h2 class="text-lg font-semibold text-slate-100">Session Details</h2>
+            <p class="text-sm text-slate-400">{{ session.date }}{% if session.event_time %} at {{ session.event_time }}{% endif %} - {{ session.event_type or 'CPR Session' }}</p>
+        </div>
+        <button onclick="document.getElementById('modal-container').innerHTML = ''" class="text-slate-400 hover:text-slate-300">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+
+    {# Session Info Header #}
+    <div class="px-6 py-4 bg-[#36323e] border-b border-[rgba(255,255,255,0.10)]">
+        <div class="flex items-center gap-4 flex-wrap">
+            {# Session Type Badge #}
+            {% if session.session_type == 'real_call' or session.event_type != 'Simulated' %}
+            <span class="px-3 py-1 text-sm font-medium bg-red-900/20 text-[#dc2626] rounded-full">Real Call</span>
+            {% else %}
+            <span class="px-3 py-1 text-sm font-medium bg-blue-900/20 text-blue-400 rounded-full">Simulated</span>
+            {% endif %}
+
+            {# Status Badge #}
+            {% if session.status == 'complete' or session.metrics %}
+            <span class="px-3 py-1 text-sm font-medium bg-green-900/20 text-[#16a34a] rounded-full">Complete</span>
+            {% elif session.status == 'importing' %}
+            <span class="px-3 py-1 text-sm font-medium bg-blue-900/20 text-blue-400 rounded-full">Importing</span>
+            {% elif session.status == 'failed' %}
+            <span class="px-3 py-1 text-sm font-medium bg-red-900/20 text-[#dc2626] rounded-full">Failed</span>
+            {% endif %}
+
+            {# Outcome Badge (ROSC) #}
+            {% if session.outcome %}
+            {% if session.outcome == 'ROSC' %}
+            <span class="px-3 py-1 text-sm font-medium bg-emerald-900/20 text-emerald-400 rounded-full flex items-center gap-1">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
+                </svg>
+                ROSC
+            </span>
+            {% elif session.outcome == 'No ROSC' %}
+            <span class="px-3 py-1 text-sm font-medium bg-[#46424e] text-slate-300 rounded-full">No ROSC</span>
+            {% else %}
+            <span class="px-3 py-1 text-sm font-medium bg-amber-900/20 text-amber-400 rounded-full">{{ session.outcome }}</span>
+            {% endif %}
+            {% endif %}
+
+            {# Platoon Badge #}
+            {% if session.platoon %}
+            <span class="px-3 py-1 text-sm font-medium bg-amber-900/20 text-amber-400 rounded-full">Platoon {{ session.platoon }}</span>
+            {% endif %}
+
+            {# Shocks Delivered Badge #}
+            {% set shocks = session.get('shocks_delivered') %}
+            {% if shocks is not none and shocks > 0 %}
+            <span class="px-3 py-1 text-sm font-medium bg-yellow-900/20 text-yellow-400 rounded-full flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                {{ shocks }} Shock{% if shocks != 1 %}s{% endif %}
+            </span>
+            {% endif %}
+
+            {# Event Tags #}
+            {% if session.metrics and session.metrics.tags %}
+            {% for tag in session.metrics.tags.split(';') %}
+            {% if tag.strip() %}
+            <span class="px-2 py-0.5 text-xs font-medium bg-purple-900/20 text-purple-400 rounded">{{ tag.strip() }}</span>
+            {% endif %}
+            {% endfor %}
+            {% endif %}
+
+            {# Provider Info #}
+            {% if provider %}
+            <div class="flex items-center gap-2 ml-auto">
+                <div class="w-8 h-8 bg-[#46424e] rounded-full flex items-center justify-center">
+                    <span class="text-sm font-medium text-slate-300">{{ provider.first_name[0] }}{{ provider.last_name[0] }}</span>
+                </div>
+                <div>
+                    <a href="/providers/{{ provider.id }}" class="text-sm font-medium text-slate-100 hover:text-[#dc2626]">{{ provider.name }}</a>
+                    <p class="text-xs text-slate-400">{{ provider.certification }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        {# Participants list for real calls #}
+        {% if session.participants and session.participants | length > 1 %}
+        <div class="mt-3 pt-3 border-t border-[rgba(255,255,255,0.10)]">
+            <p class="text-xs text-slate-400 mb-2">Team Members:</p>
+            <div class="flex flex-wrap gap-2">
+                {% for p in session.participants %}
+                <span class="text-xs px-2 py-1 bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded {% if p.is_primary %}font-medium text-[#dc2626]{% else %}text-slate-300{% endif %}">
+                    {{ p.provider_name }}{% if p.is_primary %} (Lead){% endif %}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if session.metrics %}
+    {# Tab Navigation #}
+    <div class="border-b border-[rgba(255,255,255,0.10)] px-6">
+        <nav class="flex gap-6 -mb-px">
+            {% if session.session_type == 'real_call' and session.metrics.get('jcls_breakdown') %}
+            <button @click="activeTab = 'jcls'"
+                    :class="activeTab === 'jcls' ? 'border-[#dc2626] text-[#dc2626]' : 'border-transparent text-slate-400 hover:text-slate-200'"
+                    class="py-3 text-sm font-medium border-b-2 transition-colors">
+                JcLS Score
+            </button>
+            {% endif %}
+            <button @click="activeTab = 'overview'"
+                    :class="activeTab === 'overview' ? 'border-[#dc2626] text-[#dc2626]' : 'border-transparent text-slate-400 hover:text-slate-200'"
+                    class="py-3 text-sm font-medium border-b-2 transition-colors">
+                Overview
+            </button>
+            {% if session.session_type == 'real_call' or session.event_type != 'Simulated' %}
+            <button @click="activeTab = 'depth'"
+                    :class="activeTab === 'depth' ? 'border-[#dc2626] text-[#dc2626]' : 'border-transparent text-slate-400 hover:text-slate-200'"
+                    class="py-3 text-sm font-medium border-b-2 transition-colors">
+                Depth Analysis
+            </button>
+            <button @click="activeTab = 'rate'"
+                    :class="activeTab === 'rate' ? 'border-[#dc2626] text-[#dc2626]' : 'border-transparent text-slate-400 hover:text-slate-200'"
+                    class="py-3 text-sm font-medium border-b-2 transition-colors">
+                Rate Analysis
+            </button>
+            <button @click="activeTab = 'timing'"
+                    :class="activeTab === 'timing' ? 'border-[#dc2626] text-[#dc2626]' : 'border-transparent text-slate-400 hover:text-slate-200'"
+                    class="py-3 text-sm font-medium border-b-2 transition-colors">
+                Timing & Pauses
+            </button>
+            <button @click="activeTab = 'advanced'"
+                    :class="activeTab === 'advanced' ? 'border-[#dc2626] text-[#dc2626]' : 'border-transparent text-slate-400 hover:text-slate-200'"
+                    class="py-3 text-sm font-medium border-b-2 transition-colors">
+                Advanced
+            </button>
+            {% endif %}
+        </nav>
+    </div>
+
+    {# Tab Content #}
+    <div class="p-6">
+        {# JcLS Score Tab (real-call only) #}
+        {% if session.session_type == 'real_call' and session.metrics.get('jcls_breakdown') %}
+        {% set jcls = session.metrics.get('jcls_breakdown') %}
+        <div x-show="activeTab === 'jcls'">
+            {# Hero Score #}
+            <div class="flex items-center gap-6 mb-6">
+                <div class="w-24 h-24 rounded-[6px] flex items-center justify-center
+                    {% if jcls.jcls_score >= 80 %}bg-green-900/30 border-2 border-green-500/40
+                    {% elif jcls.jcls_score >= 60 %}bg-yellow-900/30 border-2 border-yellow-500/40
+                    {% else %}bg-red-900/30 border-2 border-red-500/40{% endif %}">
+                    <span class="text-4xl font-bold
+                        {% if jcls.jcls_score >= 80 %}text-green-400
+                        {% elif jcls.jcls_score >= 60 %}text-yellow-400
+                        {% else %}text-red-400{% endif %}">{{ jcls.jcls_score }}</span>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-slate-100">JcLS Score</h3>
+                    {% if jcls.available_points < 100 %}
+                    <p class="text-sm text-slate-400">{{ jcls.raw_score }} out of {{ jcls.available_points }} available points (scaled to 100)</p>
+                    {% else %}
+                    <p class="text-sm text-slate-400">{{ jcls.raw_score }} / {{ jcls.available_points }} points</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Tier Breakdown Cards #}
+            <div class="space-y-4">
+                {# Tier 1: Compression Quality #}
+                {% set t1 = jcls.tier1 %}
+                <div class="bg-[#36323e] rounded-[6px] p-4 border border-[rgba(255,255,255,0.10)]">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-sm font-semibold text-slate-200">Tier 1: {{ t1.name }}</h4>
+                        <span class="text-sm font-medium {% if t1.max > 0 and t1.earned == t1.max %}text-green-400{% else %}text-slate-300{% endif %}">
+                            {{ t1.earned }}/{{ t1.max }} pts
+                            {% if t1.max > 0 and t1.earned == t1.max %}&#9733;{% endif %}
+                        </span>
+                    </div>
+                    {% if t1.max > 0 %}
+                    <div class="w-full bg-[#46424e] rounded-full h-1.5 mb-3">
+                        <div class="h-1.5 rounded-full {% if t1.earned / t1.max >= 0.8 %}bg-green-500{% elif t1.earned / t1.max >= 0.6 %}bg-yellow-500{% else %}bg-red-500{% endif %}" style="width: {{ (t1.earned / t1.max * 100)|round }}%"></div>
+                    </div>
+                    {% endif %}
+                    <div class="space-y-2 text-sm">
+                        {% set dc = t1.depth_compliance %}
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400">Depth Compliance</span>
+                            <span class="text-slate-300">{% if dc.value is not none %}{{ dc.value }}%{% else %}N/A{% endif %} &mdash; {{ dc.earned }}/{{ dc.max }}</span>
+                        </div>
+                        {% set rc = t1.rate_compliance %}
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400">Rate Compliance</span>
+                            <span class="text-slate-300">{% if rc.value is not none %}{{ rc.value }}%{% else %}N/A{% endif %} &mdash; {{ rc.earned }}/{{ rc.max }}</span>
+                        </div>
+                        {% set cc = t1.combined_compliance %}
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400">Combined Compliance (CiT)</span>
+                            <span class="text-slate-300">{% if cc.value is not none %}{{ cc.value }}%{% else %}N/A{% endif %} &mdash; {{ cc.earned }}/{{ cc.max }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {# Tier 2: Perfusion Continuity #}
+                {% set t2 = jcls.tier2 %}
+                <div class="bg-[#36323e] rounded-[6px] p-4 border border-[rgba(255,255,255,0.10)]">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-sm font-semibold text-slate-200">Tier 2: {{ t2.name }}</h4>
+                        <span class="text-sm font-medium {% if t2.max > 0 and t2.earned == t2.max %}text-green-400{% else %}text-slate-300{% endif %}">
+                            {{ t2.earned }}/{{ t2.max }} pts
+                            {% if t2.max > 0 and t2.earned == t2.max %}&#9733;{% endif %}
+                        </span>
+                    </div>
+                    {% if t2.max > 0 %}
+                    <div class="w-full bg-[#46424e] rounded-full h-1.5 mb-3">
+                        <div class="h-1.5 rounded-full {% if t2.earned / t2.max >= 0.8 %}bg-green-500{% elif t2.earned / t2.max >= 0.6 %}bg-yellow-500{% else %}bg-red-500{% endif %}" style="width: {{ (t2.earned / t2.max * 100)|round }}%"></div>
+                    </div>
+                    {% endif %}
+                    <div class="space-y-2 text-sm">
+                        {% set ccf = t2.ccf %}
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400">CCF</span>
+                            <span class="text-slate-300">{% if ccf.value is not none %}{{ ccf.value }}%{% else %}N/A{% endif %} &mdash; {{ ccf.earned }}/{{ ccf.max }}</span>
+                        </div>
+                        {% set pq = t2.pause_quality %}
+                        {% if pq.max > 0 %}
+                        {% set mp = pq.mean_pause %}
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400">Mean Pause Duration</span>
+                            <span class="text-slate-300">{% if mp.value is not none %}{{ mp.value }}s{% else %}N/A{% endif %} &mdash; {{ mp.earned }}/{{ mp.max }}</span>
+                        </div>
+                        {% set nlp = pq.no_long_pauses %}
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400">Pauses >10s</span>
+                            <span class="text-slate-300">{% if nlp.value is not none %}{{ nlp.value }}{% else %}N/A{% endif %} &mdash; {{ nlp.earned }}/{{ nlp.max }}</span>
+                        </div>
+                        {% else %}
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400">Pause Quality</span>
+                            <span class="text-slate-500 text-xs">N/A (excluded from scoring)</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {# Tier 3: Recoil Quality #}
+                {% set t3 = jcls.tier3 %}
+                <div class="bg-[#36323e] rounded-[6px] p-4 border border-[rgba(255,255,255,0.10)]">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-sm font-semibold text-slate-200">Tier 3: {{ t3.name }}</h4>
+                        <span class="text-sm font-medium {% if t3.max > 0 and t3.earned == t3.max %}text-green-400{% else %}text-slate-300{% endif %}">
+                            {% if t3.max > 0 %}{{ t3.earned }}/{{ t3.max }} pts{% else %}N/A{% endif %}
+                            {% if t3.max > 0 and t3.earned == t3.max %}&#9733;{% endif %}
+                        </span>
+                    </div>
+                    {% if t3.max > 0 %}
+                    <div class="w-full bg-[#46424e] rounded-full h-1.5 mb-3">
+                        <div class="h-1.5 rounded-full {% if t3.earned / t3.max >= 0.8 %}bg-green-500{% elif t3.earned / t3.max >= 0.6 %}bg-yellow-500{% else %}bg-red-500{% endif %}" style="width: {{ (t3.earned / t3.max * 100)|round }}%"></div>
+                    </div>
+                    {% endif %}
+                    <div class="space-y-2 text-sm">
+                        {% set rv = t3.release_velocity %}
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400">Release Velocity</span>
+                            {% if rv.max > 0 %}
+                            <span class="text-slate-300">{{ rv.value }} mm/s{% if rv.sd %} (SD: {{ rv.sd }}){% endif %} &mdash; {{ rv.earned }}/{{ rv.max }}</span>
+                            {% else %}
+                            <span class="text-slate-500 text-xs">N/A (excluded from scoring)</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {# Tier 4: System Performance #}
+                {% set t4 = jcls.tier4 %}
+                <div class="bg-[#36323e] rounded-[6px] p-4 border border-[rgba(255,255,255,0.10)]">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-sm font-semibold text-slate-200">Tier 4: {{ t4.name }}</h4>
+                        <span class="text-sm font-medium {% if t4.max > 0 and t4.earned == t4.max %}text-green-400{% else %}text-slate-300{% endif %}">
+                            {{ t4.earned }}/{{ t4.max }} pts
+                            {% if t4.max > 0 and t4.earned == t4.max %}&#9733;{% endif %}
+                        </span>
+                    </div>
+                    {% if t4.max > 0 %}
+                    <div class="w-full bg-[#46424e] rounded-full h-1.5 mb-3">
+                        <div class="h-1.5 rounded-full {% if t4.earned / t4.max >= 0.8 %}bg-green-500{% elif t4.earned / t4.max >= 0.6 %}bg-yellow-500{% else %}bg-red-500{% endif %}" style="width: {{ (t4.earned / t4.max * 100)|round }}%"></div>
+                    </div>
+                    {% endif %}
+                    <div class="space-y-2 text-sm">
+                        {% set ttfc = t4.time_to_first_compression %}
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400">Time to 1st Compression</span>
+                            <span class="text-slate-300">{% if ttfc.value is not none %}{{ ttfc.value }}s{% else %}N/A{% endif %} &mdash; {{ ttfc.earned }}/{{ ttfc.max }}</span>
+                        </div>
+                        {% set ttfs = t4.time_to_first_shock %}
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-400">Time to 1st Shock</span>
+                            <span class="text-slate-300">
+                                {% if ttfs.value is not none %}{{ ttfs.value }}s
+                                {% elif ttfs.shocks_delivered is not none and ttfs.shocks_delivered == 0 %}Non-shockable
+                                {% else %}N/A{% endif %}
+                                &mdash; {{ ttfs.earned }}/{{ ttfs.max }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# Overview Tab #}
+        <div x-show="activeTab === 'overview'">
+            {# Primary KPI Cards - Large #}
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                {# Correct Depth % #}
+                <div class="bg-gradient-to-br from-[#36323e] to-[#46424e] rounded-lg p-4 text-center border border-[rgba(255,255,255,0.10)]">
+                    <p class="text-3xl font-bold {% if session.metrics.correct_depth_percent and session.metrics.correct_depth_percent >= 70 %}text-[#16a34a]{% elif session.metrics.correct_depth_percent and session.metrics.correct_depth_percent >= 50 %}text-amber-500{% else %}text-[#dc2626]{% endif %}">
+                        {% if session.metrics.correct_depth_percent is not none %}{{ session.metrics.correct_depth_percent }}%{% else %}--{% endif %}
+                    </p>
+                    <p class="text-xs text-slate-400 mt-1 font-medium">Correct Depth</p>
+                </div>
+
+                {# Correct Rate % #}
+                <div class="bg-gradient-to-br from-[#36323e] to-[#46424e] rounded-lg p-4 text-center border border-[rgba(255,255,255,0.10)]">
+                    <p class="text-3xl font-bold {% if session.metrics.correct_rate_percent and session.metrics.correct_rate_percent >= 70 %}text-[#16a34a]{% elif session.metrics.correct_rate_percent and session.metrics.correct_rate_percent >= 50 %}text-amber-500{% else %}text-[#dc2626]{% endif %}">
+                        {% if session.metrics.correct_rate_percent is not none %}{{ session.metrics.correct_rate_percent }}%{% else %}--{% endif %}
+                    </p>
+                    <p class="text-xs text-slate-400 mt-1 font-medium">Correct Rate</p>
+                </div>
+
+                {# CCF - Most Important (Real Calls Only) #}
+                {% if session.session_type == 'real_call' %}
+                <div class="bg-gradient-to-br {% if session.metrics.compression_fraction and session.metrics.compression_fraction >= 85 %}from-emerald-900/30 to-emerald-900/20 border-emerald-500/30{% elif session.metrics.compression_fraction and session.metrics.compression_fraction >= 60 %}from-amber-900/30 to-amber-900/20 border-amber-500/30{% else %}from-red-900/30 to-red-900/20 border-red-500/30{% endif %} rounded-lg p-4 text-center border">
+                    <p class="text-3xl font-bold {% if session.metrics.compression_fraction and session.metrics.compression_fraction >= 85 %}text-emerald-400{% elif session.metrics.compression_fraction and session.metrics.compression_fraction >= 60 %}text-amber-400{% else %}text-[#dc2626]{% endif %}">
+                        {% if session.metrics.compression_fraction is not none %}{{ session.metrics.compression_fraction }}%{% else %}--{% endif %}
+                    </p>
+                    <p class="text-xs font-medium mt-1 {% if session.metrics.compression_fraction and session.metrics.compression_fraction >= 85 %}text-emerald-400{% elif session.metrics.compression_fraction and session.metrics.compression_fraction >= 60 %}text-amber-400{% else %}text-[#dc2626]{% endif %}">CCF (Target >85%)</p>
+                </div>
+                {% endif %}
+
+                {# Duration #}
+                <div class="bg-gradient-to-br from-[#36323e] to-[#46424e] rounded-lg p-4 text-center border border-[rgba(255,255,255,0.10)]">
+                    <p class="text-3xl font-bold text-slate-200">
+                        {% if session.metrics.duration is not none %}
+                            {% if session.metrics.duration >= 60 %}
+                                {{ (session.metrics.duration / 60)|round(1) }}m
+                            {% else %}
+                                {{ session.metrics.duration|round(0)|int }}s
+                            {% endif %}
+                        {% else %}--{% endif %}
+                    </p>
+                    <p class="text-xs text-slate-400 mt-1 font-medium">Duration</p>
+                </div>
+            </div>
+
+            {# Secondary Metrics - Medium Cards #}
+            <div class="grid grid-cols-3 md:grid-cols-6 gap-3">
+                <div class="bg-[#36323e] rounded-lg p-3 text-center">
+                    <p class="text-lg font-semibold text-slate-200">{% if session.metrics.compression_rate is not none %}{{ session.metrics.compression_rate|round(1) }}{% else %}--{% endif %}</p>
+                    <p class="text-xs text-slate-400">CPM</p>
+                </div>
+                <div class="bg-[#36323e] rounded-lg p-3 text-center">
+                    <p class="text-lg font-semibold text-slate-200">{% if session.metrics.compression_depth is not none %}{{ session.metrics.compression_depth }}{% else %}--{% endif %}</p>
+                    <p class="text-xs text-slate-400">Depth (cm)</p>
+                </div>
+                <div class="bg-[#36323e] rounded-lg p-3 text-center">
+                    <p class="text-lg font-semibold text-slate-200">{% if session.metrics.total_compressions is not none %}{{ session.metrics.total_compressions }}{% else %}--{% endif %}</p>
+                    <p class="text-xs text-slate-400">Total Comp.</p>
+                </div>
+                <div class="bg-[#36323e] rounded-lg p-3 text-center">
+                    <p class="text-lg font-semibold text-slate-200">{% if session.metrics.seconds_to_first_compression is not none %}{{ session.metrics.seconds_to_first_compression }}s{% else %}--{% endif %}</p>
+                    <p class="text-xs text-slate-400">To 1st Comp.</p>
+                </div>
+                <div class="bg-[#36323e] rounded-lg p-3 text-center">
+                    <p class="text-lg font-semibold text-slate-200">{% if session.metrics.seconds_to_first_shock is not none %}{{ session.metrics.seconds_to_first_shock }}s{% else %}--{% endif %}</p>
+                    <p class="text-xs text-slate-400">To 1st Shock</p>
+                </div>
+                <div class="bg-[#36323e] rounded-lg p-3 text-center">
+                    <p class="text-lg font-semibold text-slate-200">{% if session.metrics.avg_post_shock_pause is not none %}{{ session.metrics.avg_post_shock_pause }}s{% else %}--{% endif %}</p>
+                    <p class="text-xs text-slate-400">Post-Shock</p>
+                </div>
+            </div>
+
+            {# EtCO2 Section #}
+            {% if session.metrics.mean_etco2 is not none or session.metrics.max_etco2 is not none %}
+            <div class="mt-4 p-4 bg-cyan-900/15 rounded-lg border border-cyan-500/30">
+                <h4 class="text-xs font-semibold text-cyan-400 uppercase mb-2">End-Tidal CO2</h4>
+                <div class="flex gap-6">
+                    <div>
+                        <span class="text-2xl font-bold text-cyan-400">{{ session.metrics.mean_etco2 or '--' }}</span>
+                        <span class="text-xs text-cyan-400 ml-1">Mean</span>
+                    </div>
+                    <div>
+                        <span class="text-2xl font-bold text-cyan-400">{{ session.metrics.max_etco2 or '--' }}</span>
+                        <span class="text-xs text-cyan-400 ml-1">Max</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        {# Depth Analysis Tab #}
+        <div x-show="activeTab === 'depth'" x-cloak>
+            <div class="grid grid-cols-2 gap-6">
+                {# Depth Breakdown Visual #}
+                <div class="bg-[#36323e] rounded-lg p-5 border border-[rgba(255,255,255,0.10)]">
+                    <h4 class="text-sm font-semibold text-slate-200 mb-4">Compression Depth Distribution</h4>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-300">In Target</span>
+                            <span class="text-lg font-semibold text-[#16a34a]">{{ session.metrics.compressions_in_target_depth or 0 }}</span>
+                        </div>
+                        <div class="w-full bg-[#46424e] rounded-full h-2">
+                            {% set total_depth = (session.metrics.compressions_in_target_depth or 0) + (session.metrics.compressions_below_target_depth or 0) + (session.metrics.compressions_above_target_depth or 0) %}
+                            {% set in_pct = ((session.metrics.compressions_in_target_depth or 0) / total_depth * 100) if total_depth > 0 else 0 %}
+                            <div class="bg-[#16a34a] h-2 rounded-full" style="width: {{ in_pct }}%"></div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-300">Below Target</span>
+                            <span class="text-lg font-semibold text-amber-500">{{ session.metrics.compressions_below_target_depth or 0 }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-300">Above Target</span>
+                            <span class="text-lg font-semibold text-[#dc2626]">{{ session.metrics.compressions_above_target_depth or 0 }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {# Depth Stats #}
+                <div class="space-y-4">
+                    <div class="bg-[#36323e] rounded-lg p-4 border border-[rgba(255,255,255,0.10)]">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-300">Mean Depth</span>
+                            <span class="text-xl font-bold text-slate-200">{{ session.metrics.compression_depth or '--' }} cm</span>
+                        </div>
+                    </div>
+                    <div class="bg-[#36323e] rounded-lg p-4 border border-[rgba(255,255,255,0.10)]">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-300">Standard Deviation</span>
+                            <span class="text-xl font-bold text-slate-200">{{ session.metrics.depth_std_dev or '--' }} cm</span>
+                        </div>
+                    </div>
+                    <div class="bg-[#36323e] rounded-lg p-4 border border-[rgba(255,255,255,0.10)]">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-300">Target Setting</span>
+                            <span class="text-xl font-bold text-slate-200">{{ session.metrics.target_depth_setting or '--' }} cm</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Rate Analysis Tab #}
+        <div x-show="activeTab === 'rate'" x-cloak>
+            <div class="grid grid-cols-2 gap-6">
+                {# Rate Breakdown Visual #}
+                <div class="bg-[#36323e] rounded-lg p-5 border border-[rgba(255,255,255,0.10)]">
+                    <h4 class="text-sm font-semibold text-slate-200 mb-4">Compression Rate Distribution</h4>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-300">In Target (100-120)</span>
+                            <span class="text-lg font-semibold text-[#16a34a]">{{ session.metrics.compressions_in_target_rate or 0 }}</span>
+                        </div>
+                        <div class="w-full bg-[#46424e] rounded-full h-2">
+                            {% set total_rate = (session.metrics.compressions_in_target_rate or 0) + (session.metrics.compressions_below_target_rate or 0) + (session.metrics.compressions_above_target_rate or 0) %}
+                            {% set in_rate_pct = ((session.metrics.compressions_in_target_rate or 0) / total_rate * 100) if total_rate > 0 else 0 %}
+                            <div class="bg-[#16a34a] h-2 rounded-full" style="width: {{ in_rate_pct }}%"></div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-300">Below Target (&lt;100)</span>
+                            <span class="text-lg font-semibold text-amber-500">{{ session.metrics.compressions_below_target_rate or 0 }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-300">Above Target (&gt;120)</span>
+                            <span class="text-lg font-semibold text-[#dc2626]">{{ session.metrics.compressions_above_target_rate or 0 }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {# Rate Stats #}
+                <div class="space-y-4">
+                    <div class="bg-[#36323e] rounded-lg p-4 border border-[rgba(255,255,255,0.10)]">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-300">Mean Rate</span>
+                            <span class="text-xl font-bold text-slate-200">{{ session.metrics.compression_rate or '--' }} CPM</span>
+                        </div>
+                    </div>
+                    <div class="bg-[#36323e] rounded-lg p-4 border border-[rgba(255,255,255,0.10)]">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-300">Standard Deviation</span>
+                            <span class="text-xl font-bold text-slate-200">{{ session.metrics.rate_std_dev or '--' }}</span>
+                        </div>
+                    </div>
+                    <div class="bg-[#36323e] rounded-lg p-4 border border-[rgba(255,255,255,0.10)]">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-300">Target Setting</span>
+                            <span class="text-xl font-bold text-slate-200">{{ session.metrics.target_rate_setting or '--' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Timing & Pauses Tab #}
+        <div x-show="activeTab === 'timing'" x-cloak>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div class="bg-[#36323e] rounded-lg p-4 border border-[rgba(255,255,255,0.10)] text-center">
+                    <p class="text-2xl font-bold text-slate-200">{% if session.metrics.seconds_to_first_compression is not none %}{{ session.metrics.seconds_to_first_compression }}s{% else %}--{% endif %}</p>
+                    <p class="text-xs text-slate-400 mt-1">Time to 1st Compression</p>
+                </div>
+                <div class="bg-[#36323e] rounded-lg p-4 border border-[rgba(255,255,255,0.10)] text-center">
+                    <p class="text-2xl font-bold text-slate-200">{% if session.metrics.seconds_to_first_shock is not none %}{{ session.metrics.seconds_to_first_shock }}s{% else %}--{% endif %}</p>
+                    <p class="text-xs text-slate-400 mt-1">Time to 1st Shock</p>
+                </div>
+                <div class="bg-[#36323e] rounded-lg p-4 border border-[rgba(255,255,255,0.10)] text-center">
+                    <p class="text-2xl font-bold text-slate-200">{% if session.metrics.avg_post_shock_pause is not none %}{{ session.metrics.avg_post_shock_pause }}s{% else %}--{% endif %}</p>
+                    <p class="text-xs text-slate-400 mt-1">Avg Post-Shock Pause</p>
+                </div>
+                <div class="bg-[#36323e] rounded-lg p-4 border border-[rgba(255,255,255,0.10)] text-center">
+                    <p class="text-2xl font-bold text-slate-200">{% if session.metrics.total_pause_duration is not none %}{{ session.metrics.total_pause_duration }}s{% else %}--{% endif %}</p>
+                    <p class="text-xs text-slate-400 mt-1">Total Pause Duration</p>
+                </div>
+                <div class="bg-[#36323e] rounded-lg p-4 border border-[rgba(255,255,255,0.10)] text-center">
+                    <p class="text-2xl font-bold text-slate-200">{% if session.metrics.manual_cpr_duration is not none %}{{ session.metrics.manual_cpr_duration }}s{% else %}--{% endif %}</p>
+                    <p class="text-xs text-slate-400 mt-1">Manual CPR Duration</p>
+                </div>
+                <div class="bg-[#36323e] rounded-lg p-4 border border-[rgba(255,255,255,0.10)] text-center">
+                    <p class="text-2xl font-bold text-slate-200">{% if session.metrics.percent_not_in_cpr is not none %}{{ session.metrics.percent_not_in_cpr }}%{% else %}--{% endif %}</p>
+                    <p class="text-xs text-slate-400 mt-1">% Not in CPR</p>
+                </div>
+            </div>
+        </div>
+
+        {# Advanced Tab #}
+        <div x-show="activeTab === 'advanced'" x-cloak>
+            <div class="grid grid-cols-2 gap-6">
+                {# Release Velocity #}
+                <div class="bg-[#36323e] rounded-lg p-5 border border-[rgba(255,255,255,0.10)]">
+                    <h4 class="text-sm font-semibold text-slate-200 mb-4">Release Velocity</h4>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-300">Mean</span>
+                            <span class="text-lg font-semibold text-slate-200">{{ session.metrics.mean_release_velocity or '--' }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-300">Std Dev</span>
+                            <span class="text-lg font-semibold text-slate-200">{{ session.metrics.release_velocity_std_dev or '--' }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {# Quality Metrics #}
+                <div class="bg-[#36323e] rounded-lg p-5 border border-[rgba(255,255,255,0.10)]">
+                    <h4 class="text-sm font-semibold text-slate-200 mb-4">Quality Metrics</h4>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-300">Compressions in Target %</span>
+                            <span class="text-lg font-semibold text-slate-200">{{ session.metrics.compressions_in_target_percent or '--' }}%</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-300">Target Quality %</span>
+                            <span class="text-lg font-semibold text-slate-200">{{ session.metrics.target_quality_percent or '--' }}%</span>
+                        </div>
+                        {% if session.session_type == 'real_call' %}
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-300">Target CCF %</span>
+                            <span class="text-lg font-semibold text-slate-200">{{ session.metrics.target_ccf_percent or '--' }}%</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    {# No Metrics Available #}
+    <div class="p-6">
+        <div class="text-center py-8 text-slate-400">
+            <svg class="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <p class="text-sm">No metrics available for this session</p>
+            {% if session.status == 'failed' and session.error_message %}
+            <p class="text-xs text-[#dc2626] mt-2">Error: {{ session.error_message }}</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {# Footer #}
+    <div class="flex items-center justify-between p-4 border-t border-[rgba(255,255,255,0.10)] bg-[#36323e]">
+        <button type="button" onclick="document.getElementById('modal-container').innerHTML = ''" class="px-4 py-2 text-sm text-slate-300 hover:text-slate-100">
+            Close
+        </button>
+        <div class="flex items-center gap-2">
+            {# Export buttons - only for complete sessions #}
+            {% if session.status == 'complete' and session.metrics %}
+            <div x-data="{ exporting: false, exportType: '', message: '', error: false }" class="flex items-center gap-2">
+                {# Export to PCO #}
+                <button type="button"
+                        @click="
+                            exporting = true; exportType = 'pco'; message = ''; error = false;
+                            fetch('/api/sessions/{{ session.id }}/export/pco', { method: 'POST' })
+                                .then(r => r.json())
+                                .then(data => {
+                                    exporting = false;
+                                    if (data.success) {
+                                        message = 'PCO export saved!';
+                                        error = false;
+                                    } else {
+                                        message = data.message || 'Export failed';
+                                        error = true;
+                                    }
+                                })
+                                .catch(e => { exporting = false; message = 'Export failed'; error = true; });
+                        "
+                        :disabled="exporting"
+                        class="px-3 py-2 text-sm font-medium text-blue-400 bg-blue-900/20 rounded-[6px] hover:bg-blue-900/30 transition-colors disabled:opacity-50 flex items-center gap-1">
+                    <svg x-show="exporting && exportType === 'pco'" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    <svg x-show="!exporting || exportType !== 'pco'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Export PCO
+                </button>
+
+                {# Export to Master #}
+                <button type="button"
+                        @click="
+                            exporting = true; exportType = 'master'; message = ''; error = false;
+                            fetch('/api/sessions/{{ session.id }}/export/master', { method: 'POST' })
+                                .then(r => r.json())
+                                .then(data => {
+                                    exporting = false;
+                                    if (data.success) {
+                                        message = 'Master export saved!';
+                                        error = false;
+                                    } else {
+                                        message = data.message || 'Export failed';
+                                        error = true;
+                                    }
+                                })
+                                .catch(e => { exporting = false; message = 'Export failed'; error = true; });
+                        "
+                        :disabled="exporting"
+                        class="px-3 py-2 text-sm font-medium text-green-400 bg-green-900/20 rounded-[6px] hover:bg-green-900/30 transition-colors disabled:opacity-50 flex items-center gap-1">
+                    <svg x-show="exporting && exportType === 'master'" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    <svg x-show="!exporting || exportType !== 'master'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Export Master
+                </button>
+
+                {# Status message #}
+                <span x-show="message" x-text="message" class="text-xs ml-2" :class="error ? 'text-[#dc2626]' : 'text-[#16a34a]'"></span>
+            </div>
+            {% endif %}
+
+            {# Edit Button #}
+            <button hx-get="/partials/sessions/{{ session.id }}/edit"
+                    hx-target="#modal-container"
+                    hx-swap="innerHTML"
+                    class="px-3 py-2 text-sm font-medium text-slate-200 bg-[#46424e] rounded-[6px] hover:bg-[rgba(255,255,255,0.10)] transition-colors flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+                Edit
+            </button>
+
+            {% if provider %}
+            <a href="/providers/{{ provider.id }}" class="px-4 py-2 bg-[#dc2626] text-white text-sm font-medium rounded-[6px] hover:bg-[#b91c1c] transition-colors">
+                View Provider Profile
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+</div>

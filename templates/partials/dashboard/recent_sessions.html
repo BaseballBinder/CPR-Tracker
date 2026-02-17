@@ -1,0 +1,45 @@
+{# Dashboard recent sessions table partial #}
+<table class="w-full text-sm">
+    <thead class="bg-[#36323e] text-slate-300 text-left">
+        <tr>
+            <th class="px-4 py-3 font-medium">Date</th>
+            <th class="px-4 py-3 font-medium">Provider</th>
+            <th class="px-4 py-3 font-medium">JcLS</th>
+            <th class="px-4 py-3 font-medium">Depth %</th>
+            <th class="px-4 py-3 font-medium">Rate %</th>
+            <th class="px-4 py-3 font-medium">CPM</th>
+            <th class="px-4 py-3 font-medium">Depth (cm)</th>
+        </tr>
+    </thead>
+    <tbody class="divide-y divide-[rgba(255,255,255,0.10)]">
+        {% for session in sessions %}
+        <tr class="hover:bg-[rgba(255,255,255,0.04)]">
+            <td class="px-4 py-3 text-slate-200">{{ session.date }}</td>
+            <td class="px-4 py-3 text-slate-200">{{ session.provider_name }}</td>
+            <td class="px-4 py-3">
+                {% if session.metrics.get('jcls_score') is not none %}
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full flex-shrink-0
+                        {% if session.metrics.get('jcls_score') >= 80 %}bg-green-500
+                        {% elif session.metrics.get('jcls_score') >= 60 %}bg-yellow-500
+                        {% else %}bg-red-500{% endif %}"></span>
+                    <span class="text-sm text-slate-200">{{ session.metrics.get('jcls_score') }}</span>
+                </div>
+                {% else %}
+                <span class="text-slate-500">&mdash;</span>
+                {% endif %}
+            </td>
+            <td class="px-4 py-3 text-slate-200">{{ session.metrics.correct_depth_percent }}%</td>
+            <td class="px-4 py-3 text-slate-200">{{ session.metrics.correct_rate_percent }}%</td>
+            <td class="px-4 py-3 text-slate-200">{{ session.metrics.compression_rate }}</td>
+            <td class="px-4 py-3 text-slate-200">{{ session.metrics.compression_depth }}</td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="7" class="px-4 py-8 text-center text-slate-400">
+                No recent sessions
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

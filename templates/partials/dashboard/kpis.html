@@ -1,0 +1,19 @@
+{# Dashboard KPI cards partial #}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    {% for kpi in kpis %}
+    <div class="bg-[#3e3a46] rounded-[6px] border border-[rgba(255,255,255,0.10)] p-4 shadow-sm">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-slate-400">{{ kpi.label }}</span>
+            {% if kpi.trend == 'up' %}
+            <span class="text-xs text-[#16a34a] font-medium">↑ {{ kpi.change }}</span>
+            {% elif kpi.trend == 'down' %}
+            <span class="text-xs text-[#b91c1c] font-medium">↓ {{ kpi.change }}</span>
+            {% else %}
+            <span class="text-xs text-slate-400">—</span>
+            {% endif %}
+        </div>
+        <div class="text-2xl font-bold text-slate-100">{{ kpi.value }}</div>
+        <div class="text-xs text-slate-400 mt-1">{{ kpi.subtitle }}</div>
+    </div>
+    {% endfor %}
+</div>

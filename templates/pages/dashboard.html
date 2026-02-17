@@ -1,0 +1,610 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes scoreGlow {
+    0%, 100% { filter: drop-shadow(0 0 20px rgba(220, 38, 38, 0.12)); }
+    50% { filter: drop-shadow(0 0 35px rgba(220, 38, 38, 0.22)); }
+}
+@keyframes ringDraw {
+    from { stroke-dashoffset: 264; }
+}
+.dash-enter { opacity: 0; animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.dash-d1 { animation-delay: 0.06s; }
+.dash-d2 { animation-delay: 0.14s; }
+.dash-d3 { animation-delay: 0.22s; }
+.dash-d4 { animation-delay: 0.30s; }
+.score-glow { animation: scoreGlow 3s ease-in-out infinite; }
+.ring-animate { animation: ringDraw 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards; animation-delay: 0.4s; }
+</style>
+
+{# ─── HERO METRICS BAND ─── #}
+<div class="dash-enter dash-d1 mb-6">
+    <div class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] overflow-hidden">
+        <div class="flex flex-col lg:flex-row items-center gap-6 lg:gap-8 p-6 lg:p-8">
+
+            {# JcLS Score Ring #}
+            <div class="relative flex-shrink-0 score-glow">
+                <div class="w-40 h-40 relative">
+                    <svg class="w-40 h-40 transform -rotate-90" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="7"/>
+                        {% set jcls_val = kpis.avg_jcls_score or 0 %}
+                        {% set jcls_offset = 264 - (jcls_val / 100 * 264) %}
+                        <circle cx="50" cy="50" r="42" fill="none"
+                                stroke="{% if jcls_val >= 80 %}url(#grad-green){% elif jcls_val >= 60 %}url(#grad-yellow){% else %}url(#grad-red){% endif %}"
+                                stroke-width="7" stroke-linecap="round"
+                                stroke-dasharray="264" stroke-dashoffset="{{ jcls_offset }}"
+                                class="ring-animate" style="stroke-dashoffset: {{ jcls_offset }};"/>
+                        <defs>
+                            <linearGradient id="grad-red" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#dc2626"/><stop offset="100%" stop-color="#f97316"/>
+                            </linearGradient>
+                            <linearGradient id="grad-green" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#16a34a"/><stop offset="100%" stop-color="#22d3ee"/>
+                            </linearGradient>
+                            <linearGradient id="grad-yellow" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#eab308"/><stop offset="100%" stop-color="#f97316"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span class="text-[42px] font-bold text-white leading-none tracking-tight">{{ kpis.avg_jcls_score if kpis.avg_jcls_score else "--" }}</span>
+                        <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.15em] mt-1">JcLS Score</span>
+                    </div>
+                </div>
+                <div class="absolute -top-1 -right-1">
+                    {% set info_id = "jcls" %}
+                    {% set info_title = "JcLS Score" %}
+                    {% set info_subtitle = "Jordan's Clinical Scoring" %}
+                    {% set info_body_template = "components/metric_info/jcls_body.html" %}
+                    {% set info_text = "" %}
+                    {% include "components/metric_info.html" %}
+                </div>
+            </div>
+
+            {# Vertical divider #}
+            <div class="hidden lg:block w-px h-32 bg-gradient-to-b from-transparent via-[rgba(255,255,255,0.1)] to-transparent flex-shrink-0"></div>
+            <div class="lg:hidden w-32 h-px bg-gradient-to-r from-transparent via-[rgba(255,255,255,0.1)] to-transparent"></div>
+
+            {# Secondary Metric Cards #}
+            <div class="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
+                {# CCF #}
+                <div class="relative group bg-[rgba(255,255,255,0.025)] hover:bg-[rgba(255,255,255,0.045)] rounded-xl p-4 border-l-[3px] border-[#16a34a] transition-all duration-200">
+                    <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.12em]">Avg CCF</p>
+                    <p class="text-[28px] font-bold text-white leading-tight mt-0.5">{{ (kpis.real_ccf ~ "%") if kpis.real_ccf else "--" }}</p>
+                    <div class="flex items-center gap-1.5 mt-1">
+                        {% if kpis.real_ccf and kpis.real_ccf >= 80 %}
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                        <span class="text-[10px] text-green-400/80 font-medium">On target</span>
+                        {% elif kpis.real_ccf %}
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                        <span class="text-[10px] text-amber-400/80 font-medium">Below 80%</span>
+                        {% else %}
+                        <span class="text-[10px] text-slate-500">Target: ≥80%</span>
+                        {% endif %}
+                    </div>
+                    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {% set info_id = "ccf" %}
+                        {% set info_title = "CCF" %}
+                        {% set info_subtitle = "Chest Compression Fraction" %}
+                        {% set info_body_template = "components/metric_info/ccf_body.html" %}
+                        {% set info_text = "" %}
+                        {% include "components/metric_info.html" %}
+                    </div>
+                </div>
+
+                {# CiT #}
+                <div class="relative group bg-[rgba(255,255,255,0.025)] hover:bg-[rgba(255,255,255,0.045)] rounded-xl p-4 border-l-[3px] border-[#f97316] transition-all duration-200">
+                    <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.12em]">CiT</p>
+                    <p class="text-[28px] font-bold text-white leading-tight mt-0.5">{{ (kpis.avg_combined_compliance ~ "%") if kpis.avg_combined_compliance else "--" }}</p>
+                    <div class="flex items-center gap-1.5 mt-1">
+                        {% if kpis.avg_combined_compliance and kpis.avg_combined_compliance >= 35 %}
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                        <span class="text-[10px] text-green-400/80 font-medium">Above avg</span>
+                        {% elif kpis.avg_combined_compliance %}
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                        <span class="text-[10px] text-amber-400/80 font-medium">Below avg</span>
+                        {% else %}
+                        <span class="text-[10px] text-slate-500">Ind. avg ~35%</span>
+                        {% endif %}
+                    </div>
+                    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {% set info_id = "cit" %}
+                        {% set info_title = "CiT (Combined Compliance)" %}
+                        {% set info_subtitle = "Compressions in Target" %}
+                        {% set info_body_template = "components/metric_info/cit_body.html" %}
+                        {% set info_text = "" %}
+                        {% include "components/metric_info.html" %}
+                    </div>
+                </div>
+
+                {# Release Velocity #}
+                <div class="relative group bg-[rgba(255,255,255,0.025)] hover:bg-[rgba(255,255,255,0.045)] rounded-xl p-4 border-l-[3px] border-purple-500 transition-all duration-200">
+                    <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.12em]">Release Velocity</p>
+                    <p class="text-[28px] font-bold leading-tight mt-0.5
+                        {% if kpis.avg_release_velocity and kpis.avg_release_velocity >= 400 %}text-white
+                        {% elif kpis.avg_release_velocity %}text-amber-400
+                        {% else %}text-white{% endif %}">
+                        {{ kpis.avg_release_velocity if kpis.avg_release_velocity else "--" }}{% if kpis.avg_release_velocity %}<span class="text-sm font-normal text-slate-500 ml-1">mm/s</span>{% endif %}
+                    </p>
+                    <div class="flex items-center gap-1.5 mt-1">
+                        {% if kpis.avg_release_velocity and kpis.avg_release_velocity >= 400 %}
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                        <span class="text-[10px] text-green-400/80 font-medium">On target</span>
+                        {% elif kpis.avg_release_velocity %}
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                        <span class="text-[10px] text-amber-400/80 font-medium">Below 400</span>
+                        {% else %}
+                        <span class="text-[10px] text-slate-500">Target: ≥400</span>
+                        {% endif %}
+                    </div>
+                    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {% set info_id = "rv" %}
+                        {% set info_title = "Release Velocity" %}
+                        {% set info_subtitle = "Chest Recoil Speed" %}
+                        {% set info_body_template = "components/metric_info/rv_body.html" %}
+                        {% set info_text = "" %}
+                        {% include "components/metric_info.html" %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Bottom stat strip #}
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-1 px-6 lg:px-8 py-3 border-t border-[rgba(255,255,255,0.05)] bg-[rgba(0,0,0,0.12)] text-[11px]">
+            <div class="flex items-center gap-1.5">
+                <span class="text-slate-400">Sessions</span>
+                <span class="font-semibold text-slate-300">{{ kpis.total_sessions }}</span>
+            </div>
+            <div class="w-px h-3 bg-[rgba(255,255,255,0.08)]"></div>
+            <div class="flex items-center gap-1.5">
+                <span class="text-slate-400">Providers</span>
+                <span class="font-semibold text-slate-300">{{ kpis.total_providers }}</span>
+            </div>
+            <div class="w-px h-3 bg-[rgba(255,255,255,0.08)]"></div>
+            <div class="flex items-center gap-1.5">
+                <span class="text-slate-400">Real Calls</span>
+                <span class="font-semibold text-[#dc2626]">{{ kpis.real_call_count }}</span>
+            </div>
+            <div class="w-px h-3 bg-[rgba(255,255,255,0.08)]"></div>
+            <div class="flex items-center gap-1.5">
+                <span class="text-slate-400">Simulated</span>
+                <span class="font-semibold text-blue-400">{{ kpis.simulated_count }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{# ─── PERFORMANCE TREND + IMPACT STATS ─── #}
+<div class="dash-enter dash-d2 grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6" x-data="dashboardTrends()">
+
+    {# Unified Trend Chart #}
+    <div class="lg:col-span-2 bg-[#3e3a46] rounded-2xl border border-[rgba(255,255,255,0.07)] overflow-hidden">
+        <div class="flex items-center justify-between px-5 pt-5 pb-2">
+            <h2 class="text-sm font-semibold text-slate-200">Performance Trend</h2>
+            <div class="flex gap-0.5 bg-[#2c2834] rounded-lg p-0.5">
+                <button @click="switchMetric('jcls')" :class="active === 'jcls' ? 'bg-[#dc2626] text-white shadow' : 'text-slate-500 hover:text-slate-300'" class="px-2.5 py-1 text-[10px] font-semibold rounded-md transition-all tracking-wide">JcLS</button>
+                <button @click="switchMetric('ccf')" :class="active === 'ccf' ? 'bg-[#16a34a] text-white shadow' : 'text-slate-500 hover:text-slate-300'" class="px-2.5 py-1 text-[10px] font-semibold rounded-md transition-all tracking-wide">CCF</button>
+                <button @click="switchMetric('cit')" :class="active === 'cit' ? 'bg-[#f97316] text-white shadow' : 'text-slate-500 hover:text-slate-300'" class="px-2.5 py-1 text-[10px] font-semibold rounded-md transition-all tracking-wide">CiT</button>
+                <button @click="switchMetric('rv')" :class="active === 'rv' ? 'bg-purple-600 text-white shadow' : 'text-slate-500 hover:text-slate-300'" class="px-2.5 py-1 text-[10px] font-semibold rounded-md transition-all tracking-wide">RV</button>
+            </div>
+        </div>
+        <div class="px-5 pb-5">
+            <div style="height: 220px;">
+                <canvas x-ref="trendCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    {# Impact Stats Stack #}
+    <div class="space-y-4">
+        {# Compressions #}
+        <div class="relative bg-gradient-to-br from-[#dc2626]/8 to-[#f97316]/4 rounded-2xl p-5 border border-[#dc2626]/15 overflow-hidden">
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-[#dc2626]/5 rounded-full blur-2xl"></div>
+            <div class="relative">
+                <p class="text-[10px] font-semibold text-red-400/70 uppercase tracking-[0.12em] mb-1.5">Compressions</p>
+                <p class="text-3xl font-bold text-red-400 leading-none">{{ "{:,}".format(kpis.total_compressions) }}</p>
+                {% if kpis.compressions_distance_km >= 1 %}
+                <p class="text-[11px] text-red-400/50 mt-1.5">{{ "{:,.1f}".format(kpis.compressions_distance_km) }} km pushed</p>
+                {% elif kpis.compressions_distance_m >= 1 %}
+                <p class="text-[11px] text-red-400/50 mt-1.5">{{ "{:,.0f}".format(kpis.compressions_distance_m) }} m pushed</p>
+                {% endif %}
+                {% if kpis.total_compressions > 99 %}
+                <p class="text-[10px] text-red-500/50 mt-2 italic leading-tight">"{{ kpis.compressions_comparison }}"</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if kpis.real_call_count > 0 %}
+        {# Defibrillation #}
+        <div class="relative bg-gradient-to-br from-amber-500/8 to-yellow-500/4 rounded-2xl p-5 border border-amber-500/15 overflow-hidden">
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl"></div>
+            <div class="relative">
+                <p class="text-[10px] font-semibold text-amber-400/70 uppercase tracking-[0.12em] mb-1.5">Defibrillation</p>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-bold text-amber-400 leading-none">{{ kpis.total_shocks }}</span>
+                    <span class="text-[11px] text-amber-400/50">shock{% if kpis.total_shocks != 1 %}s{% endif %}</span>
+                </div>
+                <p class="text-[11px] text-amber-400/50 mt-1.5">{{ "{:,}".format(kpis.total_joules) }} J total energy</p>
+                {% if kpis.total_shocks > 0 %}
+                <p class="text-[10px] text-amber-500/50 mt-2 italic leading-tight">"{{ kpis.joules_comparison }}"</p>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        {# No real calls placeholder #}
+        <div class="bg-[rgba(255,255,255,0.02)] rounded-2xl p-5 border border-[rgba(255,255,255,0.06)]">
+            <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.12em] mb-1.5">Defibrillation</p>
+            <p class="text-sm text-slate-500">Import real-call data to see shock statistics</p>
+        </div>
+        {% endif %}
+
+        {% if kpis.rosc_rate is not none and kpis.real_call_count > 0 %}
+        {# ROSC Rate #}
+        <div class="relative bg-gradient-to-br from-green-500/8 to-emerald-500/4 rounded-2xl p-5 border border-green-500/15 overflow-hidden">
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-green-500/5 rounded-full blur-2xl"></div>
+            <div class="relative">
+                <p class="text-[10px] font-semibold text-green-400/70 uppercase tracking-[0.12em] mb-1.5">ROSC Rate</p>
+                <p class="text-3xl font-bold text-green-400 leading-none">{{ kpis.rosc_rate }}%</p>
+                <p class="text-[11px] text-green-400/50 mt-1.5">Return of spontaneous circulation</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+
+{# ─── COMPLIANCE BREAKDOWN + TOP PERFORMERS ─── #}
+<div class="dash-enter dash-d3 grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6" x-data="{ metricsTab: 'real', performersTab: 'real' }">
+
+    {# Compliance Donuts #}
+    <div class="lg:col-span-2 bg-[#3e3a46] rounded-2xl border border-[rgba(255,255,255,0.07)] overflow-hidden">
+        <div class="flex items-center justify-between px-5 pt-5 pb-2">
+            <h2 class="text-sm font-semibold text-slate-200">Compliance Breakdown</h2>
+            <div class="flex gap-0.5 bg-[#2c2834] rounded-lg p-0.5">
+                <button @click="metricsTab = 'real'"
+                        :class="metricsTab === 'real' ? 'bg-[#dc2626] text-white shadow' : 'text-slate-500 hover:text-slate-300'"
+                        class="px-2.5 py-1 text-[10px] font-semibold rounded-md transition-all flex items-center gap-1 tracking-wide">
+                    <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                    Real ({{ kpis.real_call_count }})
+                </button>
+                <button @click="metricsTab = 'sim'"
+                        :class="metricsTab === 'sim' ? 'bg-blue-600 text-white shadow' : 'text-slate-500 hover:text-slate-300'"
+                        class="px-2.5 py-1 text-[10px] font-semibold rounded-md transition-all flex items-center gap-1 tracking-wide">
+                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    Sim ({{ kpis.simulated_count }})
+                </button>
+            </div>
+        </div>
+
+        {# Real Metrics #}
+        <div x-show="metricsTab === 'real'" class="p-5 pt-3">
+            {% if kpis.real_call_count > 0 %}
+            <div class="grid grid-cols-3 gap-4">
+                {% for metric_name, metric_val, metric_target in [('Depth', kpis.real_depth_compliance, '5-6 cm'), ('Rate', kpis.real_rate_compliance, '100-120 CPM'), ('CCF', kpis.real_ccf, '≥80%')] %}
+                <div class="text-center">
+                    <div class="relative w-24 h-24 sm:w-28 sm:h-28 mx-auto mb-2.5">
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="7"/>
+                            <circle cx="50" cy="50" r="42" fill="none"
+                                    stroke="{% if metric_val >= 80 %}#16a34a{% elif metric_val >= 60 %}#eab308{% else %}#dc2626{% endif %}"
+                                    stroke-width="7" stroke-linecap="round"
+                                    stroke-dasharray="{{ (metric_val * 2.64)|round(1) }} 264"
+                                    class="ring-animate" style="stroke-dashoffset: 0;"/>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span class="text-xl sm:text-2xl font-bold text-white">{{ metric_val }}%</span>
+                        </div>
+                    </div>
+                    <p class="text-xs font-medium text-slate-300">{{ metric_name }}</p>
+                    <p class="text-[10px] text-slate-500">{{ metric_target }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="py-10 text-center">
+                <svg class="w-8 h-8 mx-auto text-slate-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                <p class="text-xs text-slate-500">No real-call data yet</p>
+                <p class="text-[10px] text-slate-500 mt-0.5">Import sessions to see compliance</p>
+            </div>
+            {% endif %}
+        </div>
+
+        {# Simulated Metrics #}
+        <div x-show="metricsTab === 'sim'" x-cloak class="p-5 pt-3">
+            {% if kpis.simulated_count > 0 %}
+            <div class="grid grid-cols-2 gap-4 max-w-xs mx-auto">
+                {% for metric_name, metric_val, metric_target in [('Depth', kpis.sim_depth_compliance, '5-6 cm'), ('Rate', kpis.sim_rate_compliance, '100-120 CPM')] %}
+                <div class="text-center">
+                    <div class="relative w-24 h-24 sm:w-28 sm:h-28 mx-auto mb-2.5">
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="7"/>
+                            <circle cx="50" cy="50" r="42" fill="none"
+                                    stroke="{% if metric_val >= 80 %}#16a34a{% elif metric_val >= 60 %}#eab308{% else %}#dc2626{% endif %}"
+                                    stroke-width="7" stroke-linecap="round"
+                                    stroke-dasharray="{{ (metric_val * 2.64)|round(1) }} 264"/>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span class="text-xl sm:text-2xl font-bold text-white">{{ metric_val }}%</span>
+                        </div>
+                    </div>
+                    <p class="text-xs font-medium text-slate-300">{{ metric_name }}</p>
+                    <p class="text-[10px] text-slate-500">{{ metric_target }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="py-10 text-center">
+                <svg class="w-8 h-8 mx-auto text-slate-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                <p class="text-xs text-slate-500">No training data yet</p>
+                <p class="text-[10px] text-slate-500 mt-0.5">Import simulated sessions to track compliance</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Top Performers #}
+    <div class="bg-[#3e3a46] rounded-2xl border border-[rgba(255,255,255,0.07)] overflow-hidden flex flex-col">
+        <div class="flex items-center justify-between px-5 pt-5 pb-2">
+            <h2 class="text-sm font-semibold text-slate-200">Top Performers</h2>
+            <div class="flex gap-0.5 bg-[#2c2834] rounded-lg p-0.5">
+                <button @click="performersTab = 'real'" :class="performersTab === 'real' ? 'bg-[#dc2626] text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'" class="p-1 rounded-md transition-all" title="Real Life">
+                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                </button>
+                <button @click="performersTab = 'sim'" :class="performersTab === 'sim' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'" class="p-1 rounded-md transition-all" title="Simulated">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        {# Real Performers #}
+        <div x-show="performersTab === 'real'" class="flex-1 px-5 pb-4 pt-1">
+            {% if top_performers_real %}
+            <div class="space-y-1">
+                {% for performer in top_performers_real[:5] %}
+                <div class="flex items-center gap-3 py-2 {% if not loop.last %}border-b border-[rgba(255,255,255,0.04)]{% endif %}">
+                    <span class="w-5 h-5 flex-shrink-0 flex items-center justify-center rounded-full text-[9px] font-bold
+                        {% if loop.index == 1 %}bg-gradient-to-br from-[#dc2626] to-[#f97316] text-white
+                        {% elif loop.index == 2 %}bg-slate-500/60 text-white
+                        {% elif loop.index == 3 %}bg-amber-600/60 text-white
+                        {% else %}bg-[rgba(255,255,255,0.06)] text-slate-500{% endif %}">{{ loop.index }}</span>
+                    <span class="flex-1 text-xs text-slate-300 truncate">{{ performer.name }}</span>
+                    {% if performer.avg_jcls_score %}
+                    <div class="flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full {% if performer.avg_jcls_score >= 80 %}bg-green-500{% elif performer.avg_jcls_score >= 60 %}bg-yellow-500{% else %}bg-red-500{% endif %}"></span>
+                        <span class="text-xs font-semibold text-slate-200">{{ performer.avg_jcls_score }}</span>
+                    </div>
+                    {% else %}
+                    <span class="text-[10px] text-slate-500">&mdash;</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="py-8 text-center">
+                <p class="text-xs text-slate-500">No real-life rankings yet</p>
+            </div>
+            {% endif %}
+        </div>
+
+        {# Sim Performers #}
+        <div x-show="performersTab === 'sim'" x-cloak class="flex-1 px-5 pb-4 pt-1">
+            {% if top_performers_simulated %}
+            <div class="space-y-1">
+                {% for performer in top_performers_simulated[:5] %}
+                <div class="flex items-center gap-3 py-2 {% if not loop.last %}border-b border-[rgba(255,255,255,0.04)]{% endif %}">
+                    <span class="w-5 h-5 flex-shrink-0 flex items-center justify-center rounded-full text-[9px] font-bold
+                        {% if loop.index == 1 %}bg-gradient-to-br from-blue-500 to-cyan-400 text-white
+                        {% elif loop.index == 2 %}bg-slate-500/60 text-white
+                        {% elif loop.index == 3 %}bg-amber-600/60 text-white
+                        {% else %}bg-[rgba(255,255,255,0.06)] text-slate-500{% endif %}">{{ loop.index }}</span>
+                    <span class="flex-1 text-xs text-slate-300 truncate">{{ performer.name }}</span>
+                    <span class="text-[10px] text-slate-500">{{ performer.session_count }} session{% if performer.session_count != 1 %}s{% endif %}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="py-8 text-center">
+                <p class="text-xs text-slate-500">No training rankings yet</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <a href="/rankings" class="block px-5 py-2.5 text-[10px] text-center text-[#dc2626] hover:bg-[#dc2626]/5 border-t border-[rgba(255,255,255,0.05)] font-semibold tracking-wide uppercase transition-colors mt-auto">
+            View all rankings
+        </a>
+    </div>
+</div>
+
+
+{# ─── RECENT SESSIONS ─── #}
+<div class="dash-enter dash-d4 bg-[#3e3a46] rounded-2xl border border-[rgba(255,255,255,0.07)] overflow-hidden">
+    <div class="px-5 py-4 flex items-center justify-between border-b border-[rgba(255,255,255,0.05)]">
+        <h2 class="text-sm font-semibold text-slate-200">Recent Sessions</h2>
+        <div class="flex items-center gap-3">
+            <button
+                class="text-[10px] text-slate-500 hover:text-slate-300 transition-colors font-medium"
+                hx-get="/partials/dashboard/recent-sessions"
+                hx-target="#recent-sessions-table"
+                hx-swap="innerHTML"
+                hx-indicator="#recent-sessions-loading"
+            >
+                <svg class="w-3 h-3 inline-block mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Refresh
+            </button>
+            <span id="recent-sessions-loading" class="htmx-indicator">
+                <svg class="animate-spin h-3 w-3 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </span>
+            <a href="/sessions" class="text-[10px] text-[#dc2626] hover:text-[#b91c1c] font-semibold tracking-wide uppercase">View all</a>
+        </div>
+    </div>
+
+    {% if recent_sessions %}
+    <div class="overflow-x-auto" id="recent-sessions-table">
+        <table class="w-full text-xs">
+            <thead>
+                <tr class="text-[10px] text-slate-500 uppercase tracking-wider">
+                    <th class="px-5 py-3 text-left font-semibold">Date</th>
+                    <th class="px-3 py-3 text-left font-semibold">Provider</th>
+                    <th class="px-3 py-3 text-left font-semibold">JcLS</th>
+                    <th class="px-3 py-3 text-left font-semibold">Depth %</th>
+                    <th class="px-3 py-3 text-left font-semibold">Rate %</th>
+                    <th class="px-3 py-3 text-left font-semibold">CPM</th>
+                    <th class="px-3 py-3 text-left font-semibold">Depth</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-[rgba(255,255,255,0.04)]">
+                {% for session in recent_sessions %}
+                <tr class="hover:bg-[rgba(255,255,255,0.02)] transition-colors">
+                    <td class="px-5 py-3 text-slate-400">{{ session.date }}</td>
+                    <td class="px-3 py-3 text-slate-300 font-medium">{{ session.provider_name }}</td>
+                    <td class="px-3 py-3">
+                        {% if session.metrics.get('jcls_score') is not none %}
+                        <div class="flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full flex-shrink-0
+                                {% if session.metrics.get('jcls_score') >= 80 %}bg-green-500
+                                {% elif session.metrics.get('jcls_score') >= 60 %}bg-yellow-500
+                                {% else %}bg-red-500{% endif %}"></span>
+                            <span class="text-slate-200 font-medium">{{ session.metrics.get('jcls_score') }}</span>
+                        </div>
+                        {% else %}
+                        <span class="text-slate-500">&mdash;</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-3 py-3 text-slate-400">{{ session.metrics.correct_depth_percent }}%</td>
+                    <td class="px-3 py-3 text-slate-400">{{ session.metrics.correct_rate_percent }}%</td>
+                    <td class="px-3 py-3 text-slate-400">{{ session.metrics.compression_rate }}</td>
+                    <td class="px-3 py-3 text-slate-400">{{ session.metrics.compression_depth }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div id="recent-sessions-table">
+        {% set empty_icon = "clipboard" %}
+        {% set empty_title = "No sessions yet" %}
+        {% set empty_message = "Import your first session to get started" %}
+        {% set empty_cta_text = "Import sessions" %}
+        {% set empty_cta_href = "/import-export" %}
+        {% include "components/empty_state.html" %}
+    </div>
+    {% endif %}
+</div>
+
+
+{# ─── CHART SCRIPT ─── #}
+<script>
+function dashboardTrends() {
+    const trendData = {
+        jcls: {{ kpis.jcls_trend | tojson }},
+        ccf: {{ kpis.ccf_trend | tojson }},
+        cit: {{ kpis.cit_trend | tojson }},
+        rv: {{ kpis.rv_trend | tojson }},
+    };
+    const targets = { jcls: 80, ccf: 80, cit: 35, rv: 400 };
+    const colors = {
+        jcls: { line: 'rgb(220, 38, 38)', fill: 'rgba(220, 38, 38, 0.08)' },
+        ccf:  { line: 'rgb(22, 163, 74)',  fill: 'rgba(22, 163, 74, 0.08)' },
+        cit:  { line: 'rgb(249, 115, 22)', fill: 'rgba(249, 115, 22, 0.08)' },
+        rv:   { line: 'rgb(147, 51, 234)', fill: 'rgba(147, 51, 234, 0.08)' },
+    };
+    const labels = { jcls: 'JcLS', ccf: 'CCF', cit: 'CiT', rv: 'Release Velocity' };
+    const units = { jcls: '', ccf: '%', cit: '%', rv: ' mm/s' };
+    let chart = null;
+
+    return {
+        active: 'jcls',
+        init() {
+            this.$nextTick(() => this.buildChart('jcls'));
+        },
+        switchMetric(key) {
+            this.active = key;
+            this.buildChart(key);
+        },
+        buildChart(key) {
+            const canvas = this.$refs.trendCanvas;
+            if (!canvas) return;
+            if (chart) chart.destroy();
+            const data = trendData[key] || [];
+            chart = new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.date),
+                    datasets: [
+                        {
+                            label: labels[key],
+                            data: data.map(d => d.value),
+                            borderColor: colors[key].line,
+                            backgroundColor: colors[key].fill,
+                            tension: 0.35,
+                            pointRadius: 3,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: colors[key].line,
+                            pointBorderColor: 'transparent',
+                            borderWidth: 2.5,
+                            fill: true,
+                        },
+                        {
+                            label: 'Target',
+                            data: data.map(() => targets[key]),
+                            borderColor: 'rgba(255,255,255,0.12)',
+                            borderDash: [4, 4],
+                            borderWidth: 1,
+                            pointRadius: 0,
+                            fill: false,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#2c2834',
+                            titleColor: '#94a3b8',
+                            bodyColor: '#e2e8f0',
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1,
+                            padding: 10,
+                            titleFont: { size: 10 },
+                            bodyFont: { size: 12, weight: 'bold' },
+                            callbacks: {
+                                label: (ctx) => ctx.dataset.label === 'Target'
+                                    ? 'Target: ' + ctx.parsed.y + units[key]
+                                    : labels[key] + ': ' + ctx.parsed.y + units[key]
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: key !== 'rv',
+                            grid: { color: 'rgba(255,255,255,0.03)', drawBorder: false },
+                            ticks: { color: '#475569', font: { size: 10 }, padding: 8 },
+                            border: { display: false },
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#475569', font: { size: 9 }, maxRotation: 45, padding: 4 },
+                            border: { display: false },
+                        }
+                    }
+                }
+            });
+        }
+    };
+}
+</script>
+{% endblock %}

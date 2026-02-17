@@ -1,0 +1,147 @@
+{# Wizard Step 4: Save Complete #}
+{# Modal Overlay #}
+<div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+<div class="bg-[#3e3a46] rounded-[6px] border border-[rgba(255,255,255,0.10)] shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    {# Modal Header #}
+    <div class="flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.10)]">
+        <h2 class="text-lg font-semibold text-slate-100">Session Saved</h2>
+        <button onclick="document.getElementById('modal-container').innerHTML = ''; window.location.reload();" class="text-slate-400 hover:text-slate-300">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+
+    {# Progress Steps - All Complete #}
+    <div class="px-4 py-3 border-b border-[rgba(255,255,255,0.10)] bg-[#36323e]">
+        <div class="flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 bg-[#16a34a] text-white rounded-full flex items-center justify-center font-medium">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                </span>
+                <span class="text-slate-400">Type</span>
+            </div>
+            <div class="flex-1 h-0.5 bg-[#16a34a] mx-2"></div>
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 bg-[#16a34a] text-white rounded-full flex items-center justify-center font-medium">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                </span>
+                <span class="text-slate-400">Data</span>
+            </div>
+            <div class="flex-1 h-0.5 bg-[#16a34a] mx-2"></div>
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 bg-[#16a34a] text-white rounded-full flex items-center justify-center font-medium">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                </span>
+                <span class="text-slate-400">Preview</span>
+            </div>
+            <div class="flex-1 h-0.5 bg-[#16a34a] mx-2"></div>
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 bg-[#16a34a] text-white rounded-full flex items-center justify-center font-medium">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                </span>
+                <span class="text-slate-400">Save</span>
+            </div>
+        </div>
+    </div>
+
+    {# Result Content #}
+    <div class="p-6">
+        {% if session_status == 'complete' %}
+        {# Success State #}
+        <div class="text-center py-6">
+            <div class="w-16 h-16 bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-[#16a34a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            {% if sessions_created and sessions_created > 1 %}
+            <h3 class="text-lg font-semibold text-slate-100 mb-2">{{ sessions_created }} Sessions Created Successfully</h3>
+            <p class="text-sm text-slate-400 mb-6">All sessions have been added to the sessions list with their metrics.</p>
+            {% else %}
+            <h3 class="text-lg font-semibold text-slate-100 mb-2">Session Created Successfully</h3>
+            <p class="text-sm text-slate-300 mb-4">Session ID: <span class="font-mono font-medium">{{ session_id }}</span></p>
+
+            {% if session_type == 'real_call' %}
+            <p class="text-sm text-slate-400 mb-6">Data has been imported and metrics calculated.</p>
+            {% else %}
+            <p class="text-sm text-slate-400 mb-6">Session has been added to the sessions list.</p>
+            {% endif %}
+            {% endif %}
+        </div>
+
+        {% elif session_status == 'importing' %}
+        {# Importing State #}
+        <div class="text-center py-6">
+            <div class="w-16 h-16 bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-blue-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-100 mb-2">Import in Progress</h3>
+            <p class="text-sm text-slate-300 mb-4">Session ID: <span class="font-mono font-medium">{{ session_id }}</span></p>
+            <p class="text-sm text-slate-400 mb-6">The session has been created and import is processing.<br>Check the Sessions list for status updates.</p>
+        </div>
+
+        {% elif session_status == 'failed' %}
+        {# Failed State #}
+        <div class="text-center py-6">
+            <div class="w-16 h-16 bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-[#dc2626]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-100 mb-2">Import Failed</h3>
+            <p class="text-sm text-slate-300 mb-2">Session ID: <span class="font-mono font-medium">{{ session_id }}</span></p>
+            <p class="text-sm text-[#dc2626] mb-4">{{ error_message or 'An error occurred during import.' }}</p>
+            <p class="text-sm text-slate-400 mb-6">The session has been saved with status "failed".<br>You can retry the import from the Sessions list.</p>
+        </div>
+        {% endif %}
+
+        {# Session Summary #}
+        <div class="bg-[#36323e] rounded-[6px] p-4 space-y-2">
+            <div class="flex justify-between text-sm">
+                <span class="text-slate-400">Type</span>
+                <span class="text-slate-100">{{ 'Real Call' if session_type == 'real_call' else 'Simulated' }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-slate-400">Date</span>
+                <span class="text-slate-100">{{ event_date }}</span>
+            </div>
+            {% if primary_provider_name %}
+            <div class="flex justify-between text-sm">
+                <span class="text-slate-400">Primary Practitioner</span>
+                <span class="text-slate-100">{{ primary_provider_name }}</span>
+            </div>
+            {% endif %}
+            <div class="flex justify-between text-sm">
+                <span class="text-slate-400">Status</span>
+                {% if session_status == 'complete' %}
+                <span class="px-2 py-0.5 text-xs font-medium bg-green-900/20 text-[#16a34a] rounded">Complete</span>
+                {% elif session_status == 'importing' %}
+                <span class="px-2 py-0.5 text-xs font-medium bg-blue-900/20 text-blue-400 rounded">Importing</span>
+                {% else %}
+                <span class="px-2 py-0.5 text-xs font-medium bg-red-900/20 text-[#dc2626] rounded">Failed</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# Footer #}
+    <div class="flex items-center justify-between p-4 border-t border-[rgba(255,255,255,0.10)] bg-[#36323e]">
+        <button type="button"
+                hx-get="/partials/session/wizard/step/1"
+                hx-target="#modal-container"
+                hx-swap="innerHTML"
+                class="px-4 py-2 text-sm text-slate-300 hover:text-slate-100">
+            Add Another
+        </button>
+        <button type="button"
+                onclick="document.getElementById('modal-container').innerHTML = ''; window.location.reload();"
+                class="px-4 py-2 bg-[#dc2626] text-white text-sm font-medium rounded-[6px] hover:bg-[#b91c1c] transition-colors">
+            Done
+        </button>
+    </div>
+</div>
+</div>

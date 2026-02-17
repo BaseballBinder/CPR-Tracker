@@ -1,0 +1,65 @@
+{#
+  Button Component
+
+  Usage:
+    {% set btn_text = "Save" %}
+    {% set btn_variant = "primary" %}
+    {% set btn_href = "#" %}
+    {% set btn_icon = "plus" %}
+    {% set btn_type = "button" %}
+    {% set btn_disabled = false %}
+    {% include "components/button.html" %}
+
+  Variants: primary, secondary, ghost
+  Icons: plus, download, save, check, x
+#}
+
+{% set variant_classes = {
+    'primary': 'bg-[#dc2626] text-white hover:bg-[#b91c1c] focus:ring-[#dc2626]',
+    'secondary': 'border border-[rgba(255,255,255,0.10)] text-slate-200 hover:bg-[rgba(255,255,255,0.04)] focus:ring-slate-400',
+    'ghost': 'text-slate-300 hover:bg-[rgba(255,255,255,0.10)] focus:ring-slate-400'
+} %}
+
+{% set base_classes = 'inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-[6px] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2' %}
+
+{% if btn_href %}
+<a
+    href="{{ btn_href }}"
+    class="{{ base_classes }} {{ variant_classes[btn_variant] | default(variant_classes['primary']) }} {% if btn_disabled %}opacity-50 pointer-events-none{% endif %}"
+>
+{% else %}
+<button
+    type="{{ btn_type | default('button') }}"
+    class="{{ base_classes }} {{ variant_classes[btn_variant] | default(variant_classes['primary']) }}"
+    {% if btn_disabled %}disabled{% endif %}
+>
+{% endif %}
+    {% if btn_icon %}
+        {% if btn_icon == 'plus' %}
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        {% elif btn_icon == 'download' %}
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+        </svg>
+        {% elif btn_icon == 'save' %}
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+        </svg>
+        {% elif btn_icon == 'check' %}
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        {% elif btn_icon == 'x' %}
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+        {% endif %}
+    {% endif %}
+    {{ btn_text }}
+{% if btn_href %}
+</a>
+{% else %}
+</button>
+{% endif %}

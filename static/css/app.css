@@ -1,0 +1,284 @@
+/**
+ * CPR Tracking System - Custom Styles
+ * Ember Dark Theme — Fire Department Design System
+ */
+
+/* ===== Base Styles ===== */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Ensure smooth scrolling for tables */
+.overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ===== Color Reference (CSS Custom Properties) ===== */
+:root {
+    /* Primary - Fire Red */
+    --color-fire-500: #ef4444;
+    --color-fire-600: #dc2626;
+    --color-fire-700: #b91c1c;
+
+    /* Accent - Ember */
+    --color-ember-300: #fdba74;
+    --color-ember-500: #f97316;
+
+    /* Neutral - Steel */
+    --color-steel-500: #64748b;
+
+    /* Status */
+    --color-success-600: #16a34a;
+    --color-warning-600: #d97706;
+    --color-error-700: #b91c1c;
+    --color-info-600: #2563eb;
+
+    /* Warm Mid-Dark Theme — "Ember Dark" */
+    --bg-body: #2c2834;
+    --bg-sidebar: #221e28;
+    --bg-topbar: #36323e;
+    --bg-card: #3e3a46;
+    --bg-card-alt: #46424e;
+    --bg-input: #46424e;
+    --bg-table-header: #36323e;
+    --border-subtle: rgba(255, 255, 255, 0.10);
+    --border-input: rgba(255, 255, 255, 0.14);
+    --text-primary: #ede8e6;
+    --text-secondary: #a8a0a0;
+    --text-muted: #736c6c;
+
+    /* Spacing scale */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-12: 48px;
+
+    /* Border radius */
+    --radius-card: 6px;
+    --radius-pill: 999px;
+}
+
+/* ===== Typography Enhancements ===== */
+body {
+    font-feature-settings: "kern" 1, "liga" 1;
+    text-rendering: optimizeLegibility;
+}
+
+/* ===== Table Styles ===== */
+thead.sticky {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+tbody.zebra tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+table {
+    table-layout: auto;
+}
+
+th, td {
+    white-space: nowrap;
+}
+
+/* ===== Focus States ===== */
+:focus-visible {
+    outline: 2px solid var(--color-fire-600);
+    outline-offset: 2px;
+}
+
+/* ===== Transition Defaults ===== */
+.transition-colors {
+    transition-property: color, background-color, border-color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+
+/* ===== Clinical Data Block (per UX spec) ===== */
+.clinical-data-block {
+    background-color: rgba(254, 252, 232, 0.08);
+    border: 1px solid rgba(253, 186, 116, 0.3);
+    border-radius: var(--radius-card);
+    padding: var(--space-4);
+}
+
+.clinical-data-block::before {
+    content: "Clinical Event Data";
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-ember-500);
+    margin-bottom: var(--space-2);
+}
+
+/* ===== Card Shadows (warm dark) ===== */
+.shadow-card {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.35), 0 1px 2px -1px rgba(0, 0, 0, 0.25);
+}
+
+/* ===== Badge/Pill Styles ===== */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* ===== Button States ===== */
+button:disabled,
+.btn-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ===== HTMX Loading States ===== */
+.htmx-request .htmx-indicator {
+    display: inline-block;
+}
+
+.htmx-indicator {
+    display: none;
+}
+
+/* ===== Page Entrance Animations ===== */
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.page-enter {
+    opacity: 0;
+    animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.page-d1 { animation-delay: 0.06s; }
+.page-d2 { animation-delay: 0.14s; }
+.page-d3 { animation-delay: 0.22s; }
+.page-d4 { animation-delay: 0.30s; }
+.page-d5 { animation-delay: 0.38s; }
+.page-d6 { animation-delay: 0.46s; }
+.page-d7 { animation-delay: 0.54s; }
+
+/* Loading skeleton animation */
+@keyframes skeleton-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.skeleton {
+    animation: skeleton-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    background-color: var(--bg-card-alt);
+    border-radius: var(--radius-card);
+}
+
+/* ===== Modal Overlay ===== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 50;
+}
+
+.modal-content {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    z-index: 51;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* ===== Toast Notifications (dark-friendly) ===== */
+.toast {
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-card);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.toast-success {
+    background-color: rgba(22, 163, 74, 0.15);
+    color: #4ade80;
+    border: 1px solid rgba(22, 163, 74, 0.3);
+}
+
+.toast-error {
+    background-color: rgba(220, 38, 38, 0.15);
+    color: #fca5a5;
+    border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+.toast-info {
+    background-color: rgba(37, 99, 235, 0.15);
+    color: #93c5fd;
+    border: 1px solid rgba(37, 99, 235, 0.3);
+}
+
+.toast-warning {
+    background-color: rgba(217, 119, 6, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(217, 119, 6, 0.3);
+}
+
+/* ===== Responsive Helpers ===== */
+@media (max-width: 640px) {
+    .mobile-stack {
+        display: flex;
+        flex-direction: column;
+    }
+
+    table td, table th {
+        padding: 0.5rem 0.75rem;
+    }
+}
+
+/* ===== Print Styles ===== */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    body {
+        background-color: white;
+        color: #1e293b;
+    }
+
+    .shadow-card {
+        box-shadow: none;
+        border: 1px solid #e2e8f0;
+    }
+}
+
+/* ===== Scrollbar (warm dark) ===== */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-body);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.22);
+}

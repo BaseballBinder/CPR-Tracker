@@ -1,0 +1,52 @@
+{#
+  ModalShell Component (for Wizard Modal in Milestone 4)
+
+  Usage:
+    {% set modal_title = "New Session" %}
+    {% set modal_step = 1 %}
+    {% set modal_total_steps = 5 %}
+    {% include "components/modal_shell.html" %}
+    ... modal content here ...
+    {% include "components/modal_shell_footer.html" %}
+#}
+
+<!-- Modal Overlay -->
+<div class="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4" @click.self="closeModal()">
+    <!-- Modal Content -->
+    <div class="bg-[#3e3a46] rounded-[6px] shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col" @click.stop>
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-[rgba(255,255,255,0.10)] flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-semibold text-slate-100">{{ modal_title }}</h2>
+                {% if modal_step and modal_total_steps %}
+                <p class="text-sm text-slate-400 mt-1">Step {{ modal_step }} of {{ modal_total_steps }}</p>
+                {% endif %}
+            </div>
+            <button
+                onclick="closeModal()"
+                class="p-1 text-slate-400 hover:text-slate-200 rounded-[6px] hover:bg-[rgba(255,255,255,0.10)] transition-colors"
+                aria-label="Close modal"
+            >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Progress Bar (if steps) -->
+        {% if modal_step and modal_total_steps %}
+        <div class="px-6 py-3 bg-[#36323e] border-b border-[rgba(255,255,255,0.10)]">
+            <div class="flex items-center gap-2">
+                {% for i in range(1, modal_total_steps + 1) %}
+                <div class="flex-1 h-1.5 rounded-full {% if i <= modal_step %}bg-[#dc2626]{% else %}bg-[#46424e]{% endif %}"></div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Modal Body (to be filled by page) -->
+        <div class="flex-1 overflow-y-auto px-6 py-4" id="modal-body">
+            {{ modal_content | safe if modal_content else '' }}
+        </div>
+    </div>
+</div>

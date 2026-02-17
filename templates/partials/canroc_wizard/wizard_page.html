@@ -1,0 +1,244 @@
+<!-- CanROC Wizard Page Content - Dark Theme with Two-Column Layout -->
+<form hx-post="/partials/canroc/{{ session_id }}/{{ template_id }}/page/{{ page_id }}/save"
+      hx-target="#wizard-content"
+      hx-swap="innerHTML"
+      class="space-y-5">
+
+    <!-- Page Header - Dark -->
+    <div class="border-b border-slate-700 pb-4">
+        <div class="flex items-center gap-2 mb-1">
+            <span class="px-2 py-0.5 text-xs font-medium bg-slate-700 text-slate-300 rounded">
+                Page {{ page_id }} / {{ total_pages }}
+            </span>
+            {% if page.auto_filled %}
+            <span class="px-2 py-0.5 text-xs font-medium bg-blue-900 text-blue-300 rounded">
+                Auto-filled from ZIP
+            </span>
+            {% endif %}
+        </div>
+        <h3 class="text-lg font-semibold text-white">{{ page.page_label }}</h3>
+        <p class="text-sm text-slate-400">{{ page.description }}</p>
+    </div>
+
+    <!-- Validation Errors - Dark -->
+    {% if errors %}
+    <div class="bg-red-900/50 border border-red-700 rounded-[6px] p-4">
+        <div class="flex items-start gap-2">
+            <svg class="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+                <p class="font-medium text-red-300">Please fix the following errors:</p>
+                <ul class="mt-1 text-sm text-red-400 list-disc list-inside">
+                    {% for error in errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Fields - Two Column Layout -->
+    <div class="space-y-4">
+        {% for field in fields %}
+        {% if field.should_show %}
+        <div class="field-group bg-slate-700/40 border border-slate-600 rounded-lg p-4" data-field-id="{{ field.field_id }}">
+            <!-- Two Column Grid: Left = Prompt, Right = Input -->
+            <div class="grid grid-cols-1 lg:grid-cols-[38%_62%] gap-4 items-start">
+                <!-- Left Column: Prompt / Label / Code -->
+                <div class="space-y-1">
+                    {% if field.help_text %}
+                    <p class="text-sm font-medium text-slate-200 leading-snug">
+                        {{ field.help_text }}
+                        {% if field.is_required %}<span class="text-red-400 ml-1">*</span>{% endif %}
+                    </p>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-xs text-slate-400">{{ field.label }}</span>
+                        <code class="px-1.5 py-0.5 text-xs font-mono bg-slate-600 text-slate-300 rounded">
+                            {{ field.field_id }}
+                        </code>
+                        {% if field.provenance == 'zip_autofill' %}
+                        <span class="px-1.5 py-0.5 text-xs bg-blue-900 text-blue-300 rounded">Auto-filled</span>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <!-- No help_text: use label as primary -->
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <label class="text-sm font-medium text-slate-200">
+                            {{ field.label }}
+                            {% if field.is_required %}<span class="text-red-400 ml-1">*</span>{% endif %}
+                        </label>
+                        <code class="px-1.5 py-0.5 text-xs font-mono bg-slate-600 text-slate-300 rounded">
+                            {{ field.field_id }}
+                        </code>
+                        {% if field.provenance == 'zip_autofill' %}
+                        <span class="px-1.5 py-0.5 text-xs bg-blue-900 text-blue-300 rounded">Auto-filled</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Right Column: Input Control -->
+                <div>
+                    {% if field.type == 'choice' %}
+                    <!-- Button Grid for ALL Choice Fields (strict enforcement) -->
+                    {# Reorder choices: Yes (value="1") first, then No (value="0"), then others #}
+                    {% set ordered_choices = [] %}
+                    {% for choice in field.choices %}
+                        {% if choice.value == "1" and choice.label|lower in ["yes", "y"] %}
+                            {% set ordered_choices = [choice] + ordered_choices %}
+                        {% elif choice.value == "0" and choice.label|lower in ["no", "n"] %}
+                            {% set ordered_choices = ordered_choices + [choice] %}
+                        {% else %}
+                            {% set ordered_choices = ordered_choices + [choice] %}
+                        {% endif %}
+                    {% endfor %}
+                    {# If no Yes/No detected, use original order #}
+                    {% if ordered_choices|length != field.choices|length %}
+                        {% set ordered_choices = field.choices %}
+                    {% endif %}
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2"
+                         x-data="{ selected: '{{ field.current_value or '' }}' }">
+                        <!-- Hidden input to store the actual value (allows deselect to '.') -->
+                        <input type="hidden" name="field_{{ field.field_id }}" :value="selected || '.'">
+                        {% for choice in ordered_choices %}
+                        <button type="button"
+                                @click="selected = (selected === '{{ choice.value }}') ? '' : '{{ choice.value }}'"
+                                :class="selected === '{{ choice.value }}' ? 'bg-[#dc2626] text-white border-[#dc2626]' : 'bg-slate-600 text-slate-200 border-slate-500 hover:border-[#dc2626]'"
+                                {% if field.is_cno %}disabled{% endif %}
+                                class="px-3 py-2 text-sm border rounded-[6px] text-center transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                            {{ choice.label }}
+                        </button>
+                        {% endfor %}
+                    </div>
+
+                    {% elif field.type == 'integer' %}
+                    <!-- Integer Input - Dark -->
+                    <input type="number"
+                           name="field_{{ field.field_id }}"
+                           value="{{ field.current_value or '' }}"
+                           {% if field.min is defined %}min="{{ field.min }}"{% endif %}
+                           {% if field.max is defined %}max="{{ field.max }}"{% endif %}
+                           step="1"
+                           {% if field.is_cno %}disabled{% endif %}
+                           class="w-full max-w-xs px-3 py-2 bg-slate-600 border border-slate-500 rounded-[6px] text-sm text-white placeholder-slate-400 focus:ring-2 focus:ring-[#dc2626] focus:border-transparent disabled:bg-slate-700 disabled:cursor-not-allowed">
+
+                    {% elif field.type == 'float' %}
+                    <!-- Float Input - Dark -->
+                    <input type="number"
+                           name="field_{{ field.field_id }}"
+                           value="{{ field.current_value or '' }}"
+                           {% if field.min is defined %}min="{{ field.min }}"{% endif %}
+                           {% if field.max is defined %}max="{{ field.max }}"{% endif %}
+                           step="0.{% for _ in range(field.decimals|default(2) - 1) %}0{% endfor %}1"
+                           {% if field.is_cno %}disabled{% endif %}
+                           class="w-full max-w-xs px-3 py-2 bg-slate-600 border border-slate-500 rounded-[6px] text-sm text-white placeholder-slate-400 focus:ring-2 focus:ring-[#dc2626] focus:border-transparent disabled:bg-slate-700 disabled:cursor-not-allowed">
+
+                    {% elif field.type == 'time' %}
+                    <!-- Time Input - Dark -->
+                    <input type="time"
+                           name="field_{{ field.field_id }}"
+                           value="{{ field.current_value or '' }}"
+                           step="1"
+                           {% if field.is_cno %}disabled{% endif %}
+                           class="w-full max-w-xs px-3 py-2 bg-slate-600 border border-slate-500 rounded-[6px] text-sm text-white focus:ring-2 focus:ring-[#dc2626] focus:border-transparent disabled:bg-slate-700 disabled:cursor-not-allowed">
+
+                    {% elif field.type == 'date' %}
+                    <!-- Date Input - Dark -->
+                    <input type="date"
+                           name="field_{{ field.field_id }}"
+                           value="{{ field.current_value or '' }}"
+                           {% if field.is_cno %}disabled{% endif %}
+                           class="w-full max-w-xs px-3 py-2 bg-slate-600 border border-slate-500 rounded-[6px] text-sm text-white focus:ring-2 focus:ring-[#dc2626] focus:border-transparent disabled:bg-slate-700 disabled:cursor-not-allowed">
+
+                    {% elif field.type == 'datetime' %}
+                    <!-- DateTime Input - Dark -->
+                    <input type="datetime-local"
+                           name="field_{{ field.field_id }}"
+                           value="{{ field.current_value or '' }}"
+                           {% if field.is_cno %}disabled{% endif %}
+                           class="w-full max-w-sm px-3 py-2 bg-slate-600 border border-slate-500 rounded-[6px] text-sm text-white focus:ring-2 focus:ring-[#dc2626] focus:border-transparent disabled:bg-slate-700 disabled:cursor-not-allowed">
+
+                    {% else %}
+                    <!-- Text Input (default) - Dark -->
+                    <input type="text"
+                           name="field_{{ field.field_id }}"
+                           value="{{ field.current_value or '' }}"
+                           {% if field.is_cno %}disabled{% endif %}
+                           class="w-full max-w-sm px-3 py-2 bg-slate-600 border border-slate-500 rounded-[6px] text-sm text-white placeholder-slate-400 focus:ring-2 focus:ring-[#dc2626] focus:border-transparent disabled:bg-slate-700 disabled:cursor-not-allowed">
+                    {% endif %}
+
+                    <!-- CNO Toggle (if allowed) - Dark -->
+                    {% if field.cno_allowed %}
+                    <div class="mt-2 flex items-center gap-2">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox"
+                                   name="cno_{{ field.field_id }}"
+                                   value="1"
+                                   {% if field.is_cno %}checked{% endif %}
+                                   onchange="toggleCNO(this, '{{ field.field_id }}')"
+                                   class="w-4 h-4 text-amber-500 bg-slate-600 border-slate-500 rounded focus:ring-amber-500">
+                            <span class="text-sm text-amber-400">Cannot Obtain</span>
+                        </label>
+                        {% if field.is_cno %}
+                        <span class="text-xs text-amber-500">
+                            {% if field.cno_default %}(Will use default: {{ field.cno_default }}){% endif %}
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Navigation Buttons - Dark -->
+    <div class="flex items-center justify-between pt-4 border-t border-slate-700">
+        <div>
+            {% if page_id > 1 %}
+            <button type="button"
+                    hx-get="/partials/canroc/{{ session_id }}/{{ template_id }}/page/{{ page_id - 1 }}"
+                    hx-target="#wizard-content"
+                    hx-swap="innerHTML"
+                    class="px-4 py-2 text-sm font-medium text-slate-300 border border-slate-600 rounded-[6px] hover:bg-slate-700 transition-colors">
+                Previous
+            </button>
+            {% endif %}
+        </div>
+        <div class="flex items-center gap-2">
+            <button type="button"
+                    onclick="document.getElementById('modal-container').innerHTML = ''"
+                    class="px-4 py-2 text-sm font-medium text-slate-300 border border-slate-600 rounded-[6px] hover:bg-slate-700 transition-colors">
+                Save & Exit
+            </button>
+            <button type="submit"
+                    class="px-4 py-2 text-sm font-medium text-white bg-[#dc2626] rounded-[6px] hover:bg-[#b91c1c] transition-colors">
+                {% if page_id == total_pages %}
+                Review & Complete
+                {% else %}
+                Save & Next
+                {% endif %}
+            </button>
+        </div>
+    </div>
+</form>
+
+<script>
+function toggleCNO(checkbox, fieldId) {
+    const fieldGroup = checkbox.closest('.field-group');
+    const inputs = fieldGroup.querySelectorAll('input:not([type="checkbox"]), select');
+
+    inputs.forEach(input => {
+        if (checkbox.checked) {
+            input.disabled = true;
+            input.classList.add('bg-slate-700', 'cursor-not-allowed');
+        } else {
+            input.disabled = false;
+            input.classList.remove('bg-slate-700', 'cursor-not-allowed');
+        }
+    });
+}
+</script>

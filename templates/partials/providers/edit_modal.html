@@ -1,0 +1,127 @@
+{# Edit Provider Modal #}
+<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onclick="if(event.target === this) document.getElementById('modal-container').innerHTML = ''">
+    <div class="bg-[#3e3a46] rounded-[6px] border border-[rgba(255,255,255,0.10)] shadow-lg w-full max-w-md mx-4">
+        {# Modal Header #}
+        <div class="flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.10)]">
+            <h2 class="text-lg font-semibold text-slate-100">Edit Provider</h2>
+            <button onclick="document.getElementById('modal-container').innerHTML = ''" class="text-slate-400 hover:text-slate-300">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        {# Form #}
+        <form hx-post="/partials/providers/{{ provider.id }}/update" hx-target="#modal-container" hx-swap="innerHTML">
+            <div class="p-4 space-y-4">
+                {# Provider ID (Read-only) #}
+                <div class="bg-[#36323e] rounded-[6px] p-3 border border-[rgba(255,255,255,0.10)]">
+                    <p class="text-xs text-slate-400 mb-1">Provider ID</p>
+                    <p class="text-sm font-mono text-slate-200">{{ provider.id }}</p>
+                </div>
+
+                {# First Name #}
+                <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-1">
+                        First Name <span class="text-[#dc2626]">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        name="first_name"
+                        value="{{ first_name if first_name is defined else provider.first_name }}"
+                        required
+                        class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] focus:border-[#dc2626]"
+                        placeholder="Enter first name"
+                    >
+                    {% if errors and errors.first_name %}
+                    <p class="text-xs text-[#b91c1c] mt-1">{{ errors.first_name }}</p>
+                    {% endif %}
+                </div>
+
+                {# Last Name #}
+                <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-1">
+                        Last Name <span class="text-[#dc2626]">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        name="last_name"
+                        value="{{ last_name if last_name is defined else provider.last_name }}"
+                        required
+                        class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] focus:border-[#dc2626]"
+                        placeholder="Enter last name"
+                    >
+                    {% if errors and errors.last_name %}
+                    <p class="text-xs text-[#b91c1c] mt-1">{{ errors.last_name }}</p>
+                    {% endif %}
+                </div>
+
+                {# Certification #}
+                <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-1">
+                        Certification <span class="text-[#dc2626]">*</span>
+                    </label>
+                    <select
+                        name="certification"
+                        required
+                        class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] focus:border-[#dc2626] bg-[#3e3a46]"
+                    >
+                        <option value="">Select certification</option>
+                        <option value="ACP" {% if (certification if certification is defined else provider.certification) == 'ACP' %}selected{% endif %}>ACP - Advanced Care Paramedic</option>
+                        <option value="PCP" {% if (certification if certification is defined else provider.certification) == 'PCP' %}selected{% endif %}>PCP - Primary Care Paramedic</option>
+                        <option value="Mechanic" {% if (certification if certification is defined else provider.certification) == 'Mechanic' %}selected{% endif %}>Mechanic</option>
+                    </select>
+                    {% if errors and errors.certification %}
+                    <p class="text-xs text-[#b91c1c] mt-1">{{ errors.certification }}</p>
+                    {% endif %}
+                </div>
+
+                {# Status #}
+                <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-1">Status</label>
+                    <select
+                        name="status"
+                        class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] focus:border-[#dc2626] bg-[#3e3a46]"
+                    >
+                        <option value="active" {% if (status if status is defined else provider.status) == 'active' %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if (status if status is defined else provider.status) == 'inactive' %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+
+                {% if provider.stats and provider.stats.session_count > 0 %}
+                {# Provider Stats Summary (Read-only) #}
+                <div class="bg-blue-900/20 rounded-[6px] p-3 border border-blue-500/30">
+                    <p class="text-xs font-medium text-blue-300 mb-2">Performance Summary</p>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                            <p class="text-blue-400">Sessions</p>
+                            <p class="font-semibold text-blue-300">{{ provider.stats.session_count }}</p>
+                        </div>
+                        <div>
+                            <p class="text-blue-400">JcLS</p>
+                            <p class="font-semibold text-blue-300">{{ provider.stats.avg_jcls_score if provider.stats.avg_jcls_score else "--" }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            {# Footer #}
+            <div class="flex items-center justify-end gap-2 p-4 border-t border-[rgba(255,255,255,0.10)] bg-[#36323e]">
+                <button
+                    type="button"
+                    onclick="document.getElementById('modal-container').innerHTML = ''"
+                    class="px-4 py-2 text-sm text-slate-300 hover:text-slate-100"
+                >
+                    Cancel
+                </button>
+                <button
+                    type="submit"
+                    class="px-4 py-2 bg-[#dc2626] text-white text-sm font-medium rounded-[6px] hover:bg-[#b91c1c] transition-colors"
+                >
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

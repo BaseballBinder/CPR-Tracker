@@ -1,0 +1,150 @@
+{# Provider Report Preview Partial — white "paper" preview #}
+<div class="p-6 bg-white">
+    {# Report Header #}
+    <div class="text-center mb-8 pb-6 border-b border-gray-200">
+        <h1 class="text-2xl font-bold text-gray-900">CPR Performance Report</h1>
+        <p class="text-gray-500 mt-1">{{ provider.name }} - {{ date_range_label }}</p>
+        <p class="text-xs text-gray-400 mt-2">Generated {{ generated_at }}</p>
+    </div>
+
+    {# Summary Section #}
+    <div class="mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Performance Summary</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-gray-50 rounded-lg p-4 text-center border border-gray-200">
+                <div class="text-2xl font-bold {% if stats.avg_jcls_score and stats.avg_jcls_score >= 80 %}text-emerald-600{% elif stats.avg_jcls_score and stats.avg_jcls_score >= 60 %}text-amber-600{% else %}text-red-600{% endif %}">
+                    {{ stats.avg_jcls_score if stats.avg_jcls_score else "--" }}
+                </div>
+                <div class="text-xs text-gray-500 mt-1">JcLS Score</div>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4 text-center border border-gray-200">
+                <div class="text-2xl font-bold text-gray-900">{{ stats.session_count }}</div>
+                <div class="text-xs text-gray-500 mt-1">Sessions</div>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4 text-center border border-gray-200">
+                <div class="text-2xl font-bold text-gray-900">{{ stats.avg_depth_compliance }}%</div>
+                <div class="text-xs text-gray-500 mt-1">Depth Compliance</div>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4 text-center border border-gray-200">
+                <div class="text-2xl font-bold text-gray-900">{{ stats.avg_rate_compliance }}%</div>
+                <div class="text-xs text-gray-500 mt-1">Rate Compliance</div>
+            </div>
+        </div>
+    </div>
+
+    {# Detailed Metrics #}
+    <div class="mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Detailed Metrics</h2>
+        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <table class="w-full text-sm">
+                <tbody class="divide-y divide-gray-200">
+                    <tr>
+                        <td class="py-2 text-gray-600">Average Compression Rate</td>
+                        <td class="py-2 text-right font-medium text-gray-900">{{ stats.avg_compression_rate }} CPM</td>
+                    </tr>
+                    <tr>
+                        <td class="py-2 text-gray-600">Average Compression Depth</td>
+                        <td class="py-2 text-right font-medium text-gray-900">{{ stats.avg_compression_depth }} cm</td>
+                    </tr>
+                    <tr>
+                        <td class="py-2 text-gray-600">Depth Compliance (5.0-6.0 cm)</td>
+                        <td class="py-2 text-right font-medium {% if stats.avg_depth_compliance >= 80 %}text-emerald-600{% elif stats.avg_depth_compliance >= 60 %}text-amber-600{% else %}text-red-600{% endif %}">{{ stats.avg_depth_compliance }}%</td>
+                    </tr>
+                    <tr>
+                        <td class="py-2 text-gray-600">Rate Compliance (100-120 CPM)</td>
+                        <td class="py-2 text-right font-medium {% if stats.avg_rate_compliance >= 80 %}text-emerald-600{% elif stats.avg_rate_compliance >= 60 %}text-amber-600{% else %}text-red-600{% endif %}">{{ stats.avg_rate_compliance }}%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if sessions and sessions | length > 0 %}
+    {# Session History #}
+    <div class="mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Session History</h2>
+        <div class="overflow-x-auto border border-gray-200 rounded-lg">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-100 text-gray-600 text-left">
+                    <tr>
+                        <th class="px-3 py-2 font-medium">Date</th>
+                        <th class="px-3 py-2 font-medium">Event Type</th>
+                        <th class="px-3 py-2 font-medium">Duration</th>
+                        <th class="px-3 py-2 font-medium">Rate</th>
+                        <th class="px-3 py-2 font-medium">Depth</th>
+                        <th class="px-3 py-2 font-medium">Depth %</th>
+                        <th class="px-3 py-2 font-medium">Rate %</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for session in sessions %}
+                    <tr>
+                        <td class="px-3 py-2 text-gray-900">{{ session.date }}</td>
+                        <td class="px-3 py-2 text-gray-600">{{ session.event_type }}</td>
+                        <td class="px-3 py-2 text-gray-600">{{ session.metrics.duration }}s</td>
+                        <td class="px-3 py-2 text-gray-600">{{ session.metrics.compression_rate }}</td>
+                        <td class="px-3 py-2 text-gray-600">{{ session.metrics.compression_depth }}</td>
+                        <td class="px-3 py-2 {% if session.metrics.correct_depth_percent >= 80 %}text-emerald-600{% elif session.metrics.correct_depth_percent >= 60 %}text-amber-600{% else %}text-red-600{% endif %}">{{ session.metrics.correct_depth_percent }}%</td>
+                        <td class="px-3 py-2 {% if session.metrics.correct_rate_percent >= 80 %}text-emerald-600{% elif session.metrics.correct_rate_percent >= 60 %}text-amber-600{% else %}text-red-600{% endif %}">{{ session.metrics.correct_rate_percent }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if show_comparison and department_avg %}
+    {# Department Comparison #}
+    <div class="mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Comparison to Department Average</h2>
+        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <table class="w-full text-sm">
+                <thead class="text-gray-600 text-left">
+                    <tr>
+                        <th class="py-2 font-medium">Metric</th>
+                        <th class="py-2 text-right font-medium">{{ provider.name }}</th>
+                        <th class="py-2 text-right font-medium">Dept Avg</th>
+                        <th class="py-2 text-right font-medium">Diff</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    <tr>
+                        <td class="py-2 text-gray-600">JcLS Score</td>
+                        <td class="py-2 text-right font-medium text-gray-900">{{ stats.avg_jcls_score if stats.avg_jcls_score else "--" }}</td>
+                        <td class="py-2 text-right text-gray-500">{{ department_avg.avg_jcls_score if department_avg.avg_jcls_score else "--" }}</td>
+                        {% if stats.avg_jcls_score and department_avg.avg_jcls_score %}
+                        <td class="py-2 text-right {% if stats.avg_jcls_score >= department_avg.avg_jcls_score %}text-emerald-600{% else %}text-red-600{% endif %}">
+                            {% if stats.avg_jcls_score >= department_avg.avg_jcls_score %}+{% endif %}{{ (stats.avg_jcls_score - department_avg.avg_jcls_score) | round(1) }}
+                        </td>
+                        {% else %}
+                        <td class="py-2 text-right text-gray-400">&mdash;</td>
+                        {% endif %}
+                    </tr>
+                    <tr>
+                        <td class="py-2 text-gray-600">Depth Compliance</td>
+                        <td class="py-2 text-right font-medium text-gray-900">{{ stats.avg_depth_compliance }}%</td>
+                        <td class="py-2 text-right text-gray-500">{{ department_avg.depth_compliance }}%</td>
+                        <td class="py-2 text-right {% if stats.avg_depth_compliance >= department_avg.depth_compliance %}text-emerald-600{% else %}text-red-600{% endif %}">
+                            {% if stats.avg_depth_compliance >= department_avg.depth_compliance %}+{% endif %}{{ (stats.avg_depth_compliance - department_avg.depth_compliance) | round(1) }}%
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="py-2 text-gray-600">Rate Compliance</td>
+                        <td class="py-2 text-right font-medium text-gray-900">{{ stats.avg_rate_compliance }}%</td>
+                        <td class="py-2 text-right text-gray-500">{{ department_avg.rate_compliance }}%</td>
+                        <td class="py-2 text-right {% if stats.avg_rate_compliance >= department_avg.rate_compliance %}text-emerald-600{% else %}text-red-600{% endif %}">
+                            {% if stats.avg_rate_compliance >= department_avg.rate_compliance %}+{% endif %}{{ (stats.avg_rate_compliance - department_avg.rate_compliance) | round(1) }}%
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {# Footer #}
+    <div class="text-center text-xs text-gray-400 pt-6 border-t border-gray-200">
+        <p>High Efficiency CPR Tracking System</p>
+    </div>
+</div>

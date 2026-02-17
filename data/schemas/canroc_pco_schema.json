@@ -1,0 +1,1216 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "template_id": "pco",
+  "template_name": "CanROC PCO Template",
+  "template_file": "4. CanROC_Variables_PCO_Files_Master_Update_June2025.xlsx",
+  "version": "2025.06",
+  "last_updated": "2025-06-01",
+  "missing_marker": ".",
+
+  "pages": [
+    {
+      "page_id": 1,
+      "page_name": "pco_status",
+      "page_label": "PCO File Status",
+      "description": "PCO file review status",
+      "fields": [
+        {
+          "field_id": "cr_cprprc",
+          "label": "PCO File Reviewed",
+          "help_text": "Do CPR Process measures exist from an electronic PCO file?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": true,
+          "cno_allowed": false,
+          "input_style": "button_grid",
+          "autofill_source": "zip_exists",
+          "excel_column": 5
+        }
+      ]
+    },
+    {
+      "page_id": 2,
+      "page_name": "minute_1",
+      "page_label": "Minute 1 Metrics",
+      "description": "CPR performance data for minute 1",
+      "auto_filled": true,
+      "fields": [
+        {
+          "field_id": "cr_cmprt1",
+          "label": "Compression Rate Min 1",
+          "help_text": "Provide the compression rate for minute 1 (CPM)",
+          "type": "float",
+          "min": 0,
+          "max": 200,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cmprt1",
+          "excel_column": 7
+        },
+        {
+          "field_id": "cr_cprff1",
+          "label": "Compression Fraction Min 1",
+          "help_text": "Provide the compression fraction for minute 1 (%)",
+          "type": "float",
+          "min": 0,
+          "max": 100,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cprff1",
+          "excel_column": 8
+        },
+        {
+          "field_id": "cr_cdpth1",
+          "label": "Compression Depth Min 1",
+          "help_text": "Provide the compression depth for minute 1 (cm or inches)",
+          "type": "float",
+          "min": 0,
+          "max": 10,
+          "decimals": 2,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cdpth1",
+          "excel_column": 9
+        },
+        {
+          "field_id": "cr_etco21",
+          "label": "ETCO2 Minute 1",
+          "help_text": "Provide the ETCO2 (in mmHg) for minute 1",
+          "type": "float",
+          "min": 0,
+          "max": 150,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_etco21",
+          "excel_column": 10
+        },
+        {
+          "field_id": "cr_secun1",
+          "label": "Seconds without data Minute 1",
+          "help_text": "Enter the number of seconds with no data for minute 1",
+          "type": "float",
+          "min": 0,
+          "max": 60,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_secun1",
+          "excel_column": 11
+        }
+      ]
+    },
+    {
+      "page_id": 3,
+      "page_name": "minute_2",
+      "page_label": "Minute 2 Metrics",
+      "description": "CPR performance data for minute 2",
+      "auto_filled": true,
+      "fields": [
+        {
+          "field_id": "cr_cmprt2",
+          "label": "Compression Rate Minute 2",
+          "help_text": "Provide the compression rate for minute 2 (CPM)",
+          "type": "float",
+          "min": 0,
+          "max": 200,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cmprt2",
+          "excel_column": 12
+        },
+        {
+          "field_id": "cr_cprff2",
+          "label": "Compression Fraction Minute 2",
+          "help_text": "Provide the compression fraction for minute 2 (%)",
+          "type": "float",
+          "min": 0,
+          "max": 100,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cprff2",
+          "excel_column": 13
+        },
+        {
+          "field_id": "cr_cdpth2",
+          "label": "Compression Depth Minute 2",
+          "help_text": "Provide the compression depth for minute 2 (cm or inches)",
+          "type": "float",
+          "min": 0,
+          "max": 10,
+          "decimals": 2,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cdpth2",
+          "excel_column": 14
+        },
+        {
+          "field_id": "cr_etco22",
+          "label": "ETCO2 Minute 2",
+          "help_text": "Provide the ETCO2 (in mmHg) for minute 2",
+          "type": "float",
+          "min": 0,
+          "max": 150,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_etco22",
+          "excel_column": 15
+        },
+        {
+          "field_id": "cr_secun2",
+          "label": "Seconds without data Minute 2",
+          "help_text": "Enter the number of seconds with no data for minute 2",
+          "type": "float",
+          "min": 0,
+          "max": 60,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_secun2",
+          "excel_column": 16
+        }
+      ]
+    },
+    {
+      "page_id": 4,
+      "page_name": "minute_3",
+      "page_label": "Minute 3 Metrics",
+      "description": "CPR performance data for minute 3",
+      "auto_filled": true,
+      "fields": [
+        {
+          "field_id": "cr_cmprt3",
+          "label": "Compression Rate Minute 3",
+          "help_text": "Provide the compression rate for minute 3 (CPM)",
+          "type": "float",
+          "min": 0,
+          "max": 200,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cmprt3",
+          "excel_column": 17
+        },
+        {
+          "field_id": "cr_cprff3",
+          "label": "Compression Fraction Minute 3",
+          "help_text": "Provide the compression fraction for minute 3 (%)",
+          "type": "float",
+          "min": 0,
+          "max": 100,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cprff3",
+          "excel_column": 18
+        },
+        {
+          "field_id": "cr_cdpth3",
+          "label": "Compression Depth Minute 3",
+          "help_text": "Provide the compression depth for minute 3 (cm or inches)",
+          "type": "float",
+          "min": 0,
+          "max": 10,
+          "decimals": 2,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cdpth3",
+          "excel_column": 19
+        },
+        {
+          "field_id": "cr_etco23",
+          "label": "ETCO2 Minute 3",
+          "help_text": "Provide the ETCO2 (in mmHg) for minute 3",
+          "type": "float",
+          "min": 0,
+          "max": 150,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_etco23",
+          "excel_column": 20
+        },
+        {
+          "field_id": "cr_secun3",
+          "label": "Seconds without data Minute 3",
+          "help_text": "Enter the number of seconds with no data for minute 3",
+          "type": "float",
+          "min": 0,
+          "max": 60,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_secun3",
+          "excel_column": 21
+        }
+      ]
+    },
+    {
+      "page_id": 5,
+      "page_name": "minute_4",
+      "page_label": "Minute 4 Metrics",
+      "description": "CPR performance data for minute 4",
+      "auto_filled": true,
+      "fields": [
+        {
+          "field_id": "cr_cmprt4",
+          "label": "Compression Rate Minute 4",
+          "help_text": "Provide the compression rate for minute 4 (CPM)",
+          "type": "float",
+          "min": 0,
+          "max": 200,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cmprt4",
+          "excel_column": 22
+        },
+        {
+          "field_id": "cr_cprff4",
+          "label": "Compression Fraction Minute 4",
+          "help_text": "Provide the compression fraction for minute 4 (%)",
+          "type": "float",
+          "min": 0,
+          "max": 100,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cprff4",
+          "excel_column": 23
+        },
+        {
+          "field_id": "cr_cdpth4",
+          "label": "Compression Depth Minute 4",
+          "help_text": "Provide the compression depth for minute 4 (cm or inches)",
+          "type": "float",
+          "min": 0,
+          "max": 10,
+          "decimals": 2,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cdpth4",
+          "excel_column": 24
+        },
+        {
+          "field_id": "cr_etco24",
+          "label": "ETCO2 Minute 4",
+          "help_text": "Provide the ETCO2 (in mmHg) for minute 4",
+          "type": "float",
+          "min": 0,
+          "max": 150,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_etco24",
+          "excel_column": 25
+        },
+        {
+          "field_id": "cr_secun4",
+          "label": "Seconds without data Minute 4",
+          "help_text": "Enter the number of seconds with no data for minute 4",
+          "type": "float",
+          "min": 0,
+          "max": 60,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_secun4",
+          "excel_column": 26
+        }
+      ]
+    },
+    {
+      "page_id": 6,
+      "page_name": "minute_5",
+      "page_label": "Minute 5 Metrics",
+      "description": "CPR performance data for minute 5",
+      "auto_filled": true,
+      "fields": [
+        {
+          "field_id": "cr_cmprt5",
+          "label": "Compression Rate Minute 5",
+          "help_text": "Provide the compression rate for minute 5 (CPM)",
+          "type": "float",
+          "min": 0,
+          "max": 200,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cmprt5",
+          "excel_column": 27
+        },
+        {
+          "field_id": "cr_cprff5",
+          "label": "Compression Fraction Minute 5",
+          "help_text": "Provide the compression fraction for minute 5 (%)",
+          "type": "float",
+          "min": 0,
+          "max": 100,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cprff5",
+          "excel_column": 28
+        },
+        {
+          "field_id": "cr_cdpth5",
+          "label": "Compression Depth Minute 5",
+          "help_text": "Provide the compression depth for minute 5 (cm or inches)",
+          "type": "float",
+          "min": 0,
+          "max": 10,
+          "decimals": 2,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cdpth5",
+          "excel_column": 29
+        },
+        {
+          "field_id": "cr_etco25",
+          "label": "ETCO2 Minute 5",
+          "help_text": "Provide the ETCO2 (in mmHg) for minute 5",
+          "type": "float",
+          "min": 0,
+          "max": 150,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_etco25",
+          "excel_column": 30
+        },
+        {
+          "field_id": "cr_secun5",
+          "label": "Seconds without data Minute 5",
+          "help_text": "Enter the number of seconds with no data for minute 5",
+          "type": "float",
+          "min": 0,
+          "max": 60,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_secun5",
+          "excel_column": 31
+        }
+      ]
+    },
+    {
+      "page_id": 7,
+      "page_name": "minute_6",
+      "page_label": "Minute 6 Metrics",
+      "description": "CPR performance data for minute 6",
+      "auto_filled": true,
+      "fields": [
+        {
+          "field_id": "cr_cmprt6",
+          "label": "Compression Rate Minute 6",
+          "help_text": "Provide the compression rate for minute 6 (CPM)",
+          "type": "float",
+          "min": 0,
+          "max": 200,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cmprt6",
+          "excel_column": 32
+        },
+        {
+          "field_id": "cr_cprff6",
+          "label": "Compression Fraction Minute 6",
+          "help_text": "Provide the compression fraction for minute 6 (%)",
+          "type": "float",
+          "min": 0,
+          "max": 100,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cprff6",
+          "excel_column": 33
+        },
+        {
+          "field_id": "cr_cdpth6",
+          "label": "Compression Depth Minute 6",
+          "help_text": "Provide the compression depth for minute 6 (cm or inches)",
+          "type": "float",
+          "min": 0,
+          "max": 10,
+          "decimals": 2,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cdpth6",
+          "excel_column": 34
+        },
+        {
+          "field_id": "cr_etco26",
+          "label": "ETCO2 Minute 6",
+          "help_text": "Provide the ETCO2 (in mmHg) for minute 6",
+          "type": "float",
+          "min": 0,
+          "max": 150,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_etco26",
+          "excel_column": 35
+        },
+        {
+          "field_id": "cr_secun6",
+          "label": "Seconds without data Minute 6",
+          "help_text": "Enter the number of seconds with no data for minute 6",
+          "type": "float",
+          "min": 0,
+          "max": 60,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_secun6",
+          "excel_column": 36
+        }
+      ]
+    },
+    {
+      "page_id": 8,
+      "page_name": "minute_7",
+      "page_label": "Minute 7 Metrics",
+      "description": "CPR performance data for minute 7",
+      "auto_filled": true,
+      "fields": [
+        {
+          "field_id": "cr_cmprt7",
+          "label": "Compression Rate Minute 7",
+          "help_text": "Provide the compression rate for minute 7 (CPM)",
+          "type": "float",
+          "min": 0,
+          "max": 200,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cmprt7",
+          "excel_column": 37
+        },
+        {
+          "field_id": "cr_cprff7",
+          "label": "Compression Fraction Minute 7",
+          "help_text": "Provide the compression fraction for minute 7 (%)",
+          "type": "float",
+          "min": 0,
+          "max": 100,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cprff7",
+          "excel_column": 38
+        },
+        {
+          "field_id": "cr_cdpth7",
+          "label": "Compression Depth Minute 7",
+          "help_text": "Provide the compression depth for minute 7 (cm or inches)",
+          "type": "float",
+          "min": 0,
+          "max": 10,
+          "decimals": 2,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cdpth7",
+          "excel_column": 39
+        },
+        {
+          "field_id": "cr_etco27",
+          "label": "ETCO2 Minute 7",
+          "help_text": "Provide the ETCO2 (in mmHg) for minute 7",
+          "type": "float",
+          "min": 0,
+          "max": 150,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_etco27",
+          "excel_column": 40
+        },
+        {
+          "field_id": "cr_secun7",
+          "label": "Seconds without data Minute 7",
+          "help_text": "Enter the number of seconds with no data for minute 7",
+          "type": "float",
+          "min": 0,
+          "max": 60,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_secun7",
+          "excel_column": 41
+        }
+      ]
+    },
+    {
+      "page_id": 9,
+      "page_name": "minute_8",
+      "page_label": "Minute 8 Metrics",
+      "description": "CPR performance data for minute 8",
+      "auto_filled": true,
+      "fields": [
+        {
+          "field_id": "cr_cmprt8",
+          "label": "Compression Rate Minute 8",
+          "help_text": "Provide the compression rate for minute 8 (CPM)",
+          "type": "float",
+          "min": 0,
+          "max": 200,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cmprt8",
+          "excel_column": 42
+        },
+        {
+          "field_id": "cr_cprff8",
+          "label": "Compression Fraction Minute 8",
+          "help_text": "Provide the compression fraction for minute 8 (%)",
+          "type": "float",
+          "min": 0,
+          "max": 100,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cprff8",
+          "excel_column": 43
+        },
+        {
+          "field_id": "cr_cdpth8",
+          "label": "Compression Depth Minute 8",
+          "help_text": "Provide the compression depth for minute 8 (cm or inches)",
+          "type": "float",
+          "min": 0,
+          "max": 10,
+          "decimals": 2,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cdpth8",
+          "excel_column": 44
+        },
+        {
+          "field_id": "cr_etco28",
+          "label": "ETCO2 Minute 8",
+          "help_text": "Provide the ETCO2 (in mmHg) for minute 8",
+          "type": "float",
+          "min": 0,
+          "max": 150,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_etco28",
+          "excel_column": 45
+        },
+        {
+          "field_id": "cr_secun8",
+          "label": "Seconds without data Minute 8",
+          "help_text": "Enter the number of seconds with no data for minute 8",
+          "type": "float",
+          "min": 0,
+          "max": 60,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_secun8",
+          "excel_column": 46
+        }
+      ]
+    },
+    {
+      "page_id": 10,
+      "page_name": "minute_9",
+      "page_label": "Minute 9 Metrics",
+      "description": "CPR performance data for minute 9",
+      "auto_filled": true,
+      "fields": [
+        {
+          "field_id": "cr_cmprt9",
+          "label": "Compression Rate Minute 9",
+          "help_text": "Provide the compression rate for minute 9 (CPM)",
+          "type": "float",
+          "min": 0,
+          "max": 200,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cmprt9",
+          "excel_column": 47
+        },
+        {
+          "field_id": "cr_cprff9",
+          "label": "Compression Fraction Minute 9",
+          "help_text": "Provide the compression fraction for minute 9 (%)",
+          "type": "float",
+          "min": 0,
+          "max": 100,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cprff9",
+          "excel_column": 48
+        },
+        {
+          "field_id": "cr_cdpth9",
+          "label": "Compression Depth Minute 9",
+          "help_text": "Provide the compression depth for minute 9 (cm or inches)",
+          "type": "float",
+          "min": 0,
+          "max": 10,
+          "decimals": 2,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cdpth9",
+          "excel_column": 49
+        },
+        {
+          "field_id": "cr_etco29",
+          "label": "ETCO2 Minute 9",
+          "help_text": "Provide the ETCO2 (in mmHg) for minute 9",
+          "type": "float",
+          "min": 0,
+          "max": 150,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_etco29",
+          "excel_column": 50
+        },
+        {
+          "field_id": "cr_secun9",
+          "label": "Seconds without data Minute 9",
+          "help_text": "Enter the number of seconds with no data for minute 9",
+          "type": "float",
+          "min": 0,
+          "max": 60,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_secun9",
+          "excel_column": 51
+        }
+      ]
+    },
+    {
+      "page_id": 11,
+      "page_name": "minute_10",
+      "page_label": "Minute 10 Metrics",
+      "description": "CPR performance data for minute 10",
+      "auto_filled": true,
+      "fields": [
+        {
+          "field_id": "cr_cmprt10",
+          "label": "Compression Rate Minute 10",
+          "help_text": "Provide the compression rate for minute 10 (CPM)",
+          "type": "float",
+          "min": 0,
+          "max": 200,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cmprt10",
+          "excel_column": 52
+        },
+        {
+          "field_id": "cr_cprff10",
+          "label": "Compression Fraction Minute 10",
+          "help_text": "Provide the compression fraction for minute 10 (%)",
+          "type": "float",
+          "min": 0,
+          "max": 100,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cprff10",
+          "excel_column": 53
+        },
+        {
+          "field_id": "cr_cdpth10",
+          "label": "Compression Depth Minute 10",
+          "help_text": "Provide the compression depth for minute 10 (cm or inches)",
+          "type": "float",
+          "min": 0,
+          "max": 10,
+          "decimals": 2,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_cdpth10",
+          "excel_column": 54
+        },
+        {
+          "field_id": "cr_etco210",
+          "label": "ETCO2 Minute 10",
+          "help_text": "Provide the ETCO2 (in mmHg) for minute 10",
+          "type": "float",
+          "min": 0,
+          "max": 150,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_etco210",
+          "excel_column": 55
+        },
+        {
+          "field_id": "cr_secun10",
+          "label": "Seconds without data Minute 10",
+          "help_text": "Enter the number of seconds with no data for minute 10",
+          "type": "float",
+          "min": 0,
+          "max": 60,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.cr_secun10",
+          "excel_column": 56
+        }
+      ]
+    },
+    {
+      "page_id": 12,
+      "page_name": "segments",
+      "page_label": "CPR Segments",
+      "description": "CPR segment timing data (segments 1-6)",
+      "auto_filled": true,
+      "fields": [
+        {
+          "field_id": "cr_ecstrttm1",
+          "label": "Start Segment 1",
+          "help_text": "Provide the start time of the first CPR segment",
+          "type": "datetime",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "canroc_segments.cr_ecstrttm1",
+          "excel_column": 57
+        },
+        {
+          "field_id": "cr_esctoptm1",
+          "label": "Stop Segment 1",
+          "help_text": "Provide the stop time of the first segment",
+          "type": "datetime",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "canroc_segments.cr_esctoptm1",
+          "excel_column": 58
+        },
+        {
+          "field_id": "cr_rsnstp1",
+          "label": "Reason for Pause Segment 1",
+          "help_text": "Provide the reason for the pause in compressions",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "canroc_segments.cr_rsnstp1",
+          "excel_column": 59
+        },
+        {
+          "field_id": "cr_rsnshk1",
+          "label": "Number of Seconds Shock 1",
+          "help_text": "Provide the number of seconds from CPR pause to shock delivery",
+          "type": "float",
+          "min": 0,
+          "max": 300,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "canroc_segments.cr_rsnshk1",
+          "excel_column": 60
+        },
+        {
+          "field_id": "cr_ecstrttm2",
+          "label": "Start Segment 2",
+          "help_text": "Provide the start time of the second CPR segment",
+          "type": "datetime",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "canroc_segments.cr_ecstrttm2",
+          "excel_column": 61
+        },
+        {
+          "field_id": "cr_esctoptm2",
+          "label": "Stop Segment 2",
+          "help_text": "Provide the stop time of the second segment",
+          "type": "datetime",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "canroc_segments.cr_esctoptm2",
+          "excel_column": 62
+        },
+        {
+          "field_id": "cr_rsnshk2",
+          "label": "Number of Seconds Shock 2",
+          "help_text": "Provide the number of seconds from CPR pause to shock delivery",
+          "type": "float",
+          "min": 0,
+          "max": 300,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "canroc_segments.cr_rsnshk2",
+          "excel_column": 63
+        },
+        {
+          "field_id": "cr_ecstrttm3",
+          "label": "Start Segment 3",
+          "help_text": "Provide the start time of the third CPR segment",
+          "type": "datetime",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "canroc_segments.cr_ecstrttm3",
+          "excel_column": 64
+        },
+        {
+          "field_id": "cr_esctoptm3",
+          "label": "Stop Segment 3",
+          "help_text": "Provide the stop time of the third segment",
+          "type": "datetime",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "canroc_segments.cr_esctoptm3",
+          "excel_column": 65
+        },
+        {
+          "field_id": "cr_rsnshk3",
+          "label": "Number of Seconds Shock 3",
+          "help_text": "Provide the number of seconds from CPR pause to shock delivery",
+          "type": "float",
+          "min": 0,
+          "max": 300,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "canroc_segments.cr_rsnshk3",
+          "excel_column": 66
+        },
+        {
+          "field_id": "cr_ecstrttm4",
+          "label": "Start Segment 4",
+          "help_text": "Provide the start time of the fourth CPR segment",
+          "type": "datetime",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "canroc_segments.cr_ecstrttm4",
+          "excel_column": 67
+        },
+        {
+          "field_id": "cr_esctoptm4",
+          "label": "Stop Segment 4",
+          "help_text": "Provide the stop time of the fourth segment",
+          "type": "datetime",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "canroc_segments.cr_esctoptm4",
+          "excel_column": 68
+        },
+        {
+          "field_id": "cr_rsnshk4",
+          "label": "Number of Seconds Shock 4",
+          "help_text": "Provide the number of seconds from CPR pause to shock delivery",
+          "type": "float",
+          "min": 0,
+          "max": 300,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "canroc_segments.cr_rsnshk4",
+          "excel_column": 69
+        },
+        {
+          "field_id": "cr_ecstrttm5",
+          "label": "Start Segment 5",
+          "help_text": "Provide the start time of the fifth CPR segment",
+          "type": "datetime",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "canroc_segments.cr_ecstrttm5",
+          "excel_column": 70
+        },
+        {
+          "field_id": "cr_esctoptm5",
+          "label": "Stop Segment 5",
+          "help_text": "Provide the stop time of the fifth segment",
+          "type": "datetime",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "canroc_segments.cr_esctoptm5",
+          "excel_column": 71
+        },
+        {
+          "field_id": "cr_rsnshk5",
+          "label": "Number of Seconds Shock 5",
+          "help_text": "Provide the number of seconds from CPR pause to shock delivery",
+          "type": "float",
+          "min": 0,
+          "max": 300,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "canroc_segments.cr_rsnshk5",
+          "excel_column": 72
+        },
+        {
+          "field_id": "cr_ecstrttm6",
+          "label": "Start Segment 6",
+          "help_text": "Provide the start time of the sixth CPR segment",
+          "type": "datetime",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "canroc_segments.cr_ecstrttm6",
+          "excel_column": 73
+        },
+        {
+          "field_id": "cr_esctoptm6",
+          "label": "Stop Segment 6",
+          "help_text": "Provide the stop time of the sixth segment",
+          "type": "datetime",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "canroc_segments.cr_esctoptm6",
+          "excel_column": 74
+        },
+        {
+          "field_id": "cr_rsnshk6",
+          "label": "Number of Seconds Shock 6",
+          "help_text": "Provide the number of seconds from CPR pause to shock delivery",
+          "type": "float",
+          "min": 0,
+          "max": 300,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "canroc_segments.cr_rsnshk6",
+          "excel_column": 75
+        }
+      ]
+    },
+    {
+      "page_id": 13,
+      "page_name": "aggregate_metrics",
+      "page_label": "Aggregate Metrics",
+      "description": "Aggregate CPR performance metrics",
+      "auto_filled": true,
+      "fields": [
+        {
+          "field_id": "cr_etco2",
+          "label": "ETCO2 Exists?",
+          "help_text": "Was end tidal carbon dioxide (ETCO2) monitored during resuscitation?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 76
+        },
+        {
+          "field_id": "cr_302",
+          "label": "30:2 CPR?",
+          "help_text": "Please check only if EMS/Fire performed 30:2 CPR",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 77
+        },
+        {
+          "field_id": "cr_frhyem2",
+          "label": "1st ca rhythm",
+          "help_text": "What was the first EMS rhythm after cardiac arrest?",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 78
+        },
+        {
+          "field_id": "cr_pearate",
+          "label": "PEA Rate",
+          "help_text": "If the first rhythm was PEA, what was the rate?",
+          "type": "integer",
+          "min": 0,
+          "max": 300,
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 79
+        },
+        {
+          "field_id": "cr_cmpfrag",
+          "label": "Compression Fraction % Aggregate",
+          "help_text": "AHS EMS Use Only - Aggregate compression fraction",
+          "type": "float",
+          "min": 0,
+          "max": 100,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.compression_fraction",
+          "excel_column": 80
+        },
+        {
+          "field_id": "cr_comprtag",
+          "label": "Compression Rate Aggregate",
+          "help_text": "AHS EMS Use Only - Aggregate compression rate",
+          "type": "float",
+          "min": 0,
+          "max": 200,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.compression_rate",
+          "excel_column": 81
+        },
+        {
+          "field_id": "cr_ventrate",
+          "label": "Vent Rate",
+          "help_text": "AHS EMS Use Only - Ventilation rate",
+          "type": "float",
+          "min": 0,
+          "max": 50,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 82
+        },
+        {
+          "field_id": "cr_numpau>10s",
+          "label": "# Pauses > 10s",
+          "help_text": "AHS EMS Use Only - Number of pauses greater than 10 seconds",
+          "type": "integer",
+          "min": 0,
+          "max": 100,
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 83
+        },
+        {
+          "field_id": "cr_longpause",
+          "label": "Longest Pause (seconds)",
+          "help_text": "AHS EMS Use Only - Duration of longest pause in seconds",
+          "type": "float",
+          "min": 0,
+          "max": 600,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 84
+        },
+        {
+          "field_id": "cr_duration",
+          "label": "Duration of Resus (seconds)",
+          "help_text": "AHS EMS Use Only - Total duration of resuscitation in seconds",
+          "type": "float",
+          "min": 0,
+          "max": 7200,
+          "decimals": 0,
+          "required": false,
+          "cno_allowed": true,
+          "autofill_source": "metrics.duration",
+          "excel_column": 85
+        },
+        {
+          "field_id": "cr_timrosc",
+          "label": "Time to 1st ROSC (HH:MM:SS)",
+          "help_text": "AHS EMS Use Only - Time from start to first ROSC",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 86
+        },
+        {
+          "field_id": "cr_etco2st",
+          "label": "EtCO2 Start (mmHG)",
+          "help_text": "AHS EMS Use Only - Starting ETCO2 value",
+          "type": "float",
+          "min": 0,
+          "max": 150,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 87
+        },
+        {
+          "field_id": "cr_endtidalrosc",
+          "label": "EtCO2 ROSC (mmHG)",
+          "help_text": "AHS EMS Use Only - ETCO2 at ROSC",
+          "type": "float",
+          "min": 0,
+          "max": 150,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 88
+        },
+        {
+          "field_id": "cr_etco2ed",
+          "label": "EtCO2 End (mmHG)",
+          "help_text": "AHS EMS Use Only - Ending ETCO2 value",
+          "type": "float",
+          "min": 0,
+          "max": 150,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 89
+        },
+        {
+          "field_id": "cr_rearrest",
+          "label": "Did pt rearrest?",
+          "help_text": "AHS EMS Use Only - Did patient re-arrest?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 90
+        },
+        {
+          "field_id": "cr_rearrestnum",
+          "label": "Number of rearrests",
+          "help_text": "AHS EMS Use Only - Number of re-arrests",
+          "type": "integer",
+          "min": 0,
+          "max": 20,
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_rearrest", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 91
+        }
+      ]
+    }
+  ],
+
+  "validation_rules": [],
+
+  "completion_rules": {
+    "required_fields": ["cr_cprprc"],
+    "minimum_completion_percent": 0.0
+  }
+}

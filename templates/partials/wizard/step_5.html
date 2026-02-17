@@ -1,0 +1,112 @@
+{# Wizard Step 5: Review & Submit #}
+{# Modal Overlay #}
+<div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+<div class="bg-[#3e3a46] rounded-[6px] border border-[rgba(255,255,255,0.10)] shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    {# Modal Header #}
+    <div class="flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.10)]">
+        <h2 class="text-lg font-semibold text-slate-100">New CPR Session</h2>
+        <button onclick="document.getElementById('modal-container').innerHTML = ''" class="text-slate-400 hover:text-slate-300">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+
+    {# Progress Steps #}
+    <div class="px-4 py-3 border-b border-[rgba(255,255,255,0.10)] bg-[#36323e]">
+        <div class="flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 bg-[#16a34a] text-white rounded-full flex items-center justify-center font-medium">✓</span>
+                <span class="text-slate-400">Event Info</span>
+            </div>
+            <div class="flex-1 h-0.5 bg-[#16a34a] mx-2"></div>
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 bg-[#16a34a] text-white rounded-full flex items-center justify-center font-medium">✓</span>
+                <span class="text-slate-400">Team</span>
+            </div>
+            <div class="flex-1 h-0.5 bg-[#16a34a] mx-2"></div>
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 bg-[#16a34a] text-white rounded-full flex items-center justify-center font-medium">✓</span>
+                <span class="text-slate-400">Metrics</span>
+            </div>
+            <div class="flex-1 h-0.5 bg-[#16a34a] mx-2"></div>
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 bg-[#16a34a] text-white rounded-full flex items-center justify-center font-medium">✓</span>
+                <span class="text-slate-400">Outcome</span>
+            </div>
+            <div class="flex-1 h-0.5 bg-[#16a34a] mx-2"></div>
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 bg-[#dc2626] text-white rounded-full flex items-center justify-center font-medium">5</span>
+                <span class="text-slate-100 font-medium">Review</span>
+            </div>
+        </div>
+    </div>
+
+    {# Review Content - values would be populated from form state #}
+    <div class="p-6">
+        <div class="bg-[#36323e] rounded-[6px] p-4 mb-4">
+            <h3 class="text-sm font-medium text-slate-100 mb-3">Session Summary</h3>
+            <dl class="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                    <dt class="text-slate-400">Event Type</dt>
+                    <dd class="font-medium text-slate-100" id="review-event-type">--</dd>
+                </div>
+                <div>
+                    <dt class="text-slate-400">Date/Time</dt>
+                    <dd class="font-medium text-slate-100" id="review-datetime">--</dd>
+                </div>
+                <div>
+                    <dt class="text-slate-400">Team</dt>
+                    <dd class="font-medium text-slate-100" id="review-team">--</dd>
+                </div>
+                <div>
+                    <dt class="text-slate-400">Providers</dt>
+                    <dd class="font-medium text-slate-100" id="review-providers">--</dd>
+                </div>
+            </dl>
+        </div>
+
+        <div class="bg-[#36323e] rounded-[6px] p-4 mb-4">
+            <h3 class="text-sm font-medium text-slate-100 mb-3">CPR Metrics</h3>
+            <dl class="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                    <dt class="text-slate-400">Depth Compliance %</dt>
+                    <dd class="font-medium text-slate-100" id="review-depth-compliance">--</dd>
+                </div>
+                <div>
+                    <dt class="text-slate-400">Compression Rate</dt>
+                    <dd class="font-medium text-slate-100" id="review-rate">--</dd>
+                </div>
+                <div>
+                    <dt class="text-slate-400">Compression Depth</dt>
+                    <dd class="font-medium text-slate-100" id="review-depth">--</dd>
+                </div>
+                <div>
+                    <dt class="text-slate-400">Time to First Compression</dt>
+                    <dd class="font-medium text-slate-100" id="review-ttfc">--</dd>
+                </div>
+            </dl>
+        </div>
+
+        <div class="bg-[#36323e] rounded-[6px] p-4">
+            <h3 class="text-sm font-medium text-slate-100 mb-3">Outcome</h3>
+            <dl class="text-sm">
+                <div>
+                    <dt class="text-slate-400">Patient Outcome</dt>
+                    <dd class="font-medium text-slate-100" id="review-outcome">--</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    {# Footer #}
+    <div class="flex items-center justify-between p-4 border-t border-[rgba(255,255,255,0.10)] bg-[#36323e]">
+        <button type="button" hx-get="/partials/session/wizard/step/4" hx-target="#modal-container" hx-swap="innerHTML" class="px-4 py-2 text-sm text-slate-300 hover:text-slate-100">
+            ← Back
+        </button>
+        <button type="button" onclick="alert('Session saved! (mock)'); document.getElementById('modal-container').innerHTML = '';" class="px-4 py-2 bg-[#dc2626] text-white text-sm font-medium rounded-[6px] hover:bg-[#b91c1c] transition-colors">
+            Save Session
+        </button>
+    </div>
+</div>
+</div>

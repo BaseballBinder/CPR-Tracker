@@ -1,0 +1,390 @@
+{# Wizard Step 2: Real Call - ZIP Upload + Practitioners #}
+<script type="application/json" id="step2-providers-json">{{ providers | tojson }}</script>
+<script type="application/json" id="step2-selected-participants-json">{{ selected_participant_ids | default([]) | tojson }}</script>
+{# Modal Overlay #}
+<div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+<div class="bg-[#3e3a46] rounded-[6px] border border-[rgba(255,255,255,0.10)] shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+     x-data="wizardStep2Real"
+     x-init="selectedPrimary = '{{ primary_provider_id or "" }}'">
+    {# Modal Header #}
+    <div class="flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.10)]">
+        <div class="flex items-center gap-2">
+            <h2 class="text-lg font-semibold text-slate-100">Add Session</h2>
+            <span class="px-2 py-0.5 text-xs font-medium bg-red-900/20 text-[#dc2626] rounded">Real Call</span>
+        </div>
+        <button type="button" onclick="document.getElementById('modal-container').innerHTML = ''" class="text-slate-400 hover:text-slate-300">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+
+    {# Progress Steps #}
+    <div class="px-4 py-3 border-b border-[rgba(255,255,255,0.10)] bg-[#36323e]">
+        <div class="flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 bg-[#16a34a] text-white rounded-full flex items-center justify-center font-medium">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                </span>
+                <span class="text-slate-400">Type</span>
+            </div>
+            <div class="flex-1 h-0.5 bg-[#16a34a] mx-2"></div>
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 bg-[#dc2626] text-white rounded-full flex items-center justify-center font-medium">2</span>
+                <span class="text-slate-100 font-medium">Data</span>
+            </div>
+            <div class="flex-1 h-0.5 bg-[#46424e] mx-2"></div>
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 bg-[#46424e] text-slate-400 rounded-full flex items-center justify-center font-medium">3</span>
+                <span class="text-slate-400">Preview</span>
+            </div>
+            <div class="flex-1 h-0.5 bg-[#46424e] mx-2"></div>
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 bg-[#46424e] text-slate-400 rounded-full flex items-center justify-center font-medium">4</span>
+                <span class="text-slate-400">Save</span>
+            </div>
+        </div>
+    </div>
+
+    {# Form Content #}
+    <form hx-post="/partials/session/wizard/validate/2"
+          hx-target="#modal-container"
+          hx-swap="innerHTML"
+          hx-encoding="multipart/form-data">
+        {# Pass through session data from step 1 #}
+        <input type="hidden" name="session_type" value="{{ session_type }}">
+
+        {# Error Summary Banner #}
+        {% if errors %}
+        <div class="mx-6 mt-4 p-3 bg-red-900/20 border border-red-500/30 rounded-[6px]">
+            <div class="flex items-start gap-2">
+                <svg class="w-5 h-5 text-[#dc2626] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                    <p class="text-sm font-medium text-[#dc2626]">Please fix the following errors:</p>
+                    <ul class="mt-1 text-sm text-[#b91c1c] list-disc list-inside">
+                        {% if errors.zip_file %}<li>{{ errors.zip_file }}</li>{% endif %}
+                        {% if errors.primary_provider_id %}<li>{{ errors.primary_provider_id }}</li>{% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="p-6 space-y-6">
+            {# Hidden fields for artifact and date #}
+            <input type="hidden" name="artifact_filename" value="{{ artifact_filename }}">
+            <input type="hidden" name="zoll_data_available" value="true">
+
+            {# ZIP Uploaded Confirmation #}
+            {% if artifact_filename %}
+            <div class="bg-green-900/20 border border-green-500/30 rounded-[6px] p-3 flex items-center gap-3">
+                <svg class="w-5 h-5 text-[#16a34a] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                    <p class="text-sm font-medium text-[#16a34a]">ZIP file uploaded successfully</p>
+                    <p class="text-xs text-green-400 mt-0.5">{{ artifact_filename }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+
+            {# Date and Time #}
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-2">
+                        Call Date <span class="text-[#dc2626]">*</span>
+                    </label>
+                    <input type="date" name="event_date" value="{{ event_date }}" required
+                           class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626]">
+                    <p class="text-xs text-slate-400 mt-1">Date of the actual emergency call</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-2">Call Time</label>
+                    <input type="time" name="event_time" value="{{ event_time or '' }}"
+                           class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626]">
+                    <p class="text-xs text-slate-400 mt-1">Optional - time of the call</p>
+                </div>
+            </div>
+
+            {# Primary Practitioner (Team Lead) #}
+            <div>
+                <label class="block text-sm font-medium text-slate-200 mb-2">Team Lead <span class="text-xs text-slate-400 font-normal">(optional - can be added later)</span></label>
+                <input type="hidden" name="primary_provider_id" :value="selectedPrimary">
+                <div class="relative">
+                    {# Show selected provider name, or search input #}
+                    <input type="text"
+                           :value="primaryDropdownOpen ? providerSearch : (selectedPrimary ? getProviderName(selectedPrimary) : '')"
+                           @input="providerSearch = $event.target.value; primaryDropdownOpen = true"
+                           @focus="primaryDropdownOpen = true; providerSearch = ''"
+                           @click="if (!primaryDropdownOpen) { primaryDropdownOpen = true; providerSearch = ''; }"
+                           @mousedown="primaryDropdownOpen = true"
+                           placeholder="Search providers..."
+                           :class="selectedPrimary && !primaryDropdownOpen ? 'text-slate-100' : 'text-slate-300'"
+                           class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] bg-[#3e3a46]">
+                    <div x-show="selectedPrimary && !primaryDropdownOpen" class="absolute right-3 top-1/2 -translate-y-1/2">
+                        <button type="button" @click.prevent="selectedPrimary = ''; providerSearch = ''" class="text-slate-400 hover:text-slate-300">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    {# Dropdown - shows all providers when empty search, filtered when typing #}
+                    <div x-show="primaryDropdownOpen"
+                         @click.outside="primaryDropdownOpen = false"
+                         class="absolute z-20 w-full mt-1 bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-[6px] shadow-lg max-h-48 overflow-y-auto">
+                        <template x-for="provider in (providerSearch ? filteredProviders : providers)" :key="provider.id">
+                            <button type="button"
+                                    @click="selectedPrimary = provider.id; providerSearch = ''; primaryDropdownOpen = false"
+                                    :class="selectedPrimary === provider.id ? 'bg-red-900/20 text-[#dc2626]' : 'hover:bg-[#36323e]'"
+                                    class="w-full text-left px-3 py-2 text-sm flex items-center justify-between">
+                                <span x-text="provider.name"></span>
+                                <span class="text-xs text-slate-400" x-text="'(' + provider.certification + ')'"></span>
+                            </button>
+                        </template>
+                        {# Add new provider option #}
+                        <template x-if="filteredProviders.length === 0 && providerSearch.length >= 2">
+                            <div class="p-2 border-t border-slate-100">
+                                <button type="button"
+                                        @click="showAddForm = true; primaryDropdownOpen = false;
+                                            const parts = providerSearch.trim().split(/\s+/);
+                                            if (parts.length >= 2) { newFirstName = parts[0]; newLastName = parts.slice(1).join(' '); }
+                                            else if (parts.length === 1) { newFirstName = parts[0]; newLastName = ''; }"
+                                        class="w-full px-3 py-2 text-left text-sm bg-blue-900/20 hover:bg-blue-900/20 text-blue-400 rounded flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                    </svg>
+                                    <span>Add "<span x-text="providerSearch"></span>" as new provider</span>
+                                </button>
+                            </div>
+                        </template>
+                        <div x-show="filteredProviders.length === 0 && providerSearch.length < 2" class="px-3 py-2 text-sm text-slate-400">
+                            No providers found
+                        </div>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-1">The lead practitioner for this call - their team will be ranked</p>
+
+                {# Add New Provider Inline Form #}
+                <div x-show="showAddForm" x-transition class="mt-3 p-3 bg-[#36323e] border border-[rgba(255,255,255,0.10)] rounded-[6px]">
+                    <p class="text-sm font-medium text-slate-200 mb-2">Add New Provider</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" x-model="newFirstName" placeholder="First Name" class="text-sm border border-[rgba(255,255,255,0.15)] rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#dc2626]">
+                        <input type="text" x-model="newLastName" placeholder="Last Name" class="text-sm border border-[rgba(255,255,255,0.15)] rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#dc2626]">
+                    </div>
+                    <div class="mt-2">
+                        <select x-model="newCertification" class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#dc2626] bg-[#3e3a46]">
+                            <option value="">Select Certification</option>
+                            <option value="ACP">ACP</option>
+                            <option value="PCP">PCP</option>
+                            <option value="Mechanic">Mechanic</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end gap-2 mt-3">
+                        <button type="button" @click="showAddForm = false; newFirstName = ''; newLastName = ''; newCertification = ''" class="px-3 py-1.5 text-xs text-slate-300 hover:text-slate-100">Cancel</button>
+                        <button type="button"
+                                @click="
+                                    if (newFirstName.trim() && newLastName.trim() && newCertification) {
+                                        const formData = new FormData();
+                                        formData.append('first_name', newFirstName.trim());
+                                        formData.append('last_name', newLastName.trim());
+                                        formData.append('certification', newCertification);
+                                        const component = $data;
+                                        fetch('/api/providers', {
+                                            method: 'POST',
+                                            body: formData,
+                                            headers: { 'Accept': 'application/json' }
+                                        })
+                                            .then(r => r.json())
+                                            .then(data => {
+                                                if (data.success && data.provider) {
+                                                    const newProvider = { id: data.provider.id, name: data.provider.name, certification: data.provider.certification, status: 'active' };
+                                                    component.providers.push(newProvider);
+                                                    component.selectedPrimary = data.provider.id;
+                                                    component.providerSearch = '';
+                                                    showAddForm = false;
+                                                    newFirstName = '';
+                                                    newLastName = '';
+                                                    newCertification = '';
+                                                }
+                                            });
+                                    }
+                                "
+                                :disabled="!newFirstName.trim() || !newLastName.trim() || !newCertification"
+                                :class="newFirstName.trim() && newLastName.trim() && newCertification ? 'bg-[#dc2626] hover:bg-[#b91c1c]' : 'bg-slate-300 cursor-not-allowed'"
+                                class="px-3 py-1.5 text-xs text-white rounded transition-colors">Add Provider</button>
+                    </div>
+                </div>
+                {% if errors and errors.primary_provider_id %}
+                <p class="text-xs text-[#b91c1c] mt-1">{{ errors.primary_provider_id }}</p>
+                {% endif %}
+            </div>
+
+            {# Team Members (Additional Participants) #}
+            <div>
+                <label class="block text-sm font-medium text-slate-200 mb-2">Team Members</label>
+                {# Hidden inputs for selected participants #}
+                <template x-for="id in selectedParticipants" :key="id">
+                    <input type="hidden" name="participant_ids" :value="id">
+                </template>
+
+                {# Selected participants tags #}
+                <div x-show="selectedParticipants.length > 0" class="flex flex-wrap gap-2 mb-2">
+                    <template x-for="id in selectedParticipants" :key="id">
+                        <span class="inline-flex items-center gap-1 px-2 py-1 bg-red-900/20 text-[#dc2626] text-xs font-medium rounded-full">
+                            <span x-text="getProviderName(id)"></span>
+                            <button type="button" @click="toggleParticipant(id)" class="hover:text-[#b91c1c]">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </span>
+                    </template>
+                </div>
+
+                {# Search input #}
+                <input type="text"
+                       x-model="participantSearch"
+                       placeholder="Search to add team members..."
+                       class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-t-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] bg-[#3e3a46]">
+
+                {# Filtered list #}
+                <div class="border border-t-0 border-[rgba(255,255,255,0.15)] rounded-b-[6px] max-h-32 overflow-y-auto">
+                    <template x-for="provider in filteredParticipants" :key="provider.id">
+                        <label class="flex items-center gap-2 cursor-pointer hover:bg-[#36323e] px-3 py-2 border-b border-slate-100 last:border-0"
+                               :class="selectedParticipants.includes(provider.id) ? 'bg-red-900/20' : ''">
+                            <input type="checkbox"
+                                   :checked="selectedParticipants.includes(provider.id)"
+                                   @change="toggleParticipant(provider.id)"
+                                   class="rounded border-[rgba(255,255,255,0.15)] text-[#dc2626] focus:ring-[#dc2626]">
+                            <span class="text-sm text-slate-200" x-text="provider.name"></span>
+                            <span class="text-xs text-slate-400" x-text="'(' + provider.certification + ')'"></span>
+                        </label>
+                    </template>
+                    {# No matches - show add new option #}
+                    <template x-if="filteredParticipants.length === 0 && participantSearch.length >= 2">
+                        <div class="p-2 border-t border-slate-100">
+                            <button type="button"
+                                    @click="showParticipantAddForm = true;
+                                        const parts = participantSearch.trim().split(/\s+/);
+                                        if (parts.length >= 2) { participantFirstName = parts[0]; participantLastName = parts.slice(1).join(' '); }
+                                        else if (parts.length === 1) { participantFirstName = parts[0]; participantLastName = ''; }"
+                                    class="w-full px-3 py-2 text-left text-sm bg-blue-900/20 hover:bg-blue-900/20 text-blue-400 rounded flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                <span>Add "<span x-text="participantSearch"></span>" as new provider</span>
+                            </button>
+                        </div>
+                    </template>
+                    <div x-show="filteredParticipants.length === 0 && participantSearch.length < 2" class="px-3 py-2 text-sm text-slate-400">
+                        No providers found
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-1">Other practitioners involved in this call</p>
+
+                {# Add New Provider Inline Form for Team Members #}
+                <div x-show="showParticipantAddForm" x-transition class="mt-3 p-3 bg-[#36323e] border border-[rgba(255,255,255,0.10)] rounded-[6px]">
+                    <p class="text-sm font-medium text-slate-200 mb-2">Add New Team Member</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" x-model="participantFirstName" placeholder="First Name" class="text-sm border border-[rgba(255,255,255,0.15)] rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#dc2626]">
+                        <input type="text" x-model="participantLastName" placeholder="Last Name" class="text-sm border border-[rgba(255,255,255,0.15)] rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#dc2626]">
+                    </div>
+                    <div class="mt-2">
+                        <select x-model="participantCertification" class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#dc2626] bg-[#3e3a46]">
+                            <option value="">Select Certification</option>
+                            <option value="ACP">ACP</option>
+                            <option value="PCP">PCP</option>
+                            <option value="Mechanic">Mechanic</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end gap-2 mt-3">
+                        <button type="button" @click="showParticipantAddForm = false; participantFirstName = ''; participantLastName = ''; participantCertification = ''" class="px-3 py-1.5 text-xs text-slate-300 hover:text-slate-100">Cancel</button>
+                        <button type="button"
+                                @click="
+                                    if (participantFirstName.trim() && participantLastName.trim() && participantCertification) {
+                                        const formData = new FormData();
+                                        formData.append('first_name', participantFirstName.trim());
+                                        formData.append('last_name', participantLastName.trim());
+                                        formData.append('certification', participantCertification);
+                                        fetch('/api/providers', {
+                                            method: 'POST',
+                                            body: formData,
+                                            headers: { 'Accept': 'application/json' }
+                                        })
+                                            .then(r => r.json())
+                                            .then(data => {
+                                                if (data.success && data.provider) {
+                                                    providers.push({ id: data.provider.id, name: data.provider.name, certification: data.provider.certification, status: 'active' });
+                                                    selectedParticipants.push(data.provider.id);
+                                                    participantSearch = '';
+                                                    showParticipantAddForm = false;
+                                                    participantFirstName = '';
+                                                    participantLastName = '';
+                                                    participantCertification = '';
+                                                }
+                                            });
+                                    }
+                                "
+                                :disabled="!participantFirstName.trim() || !participantLastName.trim() || !participantCertification"
+                                :class="participantFirstName.trim() && participantLastName.trim() && participantCertification ? 'bg-[#dc2626] hover:bg-[#b91c1c]' : 'bg-slate-300 cursor-not-allowed'"
+                                class="px-3 py-1.5 text-xs text-white rounded transition-colors">Add & Select</button>
+                    </div>
+                </div>
+            </div>
+
+            {# Patient Outcome, Shocks, and Platoon #}
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-2">Patient Outcome</label>
+                    <select name="outcome"
+                            class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] focus:border-[#dc2626] bg-[#3e3a46]">
+                        <option value="" {% if not outcome %}selected{% endif %}>-- Select --</option>
+                        <option value="ROSC" {% if outcome == 'ROSC' %}selected{% endif %}>ROSC</option>
+                        <option value="No ROSC" {% if outcome == 'No ROSC' %}selected{% endif %}>No ROSC</option>
+                        <option value="Ongoing" {% if outcome == 'Ongoing' %}selected{% endif %}>Ongoing / Unknown</option>
+                        <option value="Transported" {% if outcome == 'Transported' %}selected{% endif %}>Transported with CPR</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-2">Shocks Delivered</label>
+                    <input type="number"
+                           name="shocks_delivered"
+                           min="0"
+                           max="99"
+                           value="{{ shocks_delivered or '' }}"
+                           placeholder="0"
+                           class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] focus:border-[#dc2626] bg-[#3e3a46]">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-200 mb-2">Platoon</label>
+                    <select name="platoon"
+                            class="w-full text-sm border border-[rgba(255,255,255,0.15)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] focus:border-[#dc2626] bg-[#3e3a46]">
+                        <option value="" {% if not platoon %}selected{% endif %}>-- Select --</option>
+                        <option value="A" {% if platoon == 'A' %}selected{% endif %}>Platoon A</option>
+                        <option value="B" {% if platoon == 'B' %}selected{% endif %}>Platoon B</option>
+                        <option value="C" {% if platoon == 'C' %}selected{% endif %}>Platoon C</option>
+                        <option value="D" {% if platoon == 'D' %}selected{% endif %}>Platoon D</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        {# Footer #}
+        <div class="flex items-center justify-between p-4 border-t border-[rgba(255,255,255,0.10)] bg-[#36323e]">
+            <button type="button"
+                    hx-get="/partials/session/wizard/step/1"
+                    hx-target="#modal-container"
+                    hx-swap="innerHTML"
+                    class="px-4 py-2 text-sm text-slate-300 hover:text-slate-100">
+                Back
+            </button>
+            <button type="submit" class="px-4 py-2 bg-[#dc2626] text-white text-sm font-medium rounded-[6px] hover:bg-[#b91c1c] transition-colors">
+                Next
+            </button>
+        </div>
+    </form>
+</div>
+</div>

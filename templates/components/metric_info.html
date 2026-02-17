@@ -1,0 +1,77 @@
+{#
+  Metric Info Button + Modal Component
+
+  Usage:
+    {% set info_id = "jcls" %}
+    {% set info_title = "JcLS Score" %}
+    {% set info_subtitle = "Jordan's Clinical Scoring" %}
+    {% set info_body_template = "components/metric_info/jcls_body.html" %}
+    {% include "components/metric_info.html" %}
+
+  For simple text-only modals:
+    {% set info_id = "ccf" %}
+    {% set info_title = "CCF" %}
+    {% set info_subtitle = "Chest Compression Fraction" %}
+    {% set info_text = "The percentage of total CPR time spent actively delivering chest compressions." %}
+    {% include "components/metric_info.html" %}
+#}
+
+<span x-data="{ open: false }" class="inline-flex items-center">
+    {# ? Button #}
+    <button @click.stop="open = true" type="button"
+            class="ml-1 w-4 h-4 rounded-full bg-[#46424e] border border-[rgba(255,255,255,0.15)] text-slate-400 hover:text-slate-200 hover:border-slate-400 text-[10px] font-bold flex items-center justify-center transition-colors cursor-pointer"
+            title="What is {{ info_title }}?">
+        ?
+    </button>
+
+    {# Modal Overlay #}
+    <template x-teleport="body">
+        <div x-show="open" x-cloak
+             @keydown.escape.window="open = false"
+             class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            {# Backdrop #}
+            <div x-show="open" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                 @click="open = false"
+                 class="absolute inset-0 bg-black/60"></div>
+
+            {# Modal Panel #}
+            <div x-show="open" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                 @click.stop
+                 class="relative bg-[#3e3a46] rounded-[6px] border border-[rgba(255,255,255,0.10)] shadow-xl w-full max-w-lg max-h-[80vh] overflow-y-auto z-10">
+
+                {# Header #}
+                <div class="flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.10)]">
+                    <div>
+                        <h3 class="text-base font-semibold text-slate-100">{{ info_title }}</h3>
+                        {% if info_subtitle %}
+                        <p class="text-xs text-slate-400 mt-0.5">{{ info_subtitle }}</p>
+                        {% endif %}
+                    </div>
+                    <button @click="open = false" class="text-slate-400 hover:text-slate-200 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                {# Body #}
+                <div class="p-4 text-sm text-slate-300 leading-relaxed">
+                    {% if info_body_template is defined and info_body_template %}
+                        {% include info_body_template %}
+                    {% elif info_text is defined and info_text %}
+                        <p>{{ info_text }}</p>
+                    {% endif %}
+                </div>
+
+                {# Footer #}
+                <div class="p-3 border-t border-[rgba(255,255,255,0.10)] text-right">
+                    <button @click="open = false" class="px-3 py-1.5 text-xs font-medium text-slate-300 bg-[#46424e] rounded-[6px] hover:bg-[rgba(255,255,255,0.10)] transition-colors">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+</span>

@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JcLS Tracker</title>
+
+    <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg">
+    <link rel="stylesheet" href="/static/vendor/fonts/source-sans-3.css">
+    <script src="/static/vendor/js/tailwindcss.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Source Sans 3"', 'system-ui', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            font-family: 'Source Sans 3', system-ui, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ==============================================================
+           BACKGROUND — fire truck photo with dark overlay
+           Place your image at: static/images/landing-bg.jpg
+           ============================================================== */
+        .scene-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background: #0c0c0e url('/static/images/backround-landing.png') center / cover no-repeat;
+            /* Slightly desaturate overall while preserving red tones */
+            filter: saturate(0.72) brightness(0.88);
+        }
+
+        /* Dark overlay for text readability — lets reds bleed through */
+        .scene-bg::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                /* Left darken for text readability, lighter right to show the truck */
+                linear-gradient(90deg, rgba(0, 0, 0, 0.74) 0%, rgba(0, 0, 0, 0.48) 45%, rgba(0, 0, 0, 0.32) 100%),
+                /* Edge vignette */
+                linear-gradient(180deg, rgba(0, 0, 0, 0.25) 0%, transparent 25%, transparent 75%, rgba(0, 0, 0, 0.18) 100%);
+        }
+
+        /* Subtle grain texture */
+        .scene-bg::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0.025;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            background-size: 128px 128px;
+        }
+
+        /* ==============================================================
+           LAYOUT — two columns, full height
+           Left: welcome / info / release notes
+           Right: login panel (solid dark)
+           ============================================================== */
+        .landing-layout {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .col-left {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 3rem 3.5rem;
+            min-width: 0;
+        }
+
+        .col-right {
+            flex: 0 0 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: rgba(18, 12, 12, 0.88);
+            border-left: 1px solid rgba(220, 38, 38, 0.14);
+            backdrop-filter: blur(24px);
+            padding: 3rem 2.5rem;
+            box-shadow: -4px 0 30px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (max-width: 860px) {
+            .landing-layout { flex-direction: column; }
+            .col-left { padding: 2rem 1.5rem 1rem; }
+            .col-right {
+                flex: none;
+                border-left: none;
+                border-top: 1px solid rgba(220, 38, 38, 0.14);
+                padding: 2rem 1.5rem;
+            }
+        }
+
+        /* ==============================================================
+           LEFT SIDE — Welcome text & branding
+           ============================================================== */
+        .welcome-text {
+            color: #cbd5e1;
+            font-size: 0.875rem;
+            font-weight: 500;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+        }
+
+        .logo-container {
+            display: inline-flex;
+            align-items: center;
+            overflow: visible;
+            user-select: none;
+            margin-bottom: 1.25rem;
+        }
+
+        .logo-text {
+            font-size: 4rem;
+            font-weight: 700;
+            font-style: italic;
+            letter-spacing: -0.02em;
+            line-height: 1;
+            padding-right: 0.05em;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 30%, #f97316 60%, #dc2626 85%, #b91c1c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-heart-wrap {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            margin: 0 2px;
+            flex-shrink: 0;
+        }
+
+        .logo-heart-wrap svg {
+            animation: heartPulse 1.8s ease-in-out infinite;
+            filter: drop-shadow(0 0 6px rgba(220, 38, 38, 0.5));
+        }
+
+        @keyframes heartPulse {
+            0%   { transform: scale(1); }
+            10%  { transform: scale(1.15); }
+            20%  { transform: scale(1); }
+            30%  { transform: scale(1.10); }
+            40%  { transform: scale(1); }
+            100% { transform: scale(1); }
+        }
+
+        .tagline {
+            color: #94a3b8;
+            font-size: 1.0625rem;
+            line-height: 1.7;
+            max-width: 460px;
+            margin-bottom: 2.5rem;
+        }
+
+        /* ==============================================================
+           RELEASE / VERSION SECTION (left side, bottom area)
+           ============================================================== */
+        .release-section {
+            background: rgba(0, 0, 0, 0.58);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 0.625rem;
+            max-width: 440px;
+        }
+
+        .release-header {
+            padding: 0.625rem 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 0.625rem 0.625rem 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .release-body {
+            padding: 0.75rem 1rem 0.875rem;
+        }
+
+        .version-badge {
+            display: inline-block;
+            padding: 0.1rem 0.5rem;
+            background: rgba(220, 38, 38, 0.12);
+            border: 1px solid rgba(220, 38, 38, 0.25);
+            border-radius: 9999px;
+            font-size: 0.6875rem;
+            color: #f87171;
+            letter-spacing: 0.04em;
+            font-weight: 600;
+        }
+
+        .release-notes li {
+            color: #7a8899;
+            font-size: 0.75rem;
+            line-height: 1.7;
+        }
+
+        /* ==============================================================
+           RIGHT SIDE — Login form
+           ============================================================== */
+        .login-title {
+            color: #e2e8f0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .login-subtitle {
+            color: #64748b;
+            font-size: 0.8125rem;
+            margin-bottom: 1.75rem;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 0.5rem;
+            color: #e2e8f0;
+            font-family: 'Source Sans 3', system-ui, sans-serif;
+            font-size: 0.9375rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        .input-field:focus {
+            border-color: rgba(220, 38, 38, 0.5);
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+        }
+
+        .input-field::placeholder { color: #4b5563; }
+        .input-field option { background: #111; color: #e2e8f0; }
+
+        .field-label {
+            display: block;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: #94a3b8;
+            margin-bottom: 0.375rem;
+            letter-spacing: 0.02em;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 0.625rem 1.5rem;
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: #fff;
+            font-family: 'Source Sans 3', system-ui, sans-serif;
+            font-weight: 600;
+            font-size: 0.9375rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.02em;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active { transform: translateY(0); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        .btn-secondary {
+            width: 100%;
+            padding: 0.5rem 1.25rem;
+            background: transparent;
+            color: #94a3b8;
+            font-family: 'Source Sans 3', system-ui, sans-serif;
+            font-weight: 500;
+            font-size: 0.875rem;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            color: #e2e8f0;
+            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .error-banner {
+            background: rgba(220, 38, 38, 0.1);
+            border: 1px solid rgba(220, 38, 38, 0.25);
+            border-radius: 0.5rem;
+            color: #fca5a5;
+            padding: 0.625rem 0.875rem;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-divider {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            color: #374151;
+            font-size: 0.8125rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .section-divider::before,
+        .section-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.10);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background layer -->
+    <div class="scene-bg"></div>
+
+    <div x-data="landingApp()" class="landing-layout">
+
+        <!-- ==============================================================
+             LEFT — Welcome, description, release info
+             ============================================================== -->
+        <div class="col-left">
+
+            <p class="welcome-text">Welcome to</p>
+
+            <!-- Logo -->
+            <div class="logo-container" aria-label="JcLS Tracker">
+                <span class="logo-text">JcLS</span>
+                <span class="logo-text" style="margin-left: 0.3em; font-style: normal; font-weight: 400;">Tracker</span>
+                <span class="logo-heart-wrap">
+                    <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="heartGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%"   stop-color="#f87171"/>
+                                <stop offset="50%"  stop-color="#dc2626"/>
+                                <stop offset="100%" stop-color="#b91c1c"/>
+                            </linearGradient>
+                        </defs>
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="url(#heartGrad)"/>
+                    </svg>
+                </span>
+            </div>
+
+            <p class="tagline">
+                Statistics matter. Built for fire services committed to delivering
+                the highest standard of resuscitation care through performance
+                tracking and objective-based training.
+            </p>
+
+            <!-- Release / Version section -->
+            <div class="release-section">
+                <div class="release-header">
+                    <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Release Notes</span>
+                    <div class="flex items-center gap-2">
+                        <span class="version-badge">v{{ version }}</span>
+                        <span x-show="!updateAvailable" class="flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500/50"></span>
+                            <span class="text-[10px] text-emerald-500/50 font-medium">Current</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="release-body">
+
+                    <!-- Update available -->
+                    <div x-show="updateAvailable" x-cloak class="mb-2.5 px-2.5 py-1.5 rounded"
+                         style="background: rgba(220, 38, 38, 0.14); border: 1px solid rgba(220, 38, 38, 0.22);">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-1.5 text-xs text-slate-300">
+                                <svg class="w-3.5 h-3.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                                <span>v<span x-text="latestVersion"></span></span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <a x-show="releaseUrl" :href="releaseUrl" target="_blank"
+                                   class="text-[11px] text-slate-500 hover:text-slate-300">What's new</a>
+                                <a :href="downloadUrl" target="_blank"
+                                   class="text-[11px] font-medium text-red-400 hover:text-red-300">Download</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-[11px] text-slate-500 font-semibold uppercase tracking-wide mb-1">v1.0.0 — Initial Release</p>
+                    <ul class="release-notes space-y-0 pl-3" style="list-style-type: '›  ';">
+                        <li>Native Windows desktop application</li>
+                        <li>Multi-service data isolation</li>
+                        <li>Password-protected accounts</li>
+                        <li>CPR session tracking &amp; metrics</li>
+                        <li>CanROC Master &amp; PCO wizard</li>
+                        <li>Provider roster management</li>
+                        <li>Dashboard KPI analytics</li>
+                        <li>ZIP session import</li>
+                        <li>Offline-capable (bundled assets)</li>
+                        <li>Auto-update via GitHub Releases</li>
+                        <li>Encrypted GitHub backup</li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ==============================================================
+             RIGHT — Login Panel
+             ============================================================== -->
+        <div class="col-right">
+
+            <div class="login-title">Sign In</div>
+            <div class="login-subtitle">Select your fire service to continue</div>
+
+            <!-- Error Message -->
+            <div x-show="errorMsg" x-cloak class="error-banner mb-4 fade-in">
+                <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414
+                             1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293
+                             1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0
+                             00-1.414-1.414L10 8.586 8.707 7.293z"
+                          clip-rule="evenodd"/>
+                </svg>
+                <span x-text="errorMsg"></span>
+            </div>
+
+            <!-- Login form (when services exist) -->
+            <div x-show="services.length > 0 && !showCreate && !showAdmin" x-cloak class="fade-in">
+                <div class="space-y-4">
+                    <div>
+                        <label for="service-select" class="field-label">Service</label>
+                        <select id="service-select" x-model="selectedSlug" class="input-field">
+                            <option value="" disabled>Choose a fire service...</option>
+                            <template x-for="svc in services" :key="svc.slug">
+                                <option :value="svc.slug" x-text="svc.name"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="login-password" class="field-label">Password</label>
+                        <input id="login-password" type="password" x-model="loginPassword"
+                               class="input-field" placeholder="Enter service password"
+                               @keydown.enter="handleLogin">
+                    </div>
+
+                    <button class="btn-primary flex items-center justify-center gap-2"
+                            :disabled="!selectedSlug || !loginPassword || loading"
+                            @click="handleLogin">
+                        <span x-show="!loading">Continue</span>
+                        <span x-show="loading" class="flex items-center gap-2">
+                            <span class="spinner"></span> Authenticating...
+                        </span>
+                    </button>
+                </div>
+
+                <div class="section-divider">or</div>
+                <button class="btn-secondary" @click="showCreate = true; errorMsg = ''">
+                    Create New Service
+                </button>
+
+                <!-- Admin Access -->
+                <div class="section-divider">admin</div>
+                <button class="btn-secondary" @click="showAdmin = true; showCreate = false; errorMsg = ''"
+                        style="border-color: rgba(220,38,38,0.22); color: #f87171;">
+                    Admin Access
+                </button>
+            </div>
+
+            <!-- Admin Login -->
+            <div x-show="showAdmin" x-cloak class="fade-in">
+                <div class="space-y-4">
+                    <div class="text-center text-slate-500 text-sm mb-2">
+                        Sign in with admin credentials to access the cross-service dashboard.
+                    </div>
+
+                    <div>
+                        <label for="admin-username" class="field-label">Username</label>
+                        <input id="admin-username" type="text" x-model="adminUsername"
+                               class="input-field" placeholder="Admin username"
+                               @keydown.enter="$refs.adminPw.focus()">
+                    </div>
+
+                    <div>
+                        <label for="admin-password" class="field-label">Password</label>
+                        <input id="admin-password" type="password" x-model="adminPassword"
+                               x-ref="adminPw" class="input-field" placeholder="Admin password"
+                               @keydown.enter="handleAdminLogin">
+                    </div>
+
+                    <button class="btn-primary flex items-center justify-center gap-2"
+                            style="background: linear-gradient(135deg, #b91c1c, #991b1b);"
+                            :disabled="!adminUsername || !adminPassword || loading"
+                            @click="handleAdminLogin">
+                        <span x-show="!loading">Sign In as Admin</span>
+                        <span x-show="loading" class="flex items-center gap-2">
+                            <span class="spinner"></span> Authenticating...
+                        </span>
+                    </button>
+                </div>
+
+                <div class="section-divider">or</div>
+                <button class="btn-secondary" @click="showAdmin = false; errorMsg = ''">
+                    Back to Login
+                </button>
+            </div>
+
+            <!-- Create New Service -->
+            <div x-show="(services.length === 0 || showCreate) && !showAdmin" x-cloak class="fade-in">
+                <div class="space-y-4">
+                    <div x-show="services.length === 0" class="text-center text-slate-500 text-sm mb-2">
+                        Create your first fire service to get started.
+                    </div>
+
+                    <div>
+                        <label for="new-service-name" class="field-label">Service Name</label>
+                        <input id="new-service-name" type="text" x-model="newServiceName"
+                               class="input-field" placeholder="e.g. Spruce Grove Fire Services"
+                               @keydown.enter="$refs.newPassword.focus()">
+                    </div>
+
+                    <div>
+                        <label for="new-password" class="field-label">Password</label>
+                        <input id="new-password" type="password" x-model="newPassword"
+                               x-ref="newPassword" class="input-field" placeholder="Choose a password"
+                               @keydown.enter="$refs.confirmPassword.focus()">
+                    </div>
+
+                    <div>
+                        <label for="confirm-password" class="field-label">Confirm Password</label>
+                        <input id="confirm-password" type="password" x-model="confirmPassword"
+                               x-ref="confirmPassword" class="input-field" placeholder="Confirm your password"
+                               @keydown.enter="handleSetup">
+                    </div>
+
+                    <button class="btn-primary flex items-center justify-center gap-2"
+                            :disabled="!canCreate || loading" @click="handleSetup">
+                        <span x-show="!loading">Create Service</span>
+                        <span x-show="loading" class="flex items-center gap-2">
+                            <span class="spinner"></span> Creating...
+                        </span>
+                    </button>
+                </div>
+
+                <template x-if="services.length > 0">
+                    <div>
+                        <div class="section-divider">or</div>
+                        <button class="btn-secondary" @click="showCreate = false; errorMsg = ''">
+                            Back to Login
+                        </button>
+                    </div>
+                </template>
+
+                <!-- Admin Access (always visible, even with zero services) -->
+                <div class="section-divider">admin</div>
+                <button class="btn-secondary" @click="showAdmin = true; showCreate = false; errorMsg = ''"
+                        style="border-color: rgba(220,38,38,0.22); color: #f87171;">
+                    Admin Access
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script defer src="/static/vendor/js/alpine.min.js"></script>
+
+    <script>
+        function landingApp() {
+            return {
+                services: {{ services | tojson }},
+                selectedSlug: '',
+                loginPassword: '',
+                newServiceName: '',
+                newPassword: '',
+                confirmPassword: '',
+                showCreate: false,
+                showAdmin: false,
+                adminUsername: '',
+                adminPassword: '',
+                loading: false,
+                errorMsg: '',
+                updateAvailable: false,
+                latestVersion: '',
+                downloadUrl: '',
+                releaseUrl: '',
+
+                get canCreate() {
+                    return (
+                        this.newServiceName.trim().length > 0 &&
+                        this.newPassword.length >= 1 &&
+                        this.newPassword === this.confirmPassword
+                    );
+                },
+
+                init() {
+                    if (this.services.length === 1) {
+                        this.selectedSlug = this.services[0].slug;
+                    }
+                    if (this.services.length === 0) {
+                        this.showCreate = true;
+                    }
+                    this.checkForUpdates();
+                },
+
+                async checkForUpdates() {
+                    try {
+                        const resp = await fetch('/api/updates/check');
+                        const data = await resp.json();
+                        if (data.available && data.download_url) {
+                            this.updateAvailable = true;
+                            this.latestVersion = data.latest_version;
+                            this.downloadUrl = data.download_url;
+                            this.releaseUrl = data.release_url || '';
+                        }
+                    } catch (e) {}
+                },
+
+                async handleLogin() {
+                    if (!this.selectedSlug || !this.loginPassword) return;
+                    this.loading = true;
+                    this.errorMsg = '';
+                    try {
+                        const form = new FormData();
+                        form.append('service_slug', this.selectedSlug);
+                        form.append('password', this.loginPassword);
+                        const svc = this.services.find(s => s.slug === this.selectedSlug);
+                        if (svc) form.append('service_name', svc.name);
+                        const resp = await fetch('/api/auth/login', { method: 'POST', body: form });
+                        const data = await resp.json();
+                        if (data.success) {
+                            window.location.href = data.redirect || '/';
+                        } else {
+                            this.errorMsg = data.error || 'Invalid password. Please try again.';
+                        }
+                    } catch (err) {
+                        this.errorMsg = 'Connection error. Please try again.';
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                async handleSetup() {
+                    if (!this.canCreate) return;
+                    if (this.newPassword !== this.confirmPassword) {
+                        this.errorMsg = 'Passwords do not match.';
+                        return;
+                    }
+                    this.loading = true;
+                    this.errorMsg = '';
+                    try {
+                        const form = new FormData();
+                        form.append('service_name', this.newServiceName.trim());
+                        form.append('password', this.newPassword);
+                        const resp = await fetch('/api/auth/setup', { method: 'POST', body: form });
+                        const data = await resp.json();
+                        if (data.success) {
+                            window.location.href = data.redirect || '/';
+                        } else {
+                            this.errorMsg = data.error || 'Failed to create service. Please try again.';
+                        }
+                    } catch (err) {
+                        this.errorMsg = 'Connection error. Please try again.';
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                async handleAdminLogin() {
+                    if (!this.adminUsername || !this.adminPassword) return;
+                    this.loading = true;
+                    this.errorMsg = '';
+                    try {
+                        const resp = await fetch('/api/admin/login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                username: this.adminUsername,
+                                password: this.adminPassword,
+                            }),
+                        });
+                        const data = await resp.json();
+                        if (data.success) {
+                            window.location.href = data.redirect || '/admin';
+                        } else {
+                            this.errorMsg = data.error || 'Invalid admin credentials.';
+                        }
+                    } catch (err) {
+                        this.errorMsg = 'Connection error. Please try again.';
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+            };
+        }
+    </script>
+
+    <style>[x-cloak] { display: none !important; }</style>
+</body>
+</html>

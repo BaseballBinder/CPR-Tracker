@@ -1,0 +1,63 @@
+{# Provider rankings table partial #}
+<table class="w-full text-sm">
+    <thead class="bg-[#36323e] text-slate-300 text-left sticky top-0">
+        <tr>
+            <th class="px-4 py-3 font-medium w-16">Rank</th>
+            <th class="px-4 py-3 font-medium">Provider</th>
+            <th class="px-4 py-3 font-medium">Sessions</th>
+            <th class="px-4 py-3 font-medium">JcLS</th>
+            <th class="px-4 py-3 font-medium">Depth %</th>
+            <th class="px-4 py-3 font-medium">Rate %</th>
+            <th class="px-4 py-3 font-medium">Change</th>
+        </tr>
+    </thead>
+    <tbody class="divide-y divide-[rgba(255,255,255,0.10)]">
+        {% for provider in ranked_providers %}
+        {% set rank = loop.index %}
+        <tr class="hover:bg-[#36323e]">
+            <td class="px-4 py-3">
+                {% if rank == 1 %}
+                <span class="w-6 h-6 bg-[#dc2626] text-white text-xs font-bold rounded-full flex items-center justify-center">1</span>
+                {% elif rank == 2 %}
+                <span class="w-6 h-6 bg-slate-400 text-white text-xs font-bold rounded-full flex items-center justify-center">2</span>
+                {% elif rank == 3 %}
+                <span class="w-6 h-6 bg-[#f97316] text-white text-xs font-bold rounded-full flex items-center justify-center">3</span>
+                {% else %}
+                <span class="w-6 h-6 bg-[#46424e] text-slate-300 text-xs font-bold rounded-full flex items-center justify-center">{{ rank }}</span>
+                {% endif %}
+            </td>
+            <td class="px-4 py-3">
+                <a href="/providers/{{ provider.id }}" class="text-slate-100 font-medium hover:text-[#dc2626]">
+                    {{ provider.name }}
+                </a>
+            </td>
+            <td class="px-4 py-3 text-slate-200">{{ provider.session_count }}</td>
+            <td class="px-4 py-3">
+                {% if provider.avg_jcls_score %}
+                <span class="font-bold {% if provider.avg_jcls_score >= 80 %}text-[#16a34a]{% elif provider.avg_jcls_score >= 60 %}text-amber-500{% else %}text-[#dc2626]{% endif %}">
+                    {{ provider.avg_jcls_score }}
+                </span>
+                {% else %}
+                <span class="text-slate-400">&mdash;</span>
+                {% endif %}
+            </td>
+            <td class="px-4 py-3 text-slate-200">{{ provider.avg_depth_compliance }}%</td>
+            <td class="px-4 py-3 text-slate-200">{{ provider.avg_rate_compliance }}%</td>
+            <td class="px-4 py-3">
+                <span class="text-slate-400">—</span>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="7" class="px-4 py-12">
+                {% set empty_icon = "users" %}
+                {% set empty_title = "No provider rankings available" %}
+                {% set empty_message = "Import sessions to see provider rankings" %}
+                {% set empty_cta_text = "Import Sessions" %}
+                {% set empty_cta_href = "/import-export" %}
+                {% include "components/empty_state.html" %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

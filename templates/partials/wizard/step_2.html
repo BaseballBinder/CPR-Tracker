@@ -1,0 +1,6 @@
+{# Wizard Step 2: Data Input - Routes to Real Call or Simulated #}
+{% if session_type == 'real_call' %}
+    {% include "partials/wizard/step_2_real.html" %}
+{% else %}
+    {% include "partials/wizard/step_2_sim.html" %}
+{% endif %}

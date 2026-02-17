@@ -1,0 +1,667 @@
+{% extends "base.html" %}
+
+{% block content %}
+{# Page Header #}
+{% set page_title = "Help & How-To" %}
+{% set page_subtitle = "Learn how to use the CPR Performance Tracker effectively" %}
+{% include "components/page_header.html" %}
+
+{# Search / Quick Filter (optional future enhancement placeholder) #}
+<div class="mb-6 page-enter page-d1">
+    <p class="text-sm text-slate-400">Click any section below to expand it. Each topic contains step-by-step instructions and helpful tips.</p>
+</div>
+
+<div class="space-y-4 page-enter page-d2">
+
+    {# ── Section 1: Getting Started ── #}
+    <div x-data="{ open: false }" class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] shadow-sm overflow-hidden">
+        <button
+            @click="open = !open"
+            class="w-full flex items-center justify-between p-5 text-left hover:bg-[rgba(255,255,255,0.02)] transition-colors"
+        >
+            <div class="flex items-center gap-3">
+                {# Rocket / Launch icon #}
+                <div class="flex-shrink-0 w-9 h-9 rounded-lg bg-red-900/20 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-[#dc2626]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-100">Getting Started</h2>
+                    <p class="text-sm text-slate-400 mt-0.5">Create your service, log in, and explore the dashboard</p>
+                </div>
+            </div>
+            <svg
+                class="w-5 h-5 text-slate-400 transition-transform duration-200"
+                :class="open ? 'rotate-180' : ''"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+        </button>
+        <div
+            x-show="open"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 -translate-y-1"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 translate-y-0"
+            x-transition:leave-end="opacity-0 -translate-y-1"
+            class="border-t border-[rgba(255,255,255,0.07)]"
+        >
+            <div class="p-5 space-y-6">
+                {# Creating a new fire service #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-2">Creating a New Fire Service</h3>
+                    <ol class="list-decimal list-inside space-y-1.5 text-sm text-slate-300 ml-1">
+                        <li>When you first launch the app, you will see the <span class="text-slate-100 font-medium">Landing Page</span> with the option to create a new service.</li>
+                        <li>Click <span class="text-[#dc2626] font-medium">"Create New Service"</span> and enter your fire service name (e.g., "Station 42" or "Durham County EMS").</li>
+                        <li>Set a password for the service. This password protects access to the service's data.</li>
+                        <li>Once created, you will be automatically logged in and redirected to the Dashboard.</li>
+                    </ol>
+                    <div class="mt-3 p-3 bg-[#46424e] rounded-xl border border-[rgba(255,255,255,0.07)]">
+                        <p class="text-xs text-slate-400"><span class="text-[#f97316] font-semibold">Tip:</span> Each fire service has its own isolated data. You can create multiple services and switch between them from the Landing Page.</p>
+                    </div>
+                </div>
+
+                {# Logging in #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-2">Logging In for the First Time</h3>
+                    <ol class="list-decimal list-inside space-y-1.5 text-sm text-slate-300 ml-1">
+                        <li>On the Landing Page, select your fire service from the list.</li>
+                        <li>Enter the password you set during creation.</li>
+                        <li>Click <span class="text-[#dc2626] font-medium">"Log In"</span> to access your service's dashboard.</li>
+                    </ol>
+                </div>
+
+                {# Understanding the dashboard #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-2">Understanding the Dashboard</h3>
+                    <p class="text-sm text-slate-300 mb-2">The Dashboard is your home base. It provides an at-a-glance overview of your service's CPR performance:</p>
+                    <ul class="list-disc list-inside space-y-1.5 text-sm text-slate-300 ml-1">
+                        <li><span class="text-slate-100 font-medium">KPI Cards</span> -- JcLS Score, CCF, total sessions, active providers, CiT, and release velocity.</li>
+                        <li><span class="text-slate-100 font-medium">Trend Charts</span> -- Visual graphs showing performance over time.</li>
+                        <li><span class="text-slate-100 font-medium">Recent Sessions</span> -- A quick-access list of your latest imported calls.</li>
+                        <li><span class="text-slate-100 font-medium">Top Performers</span> -- Providers ranked by their CPR quality metrics.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ── Section 2: Adding Calls ── #}
+    <div x-data="{ open: false }" class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] shadow-sm overflow-hidden">
+        <button
+            @click="open = !open"
+            class="w-full flex items-center justify-between p-5 text-left hover:bg-[rgba(255,255,255,0.02)] transition-colors"
+        >
+            <div class="flex items-center gap-3">
+                {# Phone / Call icon #}
+                <div class="flex-shrink-0 w-9 h-9 rounded-lg bg-blue-900/20 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-[#2563eb]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-100">Adding Calls</h2>
+                    <p class="text-sm text-slate-400 mt-0.5">Import real call data or add simulated training sessions</p>
+                </div>
+            </div>
+            <svg
+                class="w-5 h-5 text-slate-400 transition-transform duration-200"
+                :class="open ? 'rotate-180' : ''"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+        </button>
+        <div
+            x-show="open"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 -translate-y-1"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 translate-y-0"
+            x-transition:leave-end="opacity-0 -translate-y-1"
+            class="border-t border-[rgba(255,255,255,0.07)]"
+        >
+            <div class="p-5 space-y-6">
+                {# Adding a Real Call #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-2">Adding a Real Call</h3>
+                    <p class="text-sm text-slate-300 mb-2">Real calls are imported from Zoll defibrillator data exports. Follow these steps:</p>
+                    <ol class="list-decimal list-inside space-y-1.5 text-sm text-slate-300 ml-1">
+                        <li>Navigate to <span class="text-slate-100 font-medium">Sessions</span> in the sidebar and click <span class="text-[#dc2626] font-medium">"Add Session"</span>.</li>
+                        <li>Select <span class="text-slate-100 font-medium">"Real Call"</span> as the session type.</li>
+                        <li><span class="text-slate-100 font-medium">Upload the ZIP file</span> exported from your Zoll device. The system will automatically extract and parse the CPR performance data.</li>
+                        <li>Enter the <span class="text-slate-100 font-medium">call date</span> using the date picker.</li>
+                        <li>Select the <span class="text-slate-100 font-medium">team lead</span> (primary provider) from the dropdown. You can search by name.</li>
+                        <li>Select any additional <span class="text-slate-100 font-medium">participants</span> who were on the call.</li>
+                        <li>Choose the <span class="text-slate-100 font-medium">patient outcome</span> (ROSC, No ROSC, etc.).</li>
+                        <li>Review the summary and click <span class="text-[#dc2626] font-medium">"Submit"</span> to import the session.</li>
+                    </ol>
+                    <div class="mt-3 p-3 bg-[#46424e] rounded-xl border border-[rgba(255,255,255,0.07)]">
+                        <p class="text-xs text-slate-400"><span class="text-[#f97316] font-semibold">Tip:</span> If Zoll data is not available, you can mark the call as "No Zoll Data" and still log the call for CanROC reporting with the reason why data was unavailable.</p>
+                    </div>
+                </div>
+
+                {# Adding a Simulated Call #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-2">Adding a Simulated Call</h3>
+                    <p class="text-sm text-slate-300 mb-2">Simulated calls are used for training and quality improvement sessions:</p>
+                    <ol class="list-decimal list-inside space-y-1.5 text-sm text-slate-300 ml-1">
+                        <li>Navigate to <span class="text-slate-100 font-medium">Sessions</span> and click <span class="text-[#dc2626] font-medium">"Add Session"</span>.</li>
+                        <li>Select <span class="text-slate-100 font-medium">"Simulated Call"</span> as the session type.</li>
+                        <li><span class="text-slate-100 font-medium">Upload a CSV file</span> or <span class="text-slate-100 font-medium">paste data directly</span> into the text area. The CSV should contain compression metrics exported from your training manikin.</li>
+                        <li>Select the <span class="text-slate-100 font-medium">provider</span> who performed the simulation.</li>
+                        <li>Review and submit the session.</li>
+                    </ol>
+                </div>
+
+                {# Session Statuses #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-2">Understanding Session Statuses</h3>
+                    <p class="text-sm text-slate-300 mb-3">Each session has a status that indicates its current state:</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="p-3 bg-[#46424e] rounded-xl border border-[rgba(255,255,255,0.07)]">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="inline-block w-2 h-2 rounded-full bg-blue-500"></span>
+                                <span class="text-sm font-medium text-slate-200">Importing</span>
+                            </div>
+                            <p class="text-xs text-slate-400">Data is being processed and parsed. This usually takes a few seconds.</p>
+                        </div>
+                        <div class="p-3 bg-[#46424e] rounded-xl border border-[rgba(255,255,255,0.07)]">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                                <span class="text-sm font-medium text-slate-200">Complete</span>
+                            </div>
+                            <p class="text-xs text-slate-400">The session was successfully imported and all metrics are available.</p>
+                        </div>
+                        <div class="p-3 bg-[#46424e] rounded-xl border border-[rgba(255,255,255,0.07)]">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="inline-block w-2 h-2 rounded-full bg-red-500"></span>
+                                <span class="text-sm font-medium text-slate-200">Failed</span>
+                            </div>
+                            <p class="text-xs text-slate-400">The import encountered an error. Check the file format and try again.</p>
+                        </div>
+                        <div class="p-3 bg-[#46424e] rounded-xl border border-[rgba(255,255,255,0.07)]">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="inline-block w-2 h-2 rounded-full bg-yellow-500"></span>
+                                <span class="text-sm font-medium text-slate-200">Pending</span>
+                            </div>
+                            <p class="text-xs text-slate-400">The session is awaiting additional information or manual review before completion.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ── Section 3: Managing Members ── #}
+    <div x-data="{ open: false }" class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] shadow-sm overflow-hidden">
+        <button
+            @click="open = !open"
+            class="w-full flex items-center justify-between p-5 text-left hover:bg-[rgba(255,255,255,0.02)] transition-colors"
+        >
+            <div class="flex items-center gap-3">
+                {# Users icon #}
+                <div class="flex-shrink-0 w-9 h-9 rounded-lg bg-green-900/20 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-[#16a34a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-100">Managing Members</h2>
+                    <p class="text-sm text-slate-400 mt-0.5">Add, edit, and manage providers and their certifications</p>
+                </div>
+            </div>
+            <svg
+                class="w-5 h-5 text-slate-400 transition-transform duration-200"
+                :class="open ? 'rotate-180' : ''"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+        </button>
+        <div
+            x-show="open"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 -translate-y-1"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 translate-y-0"
+            x-transition:leave-end="opacity-0 -translate-y-1"
+            class="border-t border-[rgba(255,255,255,0.07)]"
+        >
+            <div class="p-5 space-y-6">
+                {# Adding a new provider #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-2">Adding a New Provider</h3>
+                    <ol class="list-decimal list-inside space-y-1.5 text-sm text-slate-300 ml-1">
+                        <li>Navigate to <span class="text-slate-100 font-medium">Providers</span> in the sidebar.</li>
+                        <li>Click <span class="text-[#dc2626] font-medium">"Add Provider"</span> in the top right.</li>
+                        <li>Enter the provider's <span class="text-slate-100 font-medium">first name</span> and <span class="text-slate-100 font-medium">last name</span>.</li>
+                        <li>Select their <span class="text-slate-100 font-medium">certification level</span> (PCP or ACP).</li>
+                        <li>Click <span class="text-[#dc2626] font-medium">"Save"</span> to add the provider to your service roster.</li>
+                    </ol>
+                    <div class="mt-3 p-3 bg-[#46424e] rounded-xl border border-[rgba(255,255,255,0.07)]">
+                        <p class="text-xs text-slate-400"><span class="text-[#f97316] font-semibold">Tip:</span> You can also add providers on-the-fly during the session creation wizard by clicking the "Add New" option in the provider dropdown.</p>
+                    </div>
+                </div>
+
+                {# Editing provider details #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-2">Editing Provider Details</h3>
+                    <ol class="list-decimal list-inside space-y-1.5 text-sm text-slate-300 ml-1">
+                        <li>Go to the <span class="text-slate-100 font-medium">Providers</span> page.</li>
+                        <li>Click on the provider's name or the <span class="text-slate-100 font-medium">edit icon</span> next to their entry.</li>
+                        <li>Update their name, certification, or status as needed.</li>
+                        <li>Save your changes.</li>
+                    </ol>
+                    <p class="text-sm text-slate-400 mt-2">Deactivating a provider removes them from selection dropdowns but preserves all their historical session data.</p>
+                </div>
+
+                {# Provider certifications #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-2">Provider Certifications</h3>
+                    <p class="text-sm text-slate-300 mb-3">The system supports two certification levels used for reporting and filtering:</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="p-3 bg-[#46424e] rounded-xl border border-[rgba(255,255,255,0.07)]">
+                            <span class="inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-900/30 text-blue-400 mb-1.5">PCP</span>
+                            <p class="text-sm text-slate-200 font-medium">Primary Care Paramedic</p>
+                            <p class="text-xs text-slate-400 mt-1">Provides basic life support and CPR. This is the standard certification for most paramedics.</p>
+                        </div>
+                        <div class="p-3 bg-[#46424e] rounded-xl border border-[rgba(255,255,255,0.07)]">
+                            <span class="inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-900/30 text-purple-400 mb-1.5">ACP</span>
+                            <p class="text-sm text-slate-200 font-medium">Advanced Care Paramedic</p>
+                            <p class="text-xs text-slate-400 mt-1">Provides advanced interventions including drug therapy, intubation, and cardiac monitoring.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ── Section 4: Dashboard & KPIs ── #}
+    <div x-data="{ open: false }" class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] shadow-sm overflow-hidden">
+        <button
+            @click="open = !open"
+            class="w-full flex items-center justify-between p-5 text-left hover:bg-[rgba(255,255,255,0.02)] transition-colors"
+        >
+            <div class="flex items-center gap-3">
+                {# Chart icon #}
+                <div class="flex-shrink-0 w-9 h-9 rounded-lg bg-purple-900/20 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-100">Dashboard & KPIs</h2>
+                    <p class="text-sm text-slate-400 mt-0.5">Understand your performance metrics and how they are calculated</p>
+                </div>
+            </div>
+            <svg
+                class="w-5 h-5 text-slate-400 transition-transform duration-200"
+                :class="open ? 'rotate-180' : ''"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+        </button>
+        <div
+            x-show="open"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 -translate-y-1"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 translate-y-0"
+            x-transition:leave-end="opacity-0 -translate-y-1"
+            class="border-t border-[rgba(255,255,255,0.07)]"
+        >
+            <div class="p-5 space-y-6">
+                {# What each KPI means #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-3">What Each KPI Means</h3>
+                    <div class="space-y-3">
+                        <div class="p-3 bg-[#46424e] rounded-xl border border-[rgba(255,255,255,0.07)]">
+                            <p class="text-sm font-medium text-slate-200">Compression Rate</p>
+                            <p class="text-xs text-slate-400 mt-1">The number of chest compressions delivered per minute. The target range is <span class="text-slate-200 font-medium">100-120 compressions/min</span> per AHA guidelines. Rates outside this range reduce effectiveness.</p>
+                        </div>
+                        <div class="p-3 bg-[#46424e] rounded-xl border border-[rgba(255,255,255,0.07)]">
+                            <p class="text-sm font-medium text-slate-200">Compression Depth</p>
+                            <p class="text-xs text-slate-400 mt-1">How deep each compression is pushed. The target is at least <span class="text-slate-200 font-medium">5 cm (2 inches)</span> but no more than <span class="text-slate-200 font-medium">6 cm (2.4 inches)</span>. Adequate depth is critical for generating blood flow.</p>
+                        </div>
+                        <div class="p-3 bg-[#46424e] rounded-xl border border-[rgba(255,255,255,0.07)]">
+                            <p class="text-sm font-medium text-slate-200">Chest Compression Fraction (CCF)</p>
+                            <p class="text-xs text-slate-400 mt-1">The percentage of time during a resuscitation that compressions are actively being performed. Target is <span class="text-slate-200 font-medium">&ge; 80%</span>. Higher CCF is associated with better patient outcomes.</p>
+                        </div>
+                        <div class="p-3 bg-[#46424e] rounded-xl border border-[rgba(255,255,255,0.07)]">
+                            <p class="text-sm font-medium text-slate-200">Overall Compliance</p>
+                            <p class="text-xs text-slate-400 mt-1">A composite score reflecting how well all CPR metrics meet target thresholds. This combines rate, depth, CCF, and release velocity into a single percentage score for easy comparison.</p>
+                        </div>
+                    </div>
+                </div>
+
+                {# Date range filtering #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-2">Date Range Filtering</h3>
+                    <p class="text-sm text-slate-300">Use the date range selector at the top of the Dashboard to filter all KPIs and charts to a specific time period. This is useful for comparing performance across quarters, reviewing recent trends, or preparing reports for a specific date range.</p>
+                </div>
+
+                {# Top performers #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-2">Top Performers</h3>
+                    <p class="text-sm text-slate-300">The Top Performers section on the Dashboard ranks providers by their average JcLS Score. Use this to identify high-performing providers and those who may benefit from additional training.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ── Section 5: CanROC Export ── #}
+    <div x-data="{ open: false }" class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] shadow-sm overflow-hidden">
+        <button
+            @click="open = !open"
+            class="w-full flex items-center justify-between p-5 text-left hover:bg-[rgba(255,255,255,0.02)] transition-colors"
+        >
+            <div class="flex items-center gap-3">
+                {# Database / Export icon #}
+                <div class="flex-shrink-0 w-9 h-9 rounded-lg bg-orange-900/20 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-[#f97316]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-100">CanROC Export</h2>
+                    <p class="text-sm text-slate-400 mt-0.5">Prepare and export data for the Canadian Resuscitation Outcomes Consortium</p>
+                </div>
+            </div>
+            <svg
+                class="w-5 h-5 text-slate-400 transition-transform duration-200"
+                :class="open ? 'rotate-180' : ''"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+        </button>
+        <div
+            x-show="open"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 -translate-y-1"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 translate-y-0"
+            x-transition:leave-end="opacity-0 -translate-y-1"
+            class="border-t border-[rgba(255,255,255,0.07)]"
+        >
+            <div class="p-5 space-y-6">
+                {# What is CanROC #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-2">What is CanROC?</h3>
+                    <p class="text-sm text-slate-300">The <span class="text-slate-100 font-medium">Canadian Resuscitation Outcomes Consortium (CanROC)</span> is a national research network that collects data on out-of-hospital cardiac arrests. Many Canadian EMS services are required to submit standardized data to CanROC for quality improvement and research purposes.</p>
+                    <p class="text-sm text-slate-300 mt-2">The CPR Tracker helps you collect and format the required fields so you can submit them efficiently.</p>
+                </div>
+
+                {# Using the completion wizard #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-2">Using the Completion Wizard</h3>
+                    <ol class="list-decimal list-inside space-y-1.5 text-sm text-slate-300 ml-1">
+                        <li>Navigate to <span class="text-slate-100 font-medium">CanROC</span> in the sidebar.</li>
+                        <li>You will see a list of sessions that require CanROC data completion. Sessions with missing fields are highlighted.</li>
+                        <li>Click <span class="text-[#dc2626] font-medium">"Complete"</span> on a session to open the CanROC completion wizard.</li>
+                        <li>Fill in the required CanROC fields step by step: patient demographics, arrest details, interventions, and outcomes.</li>
+                        <li>Save when finished. The session will be marked as CanROC-ready.</li>
+                    </ol>
+                </div>
+
+                {# Bulk export #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-2">Bulk Export to Excel</h3>
+                    <ol class="list-decimal list-inside space-y-1.5 text-sm text-slate-300 ml-1">
+                        <li>Once sessions are marked as CanROC-ready, use the <span class="text-[#dc2626] font-medium">"Export"</span> button at the top of the CanROC page.</li>
+                        <li>Select the date range for the export.</li>
+                        <li>The system will generate an Excel file (.xlsx) formatted to match the CanROC submission template.</li>
+                        <li>Download the file and upload it to the CanROC portal.</li>
+                    </ol>
+                    <div class="mt-3 p-3 bg-[#46424e] rounded-xl border border-[rgba(255,255,255,0.07)]">
+                        <p class="text-xs text-slate-400"><span class="text-[#f97316] font-semibold">Tip:</span> Review the export before submitting to CanROC. The system will flag any incomplete records that may be rejected.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ── Section 6: Reports ── #}
+    <div x-data="{ open: false }" class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] shadow-sm overflow-hidden">
+        <button
+            @click="open = !open"
+            class="w-full flex items-center justify-between p-5 text-left hover:bg-[rgba(255,255,255,0.02)] transition-colors"
+        >
+            <div class="flex items-center gap-3">
+                {# Document / Report icon #}
+                <div class="flex-shrink-0 w-9 h-9 rounded-lg bg-cyan-900/20 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-100">Reports</h2>
+                    <p class="text-sm text-slate-400 mt-0.5">Generate and print provider and team performance reports</p>
+                </div>
+            </div>
+            <svg
+                class="w-5 h-5 text-slate-400 transition-transform duration-200"
+                :class="open ? 'rotate-180' : ''"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+        </button>
+        <div
+            x-show="open"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 -translate-y-1"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 translate-y-0"
+            x-transition:leave-end="opacity-0 -translate-y-1"
+            class="border-t border-[rgba(255,255,255,0.07)]"
+        >
+            <div class="p-5 space-y-6">
+                {# Provider reports #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-2">Provider Reports</h3>
+                    <p class="text-sm text-slate-300 mb-2">Individual provider reports give a detailed breakdown of a single provider's performance:</p>
+                    <ul class="list-disc list-inside space-y-1.5 text-sm text-slate-300 ml-1">
+                        <li>Navigate to <span class="text-slate-100 font-medium">Reports</span> in the sidebar.</li>
+                        <li>Select a provider from the dropdown or click on a provider from the Providers page.</li>
+                        <li>The report shows their session history, average metrics, trend charts, and comparison against service targets.</li>
+                        <li>Use date range filters to scope the report to a specific period.</li>
+                    </ul>
+                </div>
+
+                {# Team reports #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-2">Team Reports</h3>
+                    <p class="text-sm text-slate-300 mb-2">Team reports aggregate data across all members of a team:</p>
+                    <ul class="list-disc list-inside space-y-1.5 text-sm text-slate-300 ml-1">
+                        <li>Navigate to <span class="text-slate-100 font-medium">Team Analysis</span> in the sidebar.</li>
+                        <li>Select a team to view aggregate metrics, member comparisons, and team trends.</li>
+                        <li>Compare team performance against service-wide averages.</li>
+                    </ul>
+                </div>
+
+                {# Printing reports #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-2">Printing Reports</h3>
+                    <p class="text-sm text-slate-300">Reports are optimized for printing. Use the <span class="text-slate-100 font-medium">"Print"</span> button or your browser's print function (Ctrl+P / Cmd+P) to generate a clean, printer-friendly version of any report page. Charts and tables are formatted for standard letter-size paper.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ── Section 7: Settings ── #}
+    <div x-data="{ open: false }" class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] shadow-sm overflow-hidden">
+        <button
+            @click="open = !open"
+            class="w-full flex items-center justify-between p-5 text-left hover:bg-[rgba(255,255,255,0.02)] transition-colors"
+        >
+            <div class="flex items-center gap-3">
+                {# Gear / Settings icon #}
+                <div class="flex-shrink-0 w-9 h-9 rounded-lg bg-slate-700/30 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-100">Settings</h2>
+                    <p class="text-sm text-slate-400 mt-0.5">Configure metric targets, teams, and export preferences</p>
+                </div>
+            </div>
+            <svg
+                class="w-5 h-5 text-slate-400 transition-transform duration-200"
+                :class="open ? 'rotate-180' : ''"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+        </button>
+        <div
+            x-show="open"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 -translate-y-1"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 translate-y-0"
+            x-transition:leave-end="opacity-0 -translate-y-1"
+            class="border-t border-[rgba(255,255,255,0.07)]"
+        >
+            <div class="p-5 space-y-6">
+                {# Metric targets #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-2">Metric Targets</h3>
+                    <p class="text-sm text-slate-300 mb-2">Customize the performance thresholds used across the application:</p>
+                    <ul class="list-disc list-inside space-y-1.5 text-sm text-slate-300 ml-1">
+                        <li>Go to <span class="text-slate-100 font-medium">Settings &rarr; Metrics Definitions</span>.</li>
+                        <li>Adjust target values for compression rate, depth, CCF, and other metrics.</li>
+                        <li>These targets are used to calculate compliance scores and color-code performance indicators across the dashboard, reports, and rankings.</li>
+                    </ul>
+                    <div class="mt-3 p-3 bg-[#46424e] rounded-xl border border-[rgba(255,255,255,0.07)]">
+                        <p class="text-xs text-slate-400"><span class="text-[#f97316] font-semibold">Note:</span> Changing targets will recalculate compliance scores for all existing sessions. Default targets are based on AHA guidelines.</p>
+                    </div>
+                </div>
+
+                {# Teams configuration #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-2">Teams Configuration</h3>
+                    <ol class="list-decimal list-inside space-y-1.5 text-sm text-slate-300 ml-1">
+                        <li>Go to <span class="text-slate-100 font-medium">Settings &rarr; Teams</span>.</li>
+                        <li>Click <span class="text-[#dc2626] font-medium">"Add Team"</span> to create a new team.</li>
+                        <li>Enter the team name (e.g., "Alpha Platoon", "Shift A").</li>
+                        <li>Assign providers to the team by selecting from the provider list.</li>
+                        <li>Teams are used for grouping in reports and the Team Analysis page.</li>
+                    </ol>
+                </div>
+
+                {# Export preferences #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-2">Export Preferences</h3>
+                    <p class="text-sm text-slate-300">Configure default export formats and column selections under <span class="text-slate-100 font-medium">Settings &rarr; Export Formats</span>. You can choose which fields to include in exported files and set default date ranges for bulk exports.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ── Section 8: Admin Dashboard ── #}
+    <div x-data="{ open: false }" class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl border border-[rgba(255,255,255,0.07)] shadow-sm overflow-hidden">
+        <button
+            @click="open = !open"
+            class="w-full flex items-center justify-between p-5 text-left hover:bg-[rgba(255,255,255,0.02)] transition-colors"
+        >
+            <div class="flex items-center gap-3">
+                {# Shield / Admin icon #}
+                <div class="flex-shrink-0 w-9 h-9 rounded-lg bg-red-900/20 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-[#dc2626]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-100">Admin Dashboard</h2>
+                    <p class="text-sm text-slate-400 mt-0.5">Advanced administration, backups, and cross-service management</p>
+                </div>
+            </div>
+            <svg
+                class="w-5 h-5 text-slate-400 transition-transform duration-200"
+                :class="open ? 'rotate-180' : ''"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+        </button>
+        <div
+            x-show="open"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 -translate-y-1"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 translate-y-0"
+            x-transition:leave-end="opacity-0 -translate-y-1"
+            class="border-t border-[rgba(255,255,255,0.07)]"
+        >
+            <div class="p-5 space-y-6">
+                {# Accessing admin #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-2">Accessing the Admin Dashboard</h3>
+                    <p class="text-sm text-slate-300">The Admin Dashboard provides a high-level view across all fire services configured in the application. Access it via the <span class="text-slate-100 font-medium">"Admin"</span> link in the sidebar. Admin features are available to all users of the local desktop application.</p>
+                </div>
+
+                {# Cross-service comparison #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-2">Cross-Service Comparison</h3>
+                    <p class="text-sm text-slate-300 mb-2">If you manage multiple fire services, the Admin Dashboard lets you:</p>
+                    <ul class="list-disc list-inside space-y-1.5 text-sm text-slate-300 ml-1">
+                        <li>View aggregate statistics across all services.</li>
+                        <li>Compare performance metrics between different services side by side.</li>
+                        <li>Identify which services are meeting targets and which need improvement.</li>
+                    </ul>
+                </div>
+
+                {# Test data management #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-2">Test Data Management</h3>
+                    <p class="text-sm text-slate-300 mb-2">The admin tools include options for managing test and sample data:</p>
+                    <ul class="list-disc list-inside space-y-1.5 text-sm text-slate-300 ml-1">
+                        <li><span class="text-slate-100 font-medium">Generate Test Data</span> -- Create sample sessions and providers for testing and demonstration purposes.</li>
+                        <li><span class="text-slate-100 font-medium">Clear Test Data</span> -- Remove all generated test data without affecting real session imports.</li>
+                    </ul>
+                    <div class="mt-3 p-3 bg-[#46424e] rounded-xl border border-[rgba(255,255,255,0.07)]">
+                        <p class="text-xs text-slate-400"><span class="text-[#dc2626] font-semibold">Warning:</span> Clearing data is permanent. Always create a backup before performing bulk deletions.</p>
+                    </div>
+                </div>
+
+                {# Backup & restore #}
+                <div>
+                    <h3 class="text-[15px] font-semibold text-slate-200 mb-2">Backup & Restore</h3>
+                    <p class="text-sm text-slate-300 mb-2">Protect your data with encrypted backups:</p>
+                    <ol class="list-decimal list-inside space-y-1.5 text-sm text-slate-300 ml-1">
+                        <li>Go to <span class="text-slate-100 font-medium">Settings &rarr; Backup & Restore</span>.</li>
+                        <li>Click <span class="text-[#dc2626] font-medium">"Create Backup"</span> to generate an encrypted backup of your service data.</li>
+                        <li>Backups are encrypted using Fernet encryption and can be stored on GitHub for remote safekeeping.</li>
+                        <li>To restore, click <span class="text-slate-100 font-medium">"Restore from Backup"</span> and select a backup file or pull from your GitHub backup repository.</li>
+                    </ol>
+                    <div class="mt-3 p-3 bg-[#46424e] rounded-xl border border-[rgba(255,255,255,0.07)]">
+                        <p class="text-xs text-slate-400"><span class="text-[#f97316] font-semibold">Tip:</span> Set up automatic backups to GitHub for peace of mind. You will need a GitHub personal access token configured in Settings.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{# Keyboard shortcut hint #}
+<div class="mt-8 text-center">
+    <p class="text-xs text-slate-400">Need more help? Contact your system administrator or refer to the release notes for the latest changes.</p>
+</div>
+
+{% endblock %}

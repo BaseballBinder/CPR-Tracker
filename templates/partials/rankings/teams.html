@@ -1,0 +1,53 @@
+{# Team rankings table partial #}
+<table class="w-full text-sm">
+    <thead class="bg-[#36323e] text-slate-300 text-left sticky top-0">
+        <tr>
+            <th class="px-4 py-3 font-medium w-16">Rank</th>
+            <th class="px-4 py-3 font-medium">Team</th>
+            <th class="px-4 py-3 font-medium">Station</th>
+            <th class="px-4 py-3 font-medium">Members</th>
+            <th class="px-4 py-3 font-medium">Sessions</th>
+            <th class="px-4 py-3 font-medium">JcLS</th>
+            <th class="px-4 py-3 font-medium">Change</th>
+        </tr>
+    </thead>
+    <tbody class="divide-y divide-[rgba(255,255,255,0.10)]">
+        {% for team in teams %}
+        {% set rank = loop.index %}
+        <tr class="hover:bg-[#36323e]">
+            <td class="px-4 py-3">
+                {% if rank == 1 %}
+                <span class="w-6 h-6 bg-[#dc2626] text-white text-xs font-bold rounded-full flex items-center justify-center">1</span>
+                {% elif rank == 2 %}
+                <span class="w-6 h-6 bg-slate-400 text-white text-xs font-bold rounded-full flex items-center justify-center">2</span>
+                {% elif rank == 3 %}
+                <span class="w-6 h-6 bg-[#f97316] text-white text-xs font-bold rounded-full flex items-center justify-center">3</span>
+                {% else %}
+                <span class="w-6 h-6 bg-[#46424e] text-slate-300 text-xs font-bold rounded-full flex items-center justify-center">{{ rank }}</span>
+                {% endif %}
+            </td>
+            <td class="px-4 py-3">
+                <span class="text-slate-100 font-medium">{{ team.name }}</span>
+            </td>
+            <td class="px-4 py-3 text-slate-200">{{ team.station }}</td>
+            <td class="px-4 py-3 text-slate-200">{{ team.members }}</td>
+            <td class="px-4 py-3 text-slate-200">--</td>
+            <td class="px-4 py-3 text-slate-200 font-medium">--</td>
+            <td class="px-4 py-3">
+                <span class="text-slate-400">—</span>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="7" class="px-4 py-12">
+                {% set empty_icon = "users" %}
+                {% set empty_title = "No team rankings available" %}
+                {% set empty_message = "Import sessions to see team rankings" %}
+                {% set empty_cta_text = "Import Sessions" %}
+                {% set empty_cta_href = "/import-export" %}
+                {% include "components/empty_state.html" %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

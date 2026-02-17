@@ -1,0 +1,124 @@
+<!-- CanROC Wizard Completion/Review Page - Dark Theme -->
+<div class="space-y-6">
+    <!-- Header - Dark -->
+    <div class="text-center pb-4 border-b border-slate-700">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center
+                    {% if can_complete %}bg-green-900/50{% else %}bg-amber-900/50{% endif %}">
+            {% if can_complete %}
+            <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            {% else %}
+            <svg class="w-8 h-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            {% endif %}
+        </div>
+        <h3 class="text-xl font-semibold text-white">
+            {% if can_complete %}Ready to Complete{% else %}Missing Required Fields{% endif %}
+        </h3>
+        <p class="text-sm text-slate-400 mt-1">
+            {{ wizard_summary.completion_percent|round(1) }}% complete
+        </p>
+    </div>
+
+    <!-- Errors (if any) - Dark -->
+    {% if errors %}
+    <div class="bg-red-900/50 border border-red-700 rounded-[6px] p-4">
+        <div class="flex items-start gap-2">
+            <svg class="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+                <p class="font-medium text-red-300">Cannot complete wizard:</p>
+                <ul class="mt-1 text-sm text-red-400 list-disc list-inside">
+                    {% for error in errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Missing Required Fields - Dark -->
+    {% if missing_required %}
+    <div class="bg-amber-900/30 border border-amber-700 rounded-[6px] p-4">
+        <h4 class="font-medium text-amber-300 mb-2">Missing Required Fields</h4>
+        <div class="flex flex-wrap gap-2">
+            {% for field_id in missing_required %}
+            <span class="px-2 py-1 text-xs font-mono bg-amber-900/50 text-amber-300 rounded">
+                {{ field_id }}
+            </span>
+            {% endfor %}
+        </div>
+        <p class="text-sm text-amber-400 mt-2">
+            Please go back and fill in these fields, or mark them as "Cannot Obtain" if the information is unavailable.
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Page Summary - Dark -->
+    <div>
+        <h4 class="font-medium text-slate-300 mb-3">Page Summary</h4>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+            {% for page in wizard_summary.pages %}
+            <div class="p-3 border rounded-[6px] text-center
+                        {% if page.status == 'complete' %}
+                        border-green-700 bg-green-900/30
+                        {% elif page.status == 'partial' %}
+                        border-amber-700 bg-amber-900/30
+                        {% else %}
+                        border-slate-600 bg-slate-700/50
+                        {% endif %}">
+                <div class="text-xs text-slate-400 mb-1">Page {{ page.page_id }}</div>
+                <div class="text-sm font-medium
+                            {% if page.status == 'complete' %}text-green-400
+                            {% elif page.status == 'partial' %}text-amber-400
+                            {% else %}text-slate-400{% endif %}">
+                    {{ page.fields_filled }}/{{ page.fields_total }}
+                </div>
+                <div class="text-xs mt-1
+                            {% if page.status == 'complete' %}text-green-500
+                            {% elif page.status == 'partial' %}text-amber-500
+                            {% else %}text-slate-500{% endif %}">
+                    {{ page.status|title }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Actions - Dark -->
+    <div class="flex items-center justify-between pt-4 border-t border-slate-700">
+        <button type="button"
+                hx-get="/partials/canroc/{{ session_id }}/{{ template_id }}/page/1"
+                hx-target="#wizard-content"
+                hx-swap="innerHTML"
+                class="px-4 py-2 text-sm font-medium text-slate-300 border border-slate-600 rounded-[6px] hover:bg-slate-700 transition-colors">
+            Back to Start
+        </button>
+        <div class="flex items-center gap-2">
+            <button type="button"
+                    onclick="document.getElementById('modal-container').innerHTML = ''"
+                    class="px-4 py-2 text-sm font-medium text-slate-300 border border-slate-600 rounded-[6px] hover:bg-slate-700 transition-colors">
+                Save & Exit
+            </button>
+            {% if can_complete %}
+            <button type="button"
+                    hx-post="/partials/canroc/{{ session_id }}/{{ template_id }}/complete"
+                    hx-target="#wizard-content"
+                    hx-swap="innerHTML"
+                    class="px-6 py-2 text-sm font-medium text-white bg-[#16a34a] rounded-[6px] hover:bg-[#15803d] transition-colors">
+                Complete Wizard
+            </button>
+            {% else %}
+            <button type="button"
+                    disabled
+                    class="px-6 py-2 text-sm font-medium text-slate-400 bg-slate-600 rounded-[6px] cursor-not-allowed">
+                Complete Wizard
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</div>

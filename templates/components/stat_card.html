@@ -1,0 +1,60 @@
+{#
+  StatCard Component
+
+  Usage:
+    {% set stat_label = "Total Sessions" %}
+    {% set stat_value = "30" %}
+    {% set stat_icon_bg = "bg-red-50" %}
+    {% set stat_icon_color = "text-[#dc2626]" %}
+    {% set stat_icon = "clipboard" %}
+    {% set stat_trend = "+12%" %}
+    {% set stat_trend_direction = "up" %}
+    {% include "components/stat_card.html" %}
+#}
+
+<div class="bg-gradient-to-br from-[#3e3a46] via-[#3e3a46] to-[#46424e]/40 rounded-2xl p-4 border border-[rgba(255,255,255,0.07)] shadow-sm">
+    <div class="flex items-center justify-between">
+        <div>
+            <p class="text-sm font-medium text-slate-400">{{ stat_label }}</p>
+            <p class="text-2xl font-semibold text-slate-100 mt-1">{{ stat_value }}</p>
+        </div>
+        <div class="w-10 h-10 {{ stat_icon_bg }} rounded-[6px] flex items-center justify-center">
+            {% if stat_icon == 'clipboard' %}
+            <svg class="w-5 h-5 {{ stat_icon_color }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            </svg>
+            {% elif stat_icon == 'users' %}
+            <svg class="w-5 h-5 {{ stat_icon_color }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            {% elif stat_icon == 'chart' %}
+            <svg class="w-5 h-5 {{ stat_icon_color }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            {% elif stat_icon == 'heart' %}
+            <svg class="w-5 h-5 {{ stat_icon_color }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+            </svg>
+            {% elif stat_icon == 'clock' %}
+            <svg class="w-5 h-5 {{ stat_icon_color }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            {% else %}
+            <svg class="w-5 h-5 {{ stat_icon_color }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+            </svg>
+            {% endif %}
+        </div>
+    </div>
+    <div class="mt-2 flex items-center text-xs">
+        {% if stat_trend and stat_trend_direction == 'up' %}
+        <span class="text-[#16a34a] font-medium">{{ stat_trend }}</span>
+        <span class="text-slate-400 ml-1">{{ stat_trend_label | default('vs last period') }}</span>
+        {% elif stat_trend and stat_trend_direction == 'down' %}
+        <span class="text-[#b91c1c] font-medium">{{ stat_trend }}</span>
+        <span class="text-slate-400 ml-1">{{ stat_trend_label | default('vs last period') }}</span>
+        {% else %}
+        <span class="text-slate-400">{{ stat_trend_label | default('No change') }}</span>
+        {% endif %}
+    </div>
+</div>

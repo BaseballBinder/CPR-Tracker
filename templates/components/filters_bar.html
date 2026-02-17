@@ -1,0 +1,50 @@
+{#
+  FiltersBar Component
+
+  Usage:
+    {% set filters = [
+        {"type": "select", "name": "team", "label": "All Teams", "options": teams, "option_label": "name", "option_value": "id"},
+        {"type": "select", "name": "outcome", "label": "All Outcomes", "options": [{"value": "ROSC", "label": "ROSC"}, {"value": "No ROSC", "label": "No ROSC"}]}
+    ] %}
+    {% set filters_reset_url = "/sessions" %}
+    {% include "components/filters_bar.html" %}
+#}
+
+<div class="bg-[#3e3a46] rounded-[6px] border border-[rgba(255,255,255,0.10)] p-4 mb-6 shadow-sm">
+    <div class="flex flex-wrap items-center gap-3">
+        {% for filter in filters %}
+            {% if filter.type == 'select' %}
+            <select
+                name="{{ filter.name }}"
+                class="text-sm border border-[rgba(255,255,255,0.10)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] focus:border-[#dc2626] bg-[#36323e] text-slate-200"
+            >
+                <option value="">{{ filter.label }}</option>
+                {% if filter.options %}
+                    {% for opt in filter.options %}
+                        {% if filter.option_value %}
+                        <option value="{{ opt[filter.option_value] }}">{{ opt[filter.option_label] }}</option>
+                        {% else %}
+                        <option value="{{ opt.value }}">{{ opt.label }}</option>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            </select>
+            {% elif filter.type == 'text' %}
+            <input
+                type="text"
+                name="{{ filter.name }}"
+                placeholder="{{ filter.placeholder | default(filter.label) }}"
+                class="text-sm border border-[rgba(255,255,255,0.10)] rounded-[6px] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dc2626] focus:border-[#dc2626] bg-[#36323e] text-slate-200 placeholder-slate-500"
+            >
+            {% endif %}
+        {% endfor %}
+
+        <div class="flex-1"></div>
+
+        {% if filters_reset_url %}
+        <a href="{{ filters_reset_url }}" class="text-sm text-slate-400 hover:text-slate-200">
+            Reset filters
+        </a>
+        {% endif %}
+    </div>
+</div>

@@ -1,0 +1,31 @@
+{#
+  ChartPanel Component (Placeholder for Milestone 5)
+
+  Usage:
+    {% set chart_title = "Performance Trends" %}
+    {% set chart_id = "trend-chart" %}
+    {% set chart_options = ["Compression Fraction", "Compression Rate", "Time to First Compression"] %}
+    {% set chart_height = "h-64" %}
+    {% include "components/chart_panel.html" %}
+#}
+
+<div class="bg-[#3e3a46] rounded-[6px] p-4 border border-[rgba(255,255,255,0.10)] shadow-sm">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-[20px] font-semibold text-slate-100">{{ chart_title }}</h2>
+        {% if chart_options and chart_options | length > 0 %}
+        <select class="text-sm border border-[rgba(255,255,255,0.10)] rounded-[6px] px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#dc2626] bg-[#36323e] text-slate-200">
+            {% for option in chart_options %}
+            <option>{{ option }}</option>
+            {% endfor %}
+        </select>
+        {% endif %}
+    </div>
+    <div class="{{ chart_height | default('h-64') }} flex items-center justify-center bg-[#36323e] rounded-[6px] border border-dashed border-[rgba(255,255,255,0.10)]">
+        <div class="text-center">
+            <svg class="w-10 h-10 mx-auto text-slate-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <p class="text-slate-400 text-sm">Chart will be added in Milestone 5</p>
+        </div>
+    </div>
+</div>

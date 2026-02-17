@@ -1,0 +1,40 @@
+{# Team analysis table partial #}
+<table class="w-full text-sm">
+    <thead class="bg-[#36323e] text-slate-300 text-left">
+        <tr>
+            <th class="px-4 py-3 font-medium">Team</th>
+            <th class="px-4 py-3 font-medium">Station</th>
+            <th class="px-4 py-3 font-medium">Members</th>
+            <th class="px-4 py-3 font-medium">Sessions</th>
+            <th class="px-4 py-3 font-medium">JcLS</th>
+            <th class="px-4 py-3 font-medium">Avg Rate</th>
+            <th class="px-4 py-3 font-medium">ROSC Rate</th>
+        </tr>
+    </thead>
+    <tbody class="divide-y divide-[rgba(255,255,255,0.10)]">
+        {% for team in teams %}
+        <tr class="hover:bg-[#36323e]">
+            <td class="px-4 py-3">
+                <span class="text-slate-100 font-medium">{{ team.name }}</span>
+            </td>
+            <td class="px-4 py-3 text-slate-200">{{ team.station }}</td>
+            <td class="px-4 py-3 text-slate-200">{{ team.members }}</td>
+            <td class="px-4 py-3 text-slate-200">--</td>
+            <td class="px-4 py-3 text-slate-200 font-medium">--</td>
+            <td class="px-4 py-3 text-slate-200">--</td>
+            <td class="px-4 py-3 text-slate-200">--</td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="7" class="px-4 py-12">
+                {% set empty_icon = "users" %}
+                {% set empty_title = "No teams available" %}
+                {% set empty_message = "Configure teams in Settings" %}
+                {% set empty_cta_text = "Go to Settings" %}
+                {% set empty_cta_href = "/settings" %}
+                {% include "components/empty_state.html" %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

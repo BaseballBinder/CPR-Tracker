@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+*.spec.bak
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Node modules
+node_modules/
+package-lock.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.claude/
+
+# Windows special files
+nul
+
+# Junk/artifact files
+=3.1.0
+approuterspages.py
+templatespagessessions.html
+
+# OS
+Thumbs.db
+.DS_Store
+
+# App data (never commit user data)
+exports/*.xlsx
+exports/*.csv
+uploads/*
+!uploads/.gitkeep
+
+# PyInstaller
+*.manifest
+*.spec.bak
+
+# Logs
+*.log
+
+# Environment / secrets
+.env
+*.pem
+*.key
+
+# Test artifacts
+.pytest_cache/
+htmlcov/
+.coverage

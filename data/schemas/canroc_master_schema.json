@@ -1,0 +1,2090 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "template_id": "master",
+  "template_name": "CanROC Master Template",
+  "template_file": "1.Master_CanROC_Sheet_Update_August 2025.xlsx",
+  "version": "2025.08",
+  "last_updated": "2025-08-01",
+  "missing_marker": ".",
+
+  "pages": [
+    {
+      "page_id": 1,
+      "page_name": "case_info",
+      "page_label": "Case Information",
+      "description": "Basic case identification and treatment status",
+      "fields": [
+        {
+          "field_id": "pcofile",
+          "label": "PCO file",
+          "help_text": "Is there a PCO file uploaded to this event, if yes then data is pulled from PCO sheet",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": true,
+          "cno_allowed": false,
+          "input_style": "button_grid",
+          "excel_column": 1
+        },
+        {
+          "field_id": "ptid",
+          "label": "cr call number",
+          "help_text": "Patient ID that is found in the web browser, it is the unique identifier for this patient",
+          "type": "text",
+          "required": true,
+          "cno_allowed": false,
+          "excel_column": 2
+        },
+        {
+          "field_id": "ptid2",
+          "label": "cr call number 2",
+          "help_text": "This is for multiple PCO files attached to the same call",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 3
+        },
+        {
+          "field_id": "cr_zone",
+          "label": "ems zone",
+          "help_text": "Calgary (CGY) or Calgary Suburban Rural (CGYSR), Lethbridge (LETH)",
+          "type": "choice",
+          "choices": [
+            {"value": "CGY", "label": "Calgary"},
+            {"value": "CGYSR", "label": "Calgary Suburban Rural"},
+            {"value": "LETH", "label": "Lethbridge"}
+          ],
+          "required": true,
+          "cno_allowed": false,
+          "input_style": "button_grid",
+          "excel_column": 4
+        },
+        {
+          "field_id": "cr_tx",
+          "label": "treated by ems/fire",
+          "help_text": "Was the cardiac arrest treated by on-duty paramedics or firefighters?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": true,
+          "cno_allowed": false,
+          "input_style": "button_grid",
+          "excel_column": 5
+        },
+        {
+          "field_id": "cr_txby",
+          "label": "treated by who",
+          "help_text": "Who started CPR, was it Fire/MFR, EMS, or did bystander use AED?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "Fire/MFR"},
+            {"value": "1", "label": "EMS"},
+            {"value": "2", "label": "Bystander AED"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "dependencies": [
+            {"field_id": "cr_tx", "condition": "equals", "value": "1", "action": "show_and_require"}
+          ],
+          "excel_column": 6
+        },
+        {
+          "field_id": "cr_emstx",
+          "label": "ems only tx",
+          "help_text": "EMS continued CPR or provided post resuscitative care",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 7
+        },
+        {
+          "field_id": "cr_emstxdnr",
+          "label": "DNR delay",
+          "help_text": "Did EMS/Fire start treatment while waiting for a DNR confirmation?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"},
+            {"value": "2", "label": "Not Applicable"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 8
+        },
+        {
+          "field_id": "cr_service",
+          "label": "lead ems service",
+          "help_text": "What was the lead paramedic or fire service for this event?",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 9
+        },
+        {
+          "field_id": "cr_epdt",
+          "label": "episode date",
+          "help_text": "What was the episode date? Use the date that the call started",
+          "type": "date",
+          "format": "YYYY-MM-DD",
+          "required": true,
+          "cno_allowed": false,
+          "autofill_source": "session.date",
+          "excel_column": 10
+        },
+        {
+          "field_id": "cr_city",
+          "label": "city",
+          "help_text": "In which municipality did EMS respond and treat the patient?",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 11
+        },
+        {
+          "field_id": "cr_unknowngeo",
+          "label": "geocoordinates",
+          "help_text": "If location data (UTM and lat/long) are unavailable, select Unknown/Not Noted",
+          "type": "choice",
+          "choices": [
+            {"value": "Unknown/Not Noted", "label": "Unknown/Not Noted"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 12
+        },
+        {
+          "field_id": "cr_callnum",
+          "label": "linking id/call #",
+          "help_text": "What is the unique run/call number or site linking ID?",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 13
+        },
+        {
+          "field_id": "cr_trial",
+          "label": "clinical trial",
+          "help_text": "Was the patient enrolled in a clinical trial?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 14
+        },
+        {
+          "field_id": "cr_trialoth",
+          "label": "other trial",
+          "help_text": "What other trial?",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_trial", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 15
+        }
+      ]
+    },
+    {
+      "page_id": 2,
+      "page_name": "dispatch",
+      "page_label": "Dispatch Information",
+      "description": "MPDS codes and dispatch details",
+      "fields": [
+        {
+          "field_id": "cr_mpdscard",
+          "label": "mpds card",
+          "help_text": "Medical Priority Dispatch System Card, it's a 2 number code",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 16
+        },
+        {
+          "field_id": "cr_determinant",
+          "label": "determinant",
+          "help_text": "Second part of MPDS, 1 Letter Code (A, B, C, D, E, O)",
+          "type": "choice",
+          "choices": [
+            {"value": "A", "label": "A"},
+            {"value": "B", "label": "B"},
+            {"value": "C", "label": "C"},
+            {"value": "D", "label": "D"},
+            {"value": "E", "label": "E"},
+            {"value": "O", "label": "O"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 17
+        },
+        {
+          "field_id": "cr_det. sub-type",
+          "label": "sub-type",
+          "help_text": "Last Part of Code, 2 Number Code (May also be followed by a letter)",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 18
+        }
+      ]
+    },
+    {
+      "page_id": 3,
+      "page_name": "location",
+      "page_label": "Location & Address",
+      "description": "Pick-up location and address details",
+      "fields": [
+        {
+          "field_id": "cr_puloc",
+          "label": "address",
+          "help_text": "Pick-up Address, Not Home Address",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 19
+        },
+        {
+          "field_id": "cr_pupc",
+          "label": "postal code",
+          "help_text": "Pick-up location postal code",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 20
+        },
+        {
+          "field_id": "cr_loctyp",
+          "label": "pick-up location type",
+          "help_text": "Indicate the type of location (or immediate surroundings) where the arrest occurred",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "House"},
+            {"value": "1", "label": "Apartment/Condo"},
+            {"value": "2", "label": "Healthcare facility (non-acute)"},
+            {"value": "3", "label": "Nursing home/Residential institution"},
+            {"value": "4", "label": "Street"},
+            {"value": "5", "label": "Public building"},
+            {"value": "6", "label": "Place of recreation"},
+            {"value": "7", "label": "Industrial site"},
+            {"value": "8", "label": "Airport"},
+            {"value": "9", "label": "Casino"},
+            {"value": "10", "label": "Other private location"},
+            {"value": "11", "label": "Other public location"},
+            {"value": "12", "label": "Healthcare facility transfer"}
+          ],
+          "required": true,
+          "cno_allowed": true,
+          "cno_default": ".",
+          "input_style": "button_grid",
+          "excel_column": 21
+        }
+      ]
+    },
+    {
+      "page_id": 4,
+      "page_name": "demographics",
+      "page_label": "Patient Demographics",
+      "description": "Patient age, sex, and identifying information",
+      "fields": [
+        {
+          "field_id": "cr_estageu",
+          "label": "patient age unit",
+          "help_text": "Select the appropriate unit for the patient's age",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "Years"},
+            {"value": "1", "label": "Months"},
+            {"value": "2", "label": "Days"},
+            {"value": "3", "label": "CNO"}
+          ],
+          "required": true,
+          "cno_allowed": true,
+          "cno_default": "3",
+          "input_style": "button_grid",
+          "excel_column": 22
+        },
+        {
+          "field_id": "cr_estagev",
+          "label": "age value",
+          "help_text": "Select the appropriate age value based on the unit selected",
+          "type": "integer",
+          "min": 0,
+          "max": 150,
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_estageu", "condition": "not_equals", "value": "3", "action": "show_and_require"}
+          ],
+          "excel_column": 23
+        },
+        {
+          "field_id": "cr_estage",
+          "label": "estimated age",
+          "help_text": "This is for when you see in the documentation 'estimated age'",
+          "type": "integer",
+          "min": 0,
+          "max": 150,
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 24
+        },
+        {
+          "field_id": "cr_agecat",
+          "label": "age category",
+          "help_text": "When age is unknown, select the most accurate age category",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "Infant (estimated less than 1)"},
+            {"value": "1", "label": "Child (estimated 1 to 12 years)"},
+            {"value": "2", "label": "Adult (estimated 13+)"},
+            {"value": "3", "label": "Unknown"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 25
+        },
+        {
+          "field_id": "cr_sexp",
+          "label": "sex",
+          "help_text": "Provide the sex/gender of the patient as determined by documentation",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "Female"},
+            {"value": "1", "label": "Male"},
+            {"value": "2", "label": "Not noted"}
+          ],
+          "required": true,
+          "cno_allowed": true,
+          "cno_default": "2",
+          "input_style": "button_grid",
+          "excel_column": 26
+        },
+        {
+          "field_id": "cr_pregnant",
+          "label": "pregnant",
+          "help_text": "Select if there is evidence that the patient was pregnant at time of arrest",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"},
+            {"value": "2", "label": "Cannot obtain"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 27
+        },
+        {
+          "field_id": "cr_firstname",
+          "label": "first name",
+          "help_text": "Patients first name",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 28
+        },
+        {
+          "field_id": "cr_middlename",
+          "label": "middle name",
+          "help_text": "Patients middle name",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 29
+        },
+        {
+          "field_id": "cr_lastname",
+          "label": "last name",
+          "help_text": "Patients last name",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 30
+        },
+        {
+          "field_id": "cr_pdob",
+          "label": "date of birth",
+          "help_text": "DD/JAN/YYYY",
+          "type": "date",
+          "format": "DD/MMM/YYYY",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 31
+        },
+        {
+          "field_id": "cr_phealthcn",
+          "label": "healthcare #",
+          "help_text": "Patients healthcare number",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 32
+        },
+        {
+          "field_id": "cr_phealthcv",
+          "label": "province",
+          "help_text": "Patients healthcare province",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 33
+        },
+        {
+          "field_id": "cr_msn",
+          "label": "MSN",
+          "help_text": "Linking numbers to connect patients to connect care",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 34
+        },
+        {
+          "field_id": "cr_csn",
+          "label": "CSN",
+          "help_text": "Linking numbers to connect patients to connect care",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 35
+        }
+      ]
+    },
+    {
+      "page_id": 5,
+      "page_name": "times",
+      "page_label": "Event Times",
+      "description": "Key timestamps during the event",
+      "fields": [
+        {
+          "field_id": "cr_ptmrcv",
+          "label": "call received at dispatch",
+          "help_text": "Provide the time call received at dispatch for EMS",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 36
+        },
+        {
+          "field_id": "cr_rcvcno",
+          "label": "cannot obtain",
+          "help_text": "If call received time is unavailable, select checked",
+          "type": "choice",
+          "choices": [
+            {"value": "1", "label": "Checked"}
+          ],
+          "required": false,
+          "cno_allowed": false,
+          "cno_flag_for": "cr_ptmrcv",
+          "input_style": "checkbox",
+          "excel_column": 37
+        },
+        {
+          "field_id": "cr_ptmdsp",
+          "label": "earliest crew notified",
+          "help_text": "Provide the first time that any EMS or fire vehicle was notified",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 38
+        },
+        {
+          "field_id": "cr_dspcno",
+          "label": "cannot obtain",
+          "help_text": "If earliest crew notified time is unavailable, select checked",
+          "type": "choice",
+          "choices": [
+            {"value": "1", "label": "Checked"}
+          ],
+          "required": false,
+          "cno_allowed": false,
+          "cno_flag_for": "cr_ptmdsp",
+          "input_style": "checkbox",
+          "excel_column": 39
+        }
+      ]
+    },
+    {
+      "page_id": 6,
+      "page_name": "vehicles",
+      "page_label": "Vehicle Response",
+      "description": "Responding vehicle details",
+      "fields": [
+        {
+          "field_id": "cr_v1ag",
+          "label": "vehicle 1 agency",
+          "help_text": "Please select the agency name of the first arriving vehicle",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 40
+        },
+        {
+          "field_id": "cr_rig1dtm",
+          "label": "vehicle 1 dispatch time",
+          "help_text": "Provide the time of dispatch for the first arriving vehicle",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 41
+        },
+        {
+          "field_id": "cr_rig1tm",
+          "label": "vehicle 1 arrival time",
+          "help_text": "Provide the time of arrival for the first arriving vehicle",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 42
+        },
+        {
+          "field_id": "cr_arrivept",
+          "label": "arrive patient",
+          "help_text": "hh:mm:ss",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 43
+        },
+        {
+          "field_id": "cr_v1sl",
+          "label": "vehicle 1 service level",
+          "help_text": "Provide the service level for this vehicle",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "Fire"},
+            {"value": "1", "label": "BLS (PCP)"},
+            {"value": "2", "label": "ALS (ACP)"},
+            {"value": "3", "label": "BLS+ (PCP+)"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 44
+        },
+        {
+          "field_id": "cr_v2ag",
+          "label": "vehicle 2 agency",
+          "help_text": "Please select the agency name of the second arriving vehicle",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 45
+        },
+        {
+          "field_id": "cr_rig2dtm",
+          "label": "vehicle 2 dispatch time",
+          "help_text": "Provide the time of dispatch for the second arriving vehicle",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 46
+        },
+        {
+          "field_id": "cr_rig2tm",
+          "label": "vehicle 2 arrival time",
+          "help_text": "Provide the time of arrival for the second arriving vehicle",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 47
+        },
+        {
+          "field_id": "cr_v2sl",
+          "label": "vehicle 2 service level",
+          "help_text": "Provide the service level for this vehicle",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "Fire"},
+            {"value": "1", "label": "BLS (PCP)"},
+            {"value": "2", "label": "ALS (ACP)"},
+            {"value": "3", "label": "BLS+ (PCP+)"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 48
+        }
+      ]
+    },
+    {
+      "page_id": 7,
+      "page_name": "disposition",
+      "page_label": "Patient Disposition",
+      "description": "Final status and transport times",
+      "fields": [
+        {
+          "field_id": "cr_pdisp",
+          "label": "final status with ems",
+          "help_text": "What was the final status of the patient with EMS?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "Pronounced/TOR on scene"},
+            {"value": "1", "label": "Transported to hospital"},
+            {"value": "2", "label": "Transported with TOR en route"},
+            {"value": "3", "label": "Alive and not transported by Fire/EMS to hospital"},
+            {"value": "4", "label": "Handed over transport to higher level of care"}
+          ],
+          "required": true,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 49
+        },
+        {
+          "field_id": "cr_ptmlft",
+          "label": "depart scene time",
+          "help_text": "Provide the time that the transporting vehicle left scene",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 50
+        },
+        {
+          "field_id": "cr_lftcno",
+          "label": "cannot obtain",
+          "help_text": "If depart scene time is unavailable",
+          "type": "choice",
+          "choices": [
+            {"value": "1", "label": "Checked"}
+          ],
+          "required": false,
+          "cno_allowed": false,
+          "cno_flag_for": "cr_ptmlft",
+          "input_style": "checkbox",
+          "excel_column": 51
+        },
+        {
+          "field_id": "cr_ptmeda",
+          "label": "arrive hospital time",
+          "help_text": "Provide the time of arrival at the hospital",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 52
+        },
+        {
+          "field_id": "cr_edacno",
+          "label": "cannot obtain",
+          "help_text": "If arrive hospital time is unavailable",
+          "type": "choice",
+          "choices": [
+            {"value": "1", "label": "Checked"}
+          ],
+          "required": false,
+          "cno_allowed": false,
+          "cno_flag_for": "cr_ptmeda",
+          "input_style": "checkbox",
+          "excel_column": 53
+        },
+        {
+          "field_id": "cr_ptmtrm",
+          "label": "time of tor",
+          "help_text": "Time of termination of resuscitation",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 54
+        },
+        {
+          "field_id": "cr_trmcno",
+          "label": "cannot obtain",
+          "help_text": "If time of TOR is unavailable",
+          "type": "choice",
+          "choices": [
+            {"value": "1", "label": "Checked"}
+          ],
+          "required": false,
+          "cno_allowed": false,
+          "cno_flag_for": "cr_ptmtrm",
+          "input_style": "checkbox",
+          "excel_column": 55
+        }
+      ]
+    },
+    {
+      "page_id": 8,
+      "page_name": "witness_bystander",
+      "page_label": "Witness & Bystander",
+      "description": "Witnessed status and bystander interventions",
+      "fields": [
+        {
+          "field_id": "cr_witbys",
+          "label": "witnessed status",
+          "help_text": "Was the arrest witnessed?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "Unwitnessed"},
+            {"value": "1", "label": "Bystander witnessed"},
+            {"value": "2", "label": "EMS/fire witnessed"}
+          ],
+          "required": true,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 56
+        },
+        {
+          "field_id": "cr_ptmwar",
+          "label": "witnessed time",
+          "help_text": "Time arrest was witnessed",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 57
+        },
+        {
+          "field_id": "cr_warcno",
+          "label": "cannot obtain",
+          "help_text": "If witnessed time is unavailable",
+          "type": "choice",
+          "choices": [
+            {"value": "1", "label": "Checked"}
+          ],
+          "required": false,
+          "cno_allowed": false,
+          "cno_flag_for": "cr_ptmwar",
+          "input_style": "checkbox",
+          "excel_column": 58
+        },
+        {
+          "field_id": "cr_cpratt",
+          "label": "bystander cpr",
+          "help_text": "Was bystander CPR attempted?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": true,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 59
+        },
+        {
+          "field_id": "cr_aedapp",
+          "label": "bystander aed used",
+          "help_text": "Was a bystander AED applied?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 60
+        },
+        {
+          "field_id": "cr_aedshk",
+          "label": "bystander shocks given",
+          "help_text": "Were bystander AED shocks delivered?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "dependencies": [
+            {"field_id": "cr_aedapp", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 61
+        },
+        {
+          "field_id": "cr_aedloc",
+          "label": "aed location",
+          "help_text": "Where was the bystander AED from?",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_aedapp", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 62
+        },
+        {
+          "field_id": "cr_fireaed",
+          "label": "fire aed used",
+          "help_text": "Was fire AED used?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 63
+        },
+        {
+          "field_id": "cr_firetime",
+          "label": "time",
+          "help_text": "Time of fire AED application",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_fireaed", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 64
+        },
+        {
+          "field_id": "cr_fireaedshk",
+          "label": "fire shocks given",
+          "help_text": "Were fire AED shocks delivered?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "dependencies": [
+            {"field_id": "cr_fireaed", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 65
+        },
+        {
+          "field_id": "cr_firenumshk",
+          "label": "# of shocks by fire only",
+          "help_text": "Number of shocks delivered by fire only",
+          "type": "integer",
+          "min": 0,
+          "max": 50,
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_fireaedshk", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 66
+        }
+      ]
+    },
+    {
+      "page_id": 9,
+      "page_name": "substances",
+      "page_label": "Substances & Opioids",
+      "description": "Opioid and substance involvement",
+      "fields": [
+        {
+          "field_id": "cr_opioid",
+          "label": "opioid",
+          "help_text": "Was there opioid involvement?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"},
+            {"value": "9", "label": "Unknown"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 67
+        },
+        {
+          "field_id": "cr_substance_5",
+          "label": "recent non prescription",
+          "help_text": "Recent non-prescription substance use",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 68
+        },
+        {
+          "field_id": "cr_opioidbys",
+          "label": "administration",
+          "help_text": "Was opioid antagonist administered by bystander?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "dependencies": [
+            {"field_id": "cr_opioid", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 69
+        },
+        {
+          "field_id": "cr_firenalox",
+          "label": "fire narcan",
+          "help_text": "Was narcan given by fire?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 70
+        },
+        {
+          "field_id": "cr_firenaloxds",
+          "label": "mg dose",
+          "help_text": "Narcan dose in mg given by fire",
+          "type": "float",
+          "min": 0,
+          "max": 20,
+          "decimals": 2,
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_firenalox", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 71
+        }
+      ]
+    },
+    {
+      "page_id": 10,
+      "page_name": "clinical_event",
+      "page_label": "Clinical Event Details",
+      "description": "Etiology, rhythms, and ROSC",
+      "fields": [
+        {
+          "field_id": "cr_scause",
+          "label": "etiology",
+          "help_text": "What was the suspected cause/etiology of the arrest?",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 72
+        },
+        {
+          "field_id": "cr_rosc",
+          "label": "rosc",
+          "help_text": "Did the patient achieve ROSC?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": true,
+          "cno_allowed": false,
+          "input_style": "button_grid",
+          "autofill_source": "session.outcome",
+          "excel_column": 73
+        },
+        {
+          "field_id": "cr_ptmrsc",
+          "label": "1st rosc time",
+          "help_text": "Time of first ROSC",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_rosc", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 74
+        },
+        {
+          "field_id": "cr_rsccno",
+          "label": "cannot obtain",
+          "help_text": "If ROSC time is unavailable",
+          "type": "choice",
+          "choices": [
+            {"value": "1", "label": "Checked"}
+          ],
+          "required": false,
+          "cno_allowed": false,
+          "cno_flag_for": "cr_ptmrsc",
+          "input_style": "checkbox",
+          "excel_column": 75
+        },
+        {
+          "field_id": "cr_frhyem",
+          "label": "1st ca rhythm",
+          "help_text": "What was the first cardiac arrest rhythm?",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 76
+        },
+        {
+          "field_id": "cr_prosc",
+          "label": "status of ED",
+          "help_text": "Status at ED arrival",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 77
+        },
+        {
+          "field_id": "cr_pyhalt",
+          "label": "reason resus stopped",
+          "help_text": "Why was resuscitation stopped?",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 78
+        }
+      ]
+    },
+    {
+      "page_id": 11,
+      "page_name": "ems_cpr",
+      "page_label": "EMS/Fire CPR",
+      "description": "EMS and Fire CPR interventions",
+      "fields": [
+        {
+          "field_id": "cr_ccems",
+          "label": "1st ems/fire cpr",
+          "help_text": "Was CPR performed by EMS/Fire?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 79
+        },
+        {
+          "field_id": "cr_ptmcpr",
+          "label": "time of ems/fire cpr",
+          "help_text": "Time of first EMS/Fire CPR",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_ccems", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 80
+        },
+        {
+          "field_id": "cr_ptmesttmcpr",
+          "label": "est. time of ems/fire cpr",
+          "help_text": "Estimated time of EMS/Fire CPR if exact not known",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 81
+        },
+        {
+          "field_id": "cr_cprcno",
+          "label": "cannot obtain",
+          "help_text": "If EMS/Fire CPR time is unavailable",
+          "type": "choice",
+          "choices": [
+            {"value": "1", "label": "Checked"}
+          ],
+          "required": false,
+          "cno_allowed": false,
+          "cno_flag_for": "cr_ptmcpr",
+          "input_style": "checkbox",
+          "excel_column": 82
+        },
+        {
+          "field_id": "cr_ccmech",
+          "label": "mechanical cpr",
+          "help_text": "Was mechanical CPR used?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 83
+        }
+      ]
+    },
+    {
+      "page_id": 12,
+      "page_name": "defibrillation",
+      "page_label": "Defibrillation",
+      "description": "EMS shock and defibrillation details",
+      "fields": [
+        {
+          "field_id": "cr_emsshk",
+          "label": "1st ems shock",
+          "help_text": "Was a shock delivered by EMS?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 84
+        },
+        {
+          "field_id": "cr_ptmshk",
+          "label": "time of ems shock",
+          "help_text": "Time of first EMS shock",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_emsshk", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 85
+        },
+        {
+          "field_id": "cr_shkcno",
+          "label": "cannot obtain",
+          "help_text": "If EMS shock time is unavailable",
+          "type": "choice",
+          "choices": [
+            {"value": "1", "label": "Checked"}
+          ],
+          "required": false,
+          "cno_allowed": false,
+          "cno_flag_for": "cr_ptmshk",
+          "input_style": "checkbox",
+          "excel_column": 86
+        },
+        {
+          "field_id": "cr_numshk",
+          "label": "# of shocks given",
+          "help_text": "Total number of shocks delivered",
+          "type": "integer",
+          "min": 0,
+          "max": 50,
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 87
+        },
+        {
+          "field_id": "cr_vc",
+          "label": "vector change",
+          "help_text": "Was vector change used?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 88
+        },
+        {
+          "field_id": "cr_dsd",
+          "label": "dual sequential",
+          "help_text": "Was dual sequential defibrillation used?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 89
+        }
+      ]
+    },
+    {
+      "page_id": 13,
+      "page_name": "airway",
+      "page_label": "Airway Management",
+      "description": "Trismus, PEEP, and airway interventions",
+      "fields": [
+        {
+          "field_id": "cr_trismus",
+          "label": "trismus",
+          "help_text": "Was trismus present?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 90
+        },
+        {
+          "field_id": "cr_peep",
+          "label": "peep applied",
+          "help_text": "Was PEEP applied?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 91
+        },
+        {
+          "field_id": "cr_peepsuc",
+          "label": "Peep successful",
+          "help_text": "Was PEEP successful?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "dependencies": [
+            {"field_id": "cr_peep", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 92
+        },
+        {
+          "field_id": "cr_peepvalue",
+          "label": "value",
+          "help_text": "PEEP value used",
+          "type": "integer",
+          "min": 0,
+          "max": 30,
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_peep", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 93
+        },
+        {
+          "field_id": "cr_peeptm",
+          "label": "time",
+          "help_text": "Time PEEP was applied",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_peep", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 94
+        },
+        {
+          "field_id": "cr_peeptmcno",
+          "label": "cannot obtain",
+          "help_text": "If PEEP time is unavailable",
+          "type": "choice",
+          "choices": [
+            {"value": "1", "label": "Checked"}
+          ],
+          "required": false,
+          "cno_allowed": false,
+          "cno_flag_for": "cr_peeptm",
+          "input_style": "checkbox",
+          "excel_column": 95
+        }
+      ]
+    },
+    {
+      "page_id": 14,
+      "page_name": "vascular_access",
+      "page_label": "Vascular Access",
+      "description": "IV and IO access",
+      "fields": [
+        {
+          "field_id": "cr_ivatt",
+          "label": "iv attempted",
+          "help_text": "Was IV access attempted?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 96
+        },
+        {
+          "field_id": "cr_ivsuc",
+          "label": "iv successful",
+          "help_text": "Was IV access successful?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "dependencies": [
+            {"field_id": "cr_ivatt", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 97
+        },
+        {
+          "field_id": "cr_ioatt",
+          "label": "io attempted",
+          "help_text": "Was IO access attempted?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 98
+        },
+        {
+          "field_id": "cr_locio",
+          "label": "location of io",
+          "help_text": "Location where IO was placed",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_ioatt", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 99
+        },
+        {
+          "field_id": "cr_iosuc",
+          "label": "io successful",
+          "help_text": "Was IO access successful?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "dependencies": [
+            {"field_id": "cr_ioatt", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 100
+        }
+      ]
+    },
+    {
+      "page_id": 15,
+      "page_name": "advanced_airway",
+      "page_label": "Advanced Airway",
+      "description": "SGA and ETT",
+      "fields": [
+        {
+          "field_id": "cr_sgaatt",
+          "label": "SGA attempted",
+          "help_text": "Was SGA attempted?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 101
+        },
+        {
+          "field_id": "cr_sgasuc",
+          "label": "SGA successful",
+          "help_text": "Was SGA successful?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "dependencies": [
+            {"field_id": "cr_sgaatt", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 102
+        },
+        {
+          "field_id": "cr_sgatm",
+          "label": "SGA estab time",
+          "help_text": "Time SGA was established",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_sgasuc", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 103
+        },
+        {
+          "field_id": "cr_sgacno",
+          "label": "cannot obtain",
+          "help_text": "If SGA time is unavailable",
+          "type": "choice",
+          "choices": [
+            {"value": "1", "label": "Checked"}
+          ],
+          "required": false,
+          "cno_allowed": false,
+          "cno_flag_for": "cr_sgatm",
+          "input_style": "checkbox",
+          "excel_column": 104
+        },
+        {
+          "field_id": "cr_ettatt",
+          "label": "ett attempted",
+          "help_text": "Was ETT attempted?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 105
+        },
+        {
+          "field_id": "cr_ettsuc",
+          "label": "ett successful",
+          "help_text": "Was ETT successful?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "dependencies": [
+            {"field_id": "cr_ettatt", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 106
+        },
+        {
+          "field_id": "cr_etttm",
+          "label": "ett established time",
+          "help_text": "Time ETT was established",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_ettsuc", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 107
+        },
+        {
+          "field_id": "cr_ettcno",
+          "label": "cannot obtain",
+          "help_text": "If ETT time is unavailable",
+          "type": "choice",
+          "choices": [
+            {"value": "1", "label": "Checked"}
+          ],
+          "required": false,
+          "cno_allowed": false,
+          "cno_flag_for": "cr_etttm",
+          "input_style": "checkbox",
+          "excel_column": 108
+        }
+      ]
+    },
+    {
+      "page_id": 16,
+      "page_name": "medications",
+      "page_label": "Medications",
+      "description": "Epinephrine, push dose epi, norepinephrine, antiarrhythmics, narcan, sedation",
+      "fields": [
+        {
+          "field_id": "cr_epi",
+          "label": "epinephrine",
+          "help_text": "Was epinephrine given?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 109
+        },
+        {
+          "field_id": "cr_epitm",
+          "label": "1st admin time",
+          "help_text": "Time of first epinephrine administration",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_epi", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 110
+        },
+        {
+          "field_id": "cr_epicno",
+          "label": "cannot obtain",
+          "help_text": "If epinephrine time is unavailable",
+          "type": "choice",
+          "choices": [
+            {"value": "1", "label": "Checked"}
+          ],
+          "required": false,
+          "cno_allowed": false,
+          "cno_flag_for": "cr_epitm",
+          "input_style": "checkbox",
+          "excel_column": 111
+        },
+        {
+          "field_id": "cr_epidose",
+          "label": "total dose (mg)",
+          "help_text": "Total epinephrine dose in mg",
+          "type": "float",
+          "min": 0,
+          "max": 50,
+          "decimals": 1,
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_epi", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 112
+        },
+        {
+          "field_id": "cr_epidscno",
+          "label": "cannot obtain",
+          "help_text": "If epinephrine dose is unavailable",
+          "type": "choice",
+          "choices": [
+            {"value": "1", "label": "Checked"}
+          ],
+          "required": false,
+          "cno_allowed": false,
+          "cno_flag_for": "cr_epidose",
+          "input_style": "checkbox",
+          "excel_column": 113
+        },
+        {
+          "field_id": "cr_pushdoseepi",
+          "label": "push dose epi",
+          "help_text": "Was push dose epinephrine given?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 114
+        },
+        {
+          "field_id": "cr_pushdoseepitm",
+          "label": "1st admin time",
+          "help_text": "Time of first push dose epi",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_pushdoseepi", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 115
+        },
+        {
+          "field_id": "cr_pushdoseepitmcno",
+          "label": "cannot obtain",
+          "help_text": "If push dose epi time is unavailable",
+          "type": "choice",
+          "choices": [
+            {"value": "1", "label": "Checked"}
+          ],
+          "required": false,
+          "cno_allowed": false,
+          "cno_flag_for": "cr_pushdoseepitm",
+          "input_style": "checkbox",
+          "excel_column": 116
+        },
+        {
+          "field_id": "cr_pushdoseepids",
+          "label": "total dose (mcg)",
+          "help_text": "Total push dose epi in mcg",
+          "type": "float",
+          "min": 0,
+          "max": 1000,
+          "decimals": 0,
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_pushdoseepi", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 117
+        },
+        {
+          "field_id": "cr_pushdoseepidscno",
+          "label": "cannot obtain",
+          "help_text": "If push dose epi dose is unavailable",
+          "type": "choice",
+          "choices": [
+            {"value": "1", "label": "Checked"}
+          ],
+          "required": false,
+          "cno_allowed": false,
+          "cno_flag_for": "cr_pushdoseepids",
+          "input_style": "checkbox",
+          "excel_column": 118
+        },
+        {
+          "field_id": "cr_norepi",
+          "label": "norepinephrine",
+          "help_text": "Was norepinephrine given?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 119
+        },
+        {
+          "field_id": "cr_norepitm",
+          "label": "1st dose time",
+          "help_text": "Time of first norepinephrine dose",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_norepi", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 120
+        },
+        {
+          "field_id": "cr_norepitmcno",
+          "label": "cannot obtain",
+          "help_text": "If norepinephrine time is unavailable",
+          "type": "choice",
+          "choices": [
+            {"value": "1", "label": "Checked"}
+          ],
+          "required": false,
+          "cno_allowed": false,
+          "cno_flag_for": "cr_norepitm",
+          "input_style": "checkbox",
+          "excel_column": 121
+        },
+        {
+          "field_id": "cr_norepids",
+          "label": "starting dose (mcg/kg/min)",
+          "help_text": "Starting norepinephrine dose",
+          "type": "float",
+          "min": 0,
+          "max": 10,
+          "decimals": 2,
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_norepi", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 122
+        },
+        {
+          "field_id": "cr_norepiepidscno",
+          "label": "cannot obtain",
+          "help_text": "If norepinephrine dose is unavailable",
+          "type": "choice",
+          "choices": [
+            {"value": "1", "label": "Checked"}
+          ],
+          "required": false,
+          "cno_allowed": false,
+          "cno_flag_for": "cr_norepids",
+          "input_style": "checkbox",
+          "excel_column": 123
+        },
+        {
+          "field_id": "cr_arryth",
+          "label": "antiarrhythmic",
+          "help_text": "Was an antiarrhythmic given?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 124
+        },
+        {
+          "field_id": "cr_arrythtm",
+          "label": "1st admin time",
+          "help_text": "Time of first antiarrhythmic",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_arryth", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 125
+        },
+        {
+          "field_id": "cr_arrythcno",
+          "label": "cannot obtain",
+          "help_text": "If antiarrhythmic time is unavailable",
+          "type": "choice",
+          "choices": [
+            {"value": "1", "label": "Checked"}
+          ],
+          "required": false,
+          "cno_allowed": false,
+          "cno_flag_for": "cr_arrythtm",
+          "input_style": "checkbox",
+          "excel_column": 126
+        },
+        {
+          "field_id": "cr_arrthtyp",
+          "label": "type",
+          "help_text": "Type of antiarrhythmic used",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_arryth", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 127
+        },
+        {
+          "field_id": "cr_nalox",
+          "label": "narcan",
+          "help_text": "Was narcan (naloxone) given by EMS?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 128
+        },
+        {
+          "field_id": "cr_naloxtm",
+          "label": "1st admin time",
+          "help_text": "Time of first narcan administration",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_nalox", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 129
+        },
+        {
+          "field_id": "cr_naloxtmcno",
+          "label": "cannot obtain",
+          "help_text": "If narcan time is unavailable",
+          "type": "choice",
+          "choices": [
+            {"value": "1", "label": "Checked"}
+          ],
+          "required": false,
+          "cno_allowed": false,
+          "cno_flag_for": "cr_naloxtm",
+          "input_style": "checkbox",
+          "excel_column": 130
+        },
+        {
+          "field_id": "cr_naloxds",
+          "label": "total dose (mg)",
+          "help_text": "Total narcan dose in mg",
+          "type": "float",
+          "min": 0,
+          "max": 20,
+          "decimals": 2,
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_nalox", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 131
+        },
+        {
+          "field_id": "cr_naloxdscno",
+          "label": "cannot obtain",
+          "help_text": "If narcan dose is unavailable",
+          "type": "choice",
+          "choices": [
+            {"value": "1", "label": "Checked"}
+          ],
+          "required": false,
+          "cno_allowed": false,
+          "cno_flag_for": "cr_naloxds",
+          "input_style": "checkbox",
+          "excel_column": 132
+        },
+        {
+          "field_id": "cr_sedation",
+          "label": "sedation",
+          "help_text": "Was sedation given?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 133
+        },
+        {
+          "field_id": "cr_seationtype",
+          "label": "sedation drug type",
+          "help_text": "Type of sedation used (Versed or Ketamine only)",
+          "type": "choice",
+          "choices": [
+            {"value": "Versed", "label": "Versed"},
+            {"value": "Ketamine", "label": "Ketamine"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "dependencies": [
+            {"field_id": "cr_sedation", "condition": "equals", "value": "1", "action": "show_and_require"}
+          ],
+          "excel_column": 134
+        }
+      ]
+    },
+    {
+      "page_id": 17,
+      "page_name": "olmc_hospital",
+      "page_label": "OLMC & Hospital",
+      "description": "Online medical control and hospital transfers",
+      "fields": [
+        {
+          "field_id": "cr_olmccontacted",
+          "label": "olmc contacted",
+          "help_text": "Was online medical control contacted?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 135
+        },
+        {
+          "field_id": "cr_olmctm",
+          "label": "olmc time of call",
+          "help_text": "Time OLMC was contacted",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_olmccontacted", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 136
+        },
+        {
+          "field_id": "cr_v2hospid1",
+          "label": "receiving hospital",
+          "help_text": "Primary receiving hospital",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 137
+        },
+        {
+          "field_id": "cr_comments",
+          "label": "comment for Ian/Tim for logic testing",
+          "help_text": "Comments for logic testing",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 138
+        },
+        {
+          "field_id": "cr_trans1",
+          "label": "patient was transferred to a 2nd hospital",
+          "help_text": "Was patient transferred to a 2nd hospital?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 139
+        },
+        {
+          "field_id": "cr_v2hospid2",
+          "label": "2nd hospital",
+          "help_text": "Second hospital name",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_trans1", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 140
+        },
+        {
+          "field_id": "cr_trandate1",
+          "label": "arrival date",
+          "help_text": "Date of arrival at 2nd hospital",
+          "type": "date",
+          "format": "YYYY-MM-DD",
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_trans1", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 141
+        },
+        {
+          "field_id": "cr_trans2",
+          "label": "transferred to 3rd hospital",
+          "help_text": "Was patient transferred to a 3rd hospital?",
+          "type": "choice",
+          "choices": [
+            {"value": "0", "label": "No"},
+            {"value": "1", "label": "Yes"}
+          ],
+          "required": false,
+          "cno_allowed": true,
+          "input_style": "button_grid",
+          "excel_column": 142
+        },
+        {
+          "field_id": "cr_v2hospid3",
+          "label": "third hospital",
+          "help_text": "Third hospital name",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_trans2", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 143
+        },
+        {
+          "field_id": "cr_trandate2",
+          "label": "arrival date",
+          "help_text": "Date of arrival at 3rd hospital",
+          "type": "date",
+          "format": "YYYY-MM-DD",
+          "required": false,
+          "cno_allowed": true,
+          "dependencies": [
+            {"field_id": "cr_trans2", "condition": "equals", "value": "1", "action": "show"}
+          ],
+          "excel_column": 144
+        }
+      ]
+    },
+    {
+      "page_id": 18,
+      "page_name": "outcome",
+      "page_label": "Patient Outcome",
+      "description": "Final patient outcome",
+      "fields": [
+        {
+          "field_id": "cr_surv",
+          "label": "patient outcome",
+          "help_text": "Final patient outcome",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 145
+        },
+        {
+          "field_id": "cr_survdt",
+          "label": "outcome date",
+          "help_text": "Date of final outcome",
+          "type": "date",
+          "format": "YYYY-MM-DD",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 146
+        },
+        {
+          "field_id": "cr_survtm",
+          "label": "outcome time",
+          "help_text": "Time of final outcome",
+          "type": "time",
+          "format": "HH:MM:SS",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 147
+        },
+        {
+          "field_id": "cr_cpc",
+          "label": "cpc at discharge",
+          "help_text": "Cerebral Performance Category at discharge",
+          "type": "text",
+          "required": false,
+          "cno_allowed": true,
+          "excel_column": 148
+        }
+      ]
+    }
+  ],
+
+  "validation_rules": [
+    {
+      "rule_id": "treated_by_required",
+      "description": "Treatment provider required if treated by EMS/Fire",
+      "condition": {"field_id": "cr_tx", "operator": "equals", "value": "1"},
+      "action": {"type": "require", "target_field": "cr_txby"},
+      "error_message": "Please specify who provided treatment"
+    },
+    {
+      "rule_id": "sedation_type_required",
+      "description": "Sedation type required if sedation given",
+      "condition": {"field_id": "cr_sedation", "operator": "equals", "value": "1"},
+      "action": {"type": "require", "target_field": "cr_seationtype"},
+      "error_message": "Sedation type is required when sedation was given (Versed or Ketamine)"
+    }
+  ],
+
+  "completion_rules": {
+    "required_fields": ["pcofile", "ptid", "cr_zone", "cr_tx", "cr_epdt", "cr_loctyp", "cr_estageu", "cr_sexp", "cr_pdisp", "cr_witbys", "cr_cpratt", "cr_rosc"],
+    "minimum_completion_percent": 0.50
+  }
+}
