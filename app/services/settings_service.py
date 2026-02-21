@@ -80,9 +80,18 @@ def save_settings(settings: dict) -> bool:
 
 
 def update_section(section: str, values: dict) -> bool:
-    """Update a specific section of settings."""
+    """Update a specific section of settings. Only allows known sections and keys."""
+    # Whitelist: only accept known sections
+    if section not in DEFAULT_SETTINGS:
+        logger.warning(f"Rejected unknown settings section: {section}")
+        return False
+
+    # Only accept keys that exist in the defaults for this section
+    allowed_keys = set(DEFAULT_SETTINGS[section].keys()) if isinstance(DEFAULT_SETTINGS[section], dict) else set()
+    filtered = {k: v for k, v in values.items() if k in allowed_keys}
+
     settings = load_settings()
     if section not in settings:
         settings[section] = {}
-    settings[section].update(values)
+    settings[section].update(filtered)
     return save_settings(settings)

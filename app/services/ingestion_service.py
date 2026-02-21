@@ -165,6 +165,19 @@ class IngestionService:
             with zipfile.ZipFile(zip_path, 'r') as zf:
                 file_list = zf.namelist()
 
+                # ZIP bomb protection: check total decompressed size (100MB cap)
+                total_decompressed = sum(info.file_size for info in zf.infolist())
+                if total_decompressed > 100 * 1024 * 1024:  # 100MB
+                    raise IngestionError(
+                        f"ZIP decompressed size ({total_decompressed // (1024*1024)}MB) exceeds 100MB limit"
+                    )
+                # Also check individual file sizes
+                for info in zf.infolist():
+                    if info.file_size > 50 * 1024 * 1024:  # 50MB per file
+                        raise IngestionError(
+                            f"File '{info.filename}' in ZIP exceeds 50MB decompressed size limit"
+                        )
+
                 # Validate required CSVs are present
                 self._validate_required_csvs(file_list)
 

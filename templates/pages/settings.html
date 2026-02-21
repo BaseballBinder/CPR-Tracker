@@ -717,7 +717,11 @@ function backupManager() {
             if (!this.githubToken) return;
             this.loading = true;
             try {
-                const resp = await fetch('/api/backup/list?token=' + encodeURIComponent(this.githubToken));
+                const resp = await fetch('/api/backup/list', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ github_token: this.githubToken }),
+                });
                 if (resp.ok) {
                     const data = await resp.json();
                     if (data.success) {

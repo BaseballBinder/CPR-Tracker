@@ -3,6 +3,7 @@ Simple per-service password authentication using PBKDF2-SHA256.
 No external dependencies beyond stdlib.
 """
 import hashlib
+import hmac
 import secrets
 import json
 from pathlib import Path
@@ -20,7 +21,7 @@ def verify_password(password: str, stored_hash: str) -> bool:
     try:
         salt, key_hex = stored_hash.split(':', 1)
         key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt.encode('utf-8'), 100_000)
-        return key.hex() == key_hex
+        return hmac.compare_digest(key.hex(), key_hex)
     except (ValueError, AttributeError):
         return False
 

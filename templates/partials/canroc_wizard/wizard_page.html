@@ -99,13 +99,13 @@
                         {% set ordered_choices = field.choices %}
                     {% endif %}
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-2"
-                         x-data="{ selected: '{{ field.current_value or '' }}' }">
+                         x-data="{ selected: {{ (field.current_value or '') | tojson }} }">
                         <!-- Hidden input to store the actual value (allows deselect to '.') -->
                         <input type="hidden" name="field_{{ field.field_id }}" :value="selected || '.'">
                         {% for choice in ordered_choices %}
                         <button type="button"
-                                @click="selected = (selected === '{{ choice.value }}') ? '' : '{{ choice.value }}'"
-                                :class="selected === '{{ choice.value }}' ? 'bg-[#dc2626] text-white border-[#dc2626]' : 'bg-slate-600 text-slate-200 border-slate-500 hover:border-[#dc2626]'"
+                                @click="selected = (selected === {{ choice.value | tojson }}) ? '' : {{ choice.value | tojson }}"
+                                :class="selected === {{ choice.value | tojson }} ? 'bg-[#dc2626] text-white border-[#dc2626]' : 'bg-slate-600 text-slate-200 border-slate-500 hover:border-[#dc2626]'"
                                 {% if field.is_cno %}disabled{% endif %}
                                 class="px-3 py-2 text-sm border rounded-[6px] text-center transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                             {{ choice.label }}

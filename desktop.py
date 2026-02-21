@@ -72,6 +72,77 @@ def _cleanup_update_artifacts() -> None:
             logger.warning(f"Could not clean update artifacts: {e}")
 
 
+WEBVIEW_TIMEOUT = 10.0  # seconds to wait for WebView2 before falling back
+
+
+def _open_in_browser(url: str) -> None:
+    """Open app in default browser and keep the server alive."""
+    import webbrowser
+    webbrowser.open(url)
+    print(f"\n  CPR Performance Tracker running at: {url}")
+    print("  Press Ctrl+C to stop.\n")
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\nShutting down...")
+
+
+def _open_native_window(url: str) -> None:
+    """Open a pywebview window; fall back to the browser if WebView2 hangs.
+
+    Edge WebView2 may stall during initialization when there is no internet
+    connection (it tries to phone home to Microsoft servers).  A watchdog
+    thread detects the hang and opens the default browser instead so the
+    app is always usable.
+    """
+    webview_ready = threading.Event()
+    fell_back = threading.Event()
+
+    def on_loaded():
+        webview_ready.set()
+
+    def watchdog():
+        if webview_ready.wait(timeout=WEBVIEW_TIMEOUT):
+            return  # WebView2 loaded fine — nothing to do
+        logger.warning(
+            "WebView2 did not initialize within %.0fs — "
+            "falling back to default browser",
+            WEBVIEW_TIMEOUT,
+        )
+        fell_back.set()
+        import webbrowser
+        webbrowser.open(url)
+        # Try to tear down the stalled webview so start() can return
+        try:
+            window.destroy()
+        except Exception:
+            pass
+
+    window = webview.create_window(
+        title="CPR Performance Tracker",
+        url=url,
+        width=1400,
+        height=900,
+        min_size=(1024, 700),
+        text_select=True,
+    )
+    window.events.loaded += on_loaded
+
+    threading.Thread(target=watchdog, daemon=True).start()
+    webview.start(debug=not getattr(sys, 'frozen', False))
+
+    # If the watchdog killed the webview, keep the server alive for the browser
+    if fell_back.is_set():
+        print(f"\n  CPR Performance Tracker running at: {url}")
+        print("  Press Ctrl+C to stop.\n")
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("\nShutting down...")
+
+
 def main() -> None:
     """Main entry point for the desktop application."""
     _cleanup_update_artifacts()
@@ -114,27 +185,9 @@ def main() -> None:
     logger.info(f"Server ready at http://127.0.0.1:{port}")
 
     if HAS_WEBVIEW:
-        # Native window using Edge WebView2
-        window = webview.create_window(
-            title="CPR Performance Tracker",
-            url=url,
-            width=1400,
-            height=900,
-            min_size=(1024, 700),
-            text_select=True,
-        )
-        webview.start(debug=not getattr(sys, 'frozen', False))
+        _open_native_window(url)
     else:
-        # Fallback: open in default browser (dev mode without pywebview)
-        import webbrowser
-        webbrowser.open(url)
-        print(f"\n  CPR Performance Tracker running at: {url}")
-        print("  Press Ctrl+C to stop.\n")
-        try:
-            while True:
-                time.sleep(1)
-        except KeyboardInterrupt:
-            print("\nShutting down...")
+        _open_in_browser(url)
 
 
 if __name__ == "__main__":

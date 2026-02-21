@@ -4,9 +4,12 @@ Saves data to JSON files on disk so they survive server restarts.
 Supports per-service data isolation via service_context.
 """
 import json
+import logging
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 from app.desktop_config import get_bundle_dir
 
@@ -47,7 +50,7 @@ def load_sessions() -> List[Dict[str, Any]]:
             data = json.load(f)
             return data.get("sessions", [])
     except (json.JSONDecodeError, IOError) as e:
-        print(f"Warning: Could not load sessions file: {e}")
+        logger.warning(f"Could not load sessions file: {e}")
         return []
 
 
@@ -64,7 +67,7 @@ def save_sessions(sessions: List[Dict[str, Any]]) -> bool:
             json.dump(data, f, indent=2, default=str)
         return True
     except IOError as e:
-        print(f"Error saving sessions: {e}")
+        logger.error(f"Error saving sessions: {e}")
         return False
 
 
@@ -111,7 +114,7 @@ def load_providers() -> List[Dict[str, Any]]:
             data = json.load(f)
             return data.get("providers", [])
     except (json.JSONDecodeError, IOError) as e:
-        print(f"Warning: Could not load providers file: {e}")
+        logger.warning(f"Could not load providers file: {e}")
         return []
 
 
@@ -128,7 +131,7 @@ def save_providers(providers: List[Dict[str, Any]]) -> bool:
             json.dump(data, f, indent=2, default=str)
         return True
     except IOError as e:
-        print(f"Error saving providers: {e}")
+        logger.error(f"Error saving providers: {e}")
         return False
 
 

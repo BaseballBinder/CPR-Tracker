@@ -13,12 +13,12 @@ from app.service_context import get_active_service
 PUBLIC_PATHS = {
     "/landing",
     "/__health",
+    "/api/updates/check",
 }
 
 PUBLIC_PREFIXES = (
     "/static/",
     "/api/auth/",
-    "/api/updates/",
     "/admin",
 )
 

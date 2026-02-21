@@ -14,10 +14,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.12'
           cache: 'pip'
@@ -68,10 +68,18 @@ jobs:
             exit 1
           }
 
+      - name: Generate SHA-256 checksum
+        run: |
+          $hash = (Get-FileHash -Path "dist/CPR-Tracker.exe" -Algorithm SHA256).Hash
+          $hash | Out-File -FilePath "dist/CPR-Tracker.exe.sha256" -Encoding ascii
+          Write-Host "SHA-256: $hash"
+
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         with:
-          files: dist/CPR-Tracker.exe
+          files: |
+            dist/CPR-Tracker.exe
+            dist/CPR-Tracker.exe.sha256
           generate_release_notes: true
           draft: false
           prerelease: false

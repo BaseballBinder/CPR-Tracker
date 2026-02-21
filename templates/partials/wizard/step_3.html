@@ -285,7 +285,7 @@
                     hx-post="/partials/session/wizard/back/2"
                     hx-target="#modal-container"
                     hx-swap="innerHTML"
-                    hx-vals='{"session_type": "{{ session_type }}", "event_date": "{{ event_date }}", "event_time": "{{ event_time or '' }}"}'
+                    hx-vals='{{ {"session_type": session_type, "event_date": event_date, "event_time": event_time or ""} | tojson }}'
                     class="px-4 py-2 text-sm text-slate-300 hover:text-slate-100">
                 Back
             </button>

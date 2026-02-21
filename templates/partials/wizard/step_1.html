@@ -1,7 +1,7 @@
 {# Wizard Step 1: Session Type Selection #}
 {# Modal Overlay #}
 <div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-<div class="bg-[#3e3a46] rounded-[6px] border border-[rgba(255,255,255,0.10)] shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto" x-data="{ sessionType: '{{ session_type or '' }}' }">
+<div class="bg-[#3e3a46] rounded-[6px] border border-[rgba(255,255,255,0.10)] shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto" x-data="{ sessionType: {{ (session_type or '') | tojson }} }">
     {# Modal Header #}
     <div class="flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.10)]">
         <h2 class="text-lg font-semibold text-slate-100">Add Session</h2>

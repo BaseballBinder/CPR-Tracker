@@ -46,7 +46,7 @@
 
         <!-- Modal Body (to be filled by page) -->
         <div class="flex-1 overflow-y-auto px-6 py-4" id="modal-body">
-            {{ modal_content | safe if modal_content else '' }}
+            {{ modal_content if modal_content else '' }}
         </div>
     </div>
 </div>

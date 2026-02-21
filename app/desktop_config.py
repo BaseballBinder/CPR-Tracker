@@ -3,6 +3,7 @@ Desktop configuration for PyInstaller and per-service data isolation.
 Handles path resolution for both development and frozen (packaged) modes.
 """
 import os
+import re
 import sys
 import json
 from pathlib import Path
@@ -62,8 +63,13 @@ def save_global_config(config: dict) -> None:
 
 
 def slugify(service_name: str) -> str:
-    """Convert service name to filesystem-safe slug."""
-    return service_name.lower().strip().replace(" ", "-").replace("'", "")
+    """Convert service name to filesystem-safe slug.
+    Only permits lowercase alphanumeric characters and hyphens.
+    """
+    slug = service_name.lower().strip().replace(" ", "-")
+    slug = re.sub(r'[^a-z0-9-]', '', slug)
+    slug = re.sub(r'-+', '-', slug).strip('-')
+    return slug or "default"
 
 
 def ensure_appdata_dir() -> None:

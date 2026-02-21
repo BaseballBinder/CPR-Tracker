@@ -36,8 +36,11 @@ async def admin_login_page(request: Request):
 @router.get("", response_class=HTMLResponse)
 async def admin_dashboard(request: Request):
     """Admin dashboard - cross-service comparison."""
-    from app.services.admin_service import is_admin_authenticated, get_all_services_data, ensure_admin_credentials, load_annotations
-    ensure_admin_credentials()
+    from app.services.admin_service import is_admin_authenticated, get_all_services_data, admin_needs_setup, load_annotations
+
+    # If admin credentials not yet created, redirect to setup
+    if admin_needs_setup():
+        return RedirectResponse(url="/admin/login", status_code=302)
 
     if not is_admin_authenticated():
         return RedirectResponse(url="/admin/login", status_code=302)
@@ -148,10 +151,48 @@ async def admin_settings(request: Request):
 # Admin Auth API
 # ============================================================================
 
+@router.post("/api/setup")
+async def admin_setup(request: Request):
+    """First-run admin password setup."""
+    from app.services.admin_service import admin_needs_setup, setup_admin_credentials, set_admin_authenticated
+
+    if not admin_needs_setup():
+        return {"success": False, "error": "Admin already configured. Use login instead."}
+
+    data = await request.json()
+    password = str(data.get("password", ""))
+
+    if len(password) < 8:
+        return {"success": False, "error": "Password must be at least 8 characters"}
+
+    if setup_admin_credentials(password):
+        set_admin_authenticated(True)
+        return {"success": True, "redirect": "/admin"}
+    return {"success": False, "error": "Failed to create admin credentials"}
+
+
+@router.get("/api/needs-setup")
+async def admin_needs_setup_check():
+    """Check if admin needs first-run setup."""
+    from app.services.admin_service import admin_needs_setup
+    return {"needs_setup": admin_needs_setup()}
+
+
 @router.post("/api/login")
 async def admin_login(request: Request):
     """Authenticate as admin."""
+    import time
+    from collections import defaultdict
     from app.services.admin_service import check_admin_password, set_admin_authenticated
+
+    # Simple rate limiting for admin login
+    if not hasattr(admin_login, '_attempts'):
+        admin_login._attempts = []
+    now = time.time()
+    admin_login._attempts = [t for t in admin_login._attempts if now - t < 300]
+    if len(admin_login._attempts) >= 10:
+        return {"success": False, "error": "Too many login attempts. Please wait a few minutes."}
+    admin_login._attempts.append(now)
 
     # Accept both JSON and form data
     content_type = request.headers.get("content-type", "")
@@ -191,8 +232,8 @@ async def admin_change_password(request: Request):
 
     if not check_admin_password("Admin", current_pw):
         return {"success": False, "error": "Current password is incorrect"}
-    if len(new_pw) < 6:
-        return {"success": False, "error": "New password must be at least 6 characters"}
+    if len(new_pw) < 8:
+        return {"success": False, "error": "New password must be at least 8 characters"}
 
     from app.services.auth_service import hash_password
     import json
@@ -308,7 +349,13 @@ async def admin_csv_upload(
         return err
     from app.services.csv_import_service import validate_provider_csv, parse_provider_csv, import_providers_to_service
     from app.services.activity_service import log_activity
-    content = (await csv_file.read()).decode("utf-8")
+    # Validate file extension
+    if csv_file.filename and not csv_file.filename.lower().endswith(('.csv', '.txt')):
+        return JSONResponse({"success": False, "errors": ["Only .csv and .txt files are accepted"]}, status_code=400)
+    raw = await csv_file.read()
+    if len(raw) > 5 * 1024 * 1024:  # 5MB limit
+        return JSONResponse({"success": False, "errors": ["CSV file exceeds 5MB size limit"]}, status_code=400)
+    content = raw.decode("utf-8")
     errors = validate_provider_csv(content)
     if errors:
         return JSONResponse({"success": False, "errors": errors}, status_code=400)

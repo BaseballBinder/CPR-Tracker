@@ -13,7 +13,7 @@
 <div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onclick="if(event.target === this) document.getElementById('modal-container').innerHTML = ''">
 <div class="bg-[#3e3a46] rounded-[6px] border border-[rgba(255,255,255,0.10)] shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto"
      x-data="editSessionModal"
-     x-init="selectedPrimary = '{{ session.provider_id or "" }}'">
+     x-init="selectedPrimary = {{ (session.provider_id or '') | tojson }}">
     {# Modal Header #}
     <div class="flex items-center justify-between p-4 border-b border-[rgba(255,255,255,0.10)]">
         <div>

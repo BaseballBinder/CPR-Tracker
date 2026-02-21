@@ -1,4 +1,5 @@
 {# Wizard Step 2: Simulated - CSV/Paste + Practitioners #}
+<script type="application/json" id="step2sim-providers-json">{{ providers | tojson }}</script>
 {# Modal Overlay #}
 <div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
 <div class="bg-[#3e3a46] rounded-[6px] border border-[rgba(255,255,255,0.10)] shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto" x-data="{ inputMode: 'paste', fileName: '', dragOver: false }">
@@ -253,7 +254,7 @@ Date, Provider, Duration, Compression Rate, Depth, Depth %, Rate %
         <script>
         function providerAutocomplete() {
             // Get all providers and filter to active ones
-            const allProviders = {{ providers | tojson | safe }};
+            const allProviders = JSON.parse(document.getElementById('step2sim-providers-json')?.textContent || '[]');
             const activeProviders = allProviders.filter(p => p.status === 'active');
 
             return {

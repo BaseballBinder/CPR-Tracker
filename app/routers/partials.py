@@ -1,8 +1,11 @@
 """
 HTMX partial endpoints - return HTML fragments for dynamic updates.
 """
+import logging
 import os
 import re
+
+logger = logging.getLogger(__name__)
 import shutil
 import tempfile
 from datetime import datetime
@@ -586,10 +589,13 @@ async def wizard_validate(request: Request, step: int):
                 if existing_sessions:
                     errors["zip_file"] = f"This file '{zip_file.filename}' has already been imported."
                 else:
-                    # Save file temporarily
+                    # Save file temporarily (with 50MB size limit)
                     with tempfile.NamedTemporaryFile(delete=False, suffix=".zip") as tmp:
                         content = await zip_file.read()
-                        tmp.write(content)
+                        if len(content) > 50 * 1024 * 1024:  # 50MB
+                            errors["zip_file"] = "ZIP file exceeds 50MB size limit."
+                        else:
+                            tmp.write(content)
                         tmp_path = tmp.name
                         artifact_filename = zip_file.filename
 
@@ -678,7 +684,10 @@ async def wizard_validate(request: Request, step: int):
             if csv_file and hasattr(csv_file, 'filename') and csv_file.filename:
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp:
                     content = await csv_file.read()
-                    tmp.write(content)
+                    if len(content) > 5 * 1024 * 1024:  # 5MB
+                        errors["paste_text"] = "CSV file exceeds 5MB size limit."
+                    else:
+                        tmp.write(content)
                     tmp_path = tmp.name
                     artifact_filename = csv_file.filename
                     csv_content = content.decode('utf-8-sig')  # Also keep content for preview
@@ -808,9 +817,7 @@ async def wizard_validate(request: Request, step: int):
         artifact = None
         if artifact_filename:
             artifact_path = service.settings.upload_tmp_dir / artifact_filename
-            print(f"[STEP3] Looking for artifact: {artifact_filename}")
-            print(f"[STEP3] Full path: {artifact_path}")
-            print(f"[STEP3] Exists: {artifact_path.exists()}")
+            logger.debug(f"Looking for artifact: {artifact_filename}, exists: {artifact_path.exists()}")
             if artifact_path.exists():
                 artifact = {
                     "filename": artifact_filename,
@@ -818,11 +825,8 @@ async def wizard_validate(request: Request, step: int):
                     "file_path": str(artifact_path),
                     "content_type": "application/zip" if artifact_filename.endswith(".zip") else "text/csv",
                 }
-                print(f"[STEP3] Artifact built: {artifact}")
             else:
-                print(f"[STEP3] WARNING: Artifact file not found at {artifact_path}")
-        else:
-            print(f"[STEP3] No artifact_filename provided")
+                logger.warning(f"Artifact file not found: {artifact_filename}")
 
         session_type_enum = SessionType.REAL_CALL if session_type == "real_call" else SessionType.SIMULATED
         error_message = None
@@ -859,30 +863,24 @@ async def wizard_validate(request: Request, step: int):
             if artifact and zoll_data_available:
                 from pathlib import Path
                 artifact_path = Path(artifact["file_path"])
-                print(f"[IMPORT] Starting import for session {session['id']}")
-                print(f"[IMPORT] Artifact path: {artifact_path}")
-                print(f"[IMPORT] Artifact exists: {artifact_path.exists()}")
+                logger.debug(f"Starting import for session {session['id']}")
                 try:
                     success, message, parsed_metrics = process_session_import(session["id"], artifact_path)
-                    print(f"[IMPORT] Result: success={success}, message={message}")
                     if success:
                         session["status"] = SessionStatus.COMPLETE.value
-                        session["metrics"] = parsed_metrics  # Store metrics in session for display
-                        print(f"[IMPORT] Metrics populated: {list(parsed_metrics.keys())[:5]}...")
+                        session["metrics"] = parsed_metrics
                     else:
                         session["status"] = SessionStatus.FAILED.value
                         session["error_message"] = message
-                        error_message = message  # Capture for step 4 display
-                        print(f"[IMPORT] Import failed: {message}")
+                        error_message = message
+                        logger.warning(f"Import failed for session {session['id']}: {message}")
                 except Exception as e:
-                    import traceback
-                    print(f"[IMPORT] Exception during import: {e}")
-                    traceback.print_exc()
+                    logger.error(f"Exception during import for session {session['id']}: {e}", exc_info=True)
                     session["status"] = SessionStatus.FAILED.value
-                    session["error_message"] = str(e)
-                    error_message = str(e)
+                    session["error_message"] = "Import failed due to an unexpected error"
+                    error_message = "Import failed due to an unexpected error"
             else:
-                print(f"[IMPORT] No artifact found for session {session['id']}")
+                logger.warning(f"No artifact found for session {session['id']}")
 
             created_sessions = [session]
         else:

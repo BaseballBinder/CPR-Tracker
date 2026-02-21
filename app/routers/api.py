@@ -1,15 +1,20 @@
 """
 API endpoints for data operations.
 """
+import logging
 import os
 import sys
 import json
 import subprocess
 import tempfile
+import time
 import threading
+from collections import defaultdict
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Request, Form, UploadFile, File, HTTPException, Body
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
@@ -26,6 +31,22 @@ from app.service_context import get_active_service_dir, get_active_service
 from app.services.activity_service import log_activity
 
 router = APIRouter(prefix="/api")
+
+# Rate limiting for login endpoints
+_login_attempts: Dict[str, list] = defaultdict(list)
+_LOGIN_WINDOW_SECONDS = 300  # 5 minutes
+_LOGIN_MAX_ATTEMPTS = 10  # max attempts per window
+
+
+def _check_rate_limit(identifier: str) -> bool:
+    """Check if a login attempt is allowed. Returns True if allowed."""
+    now = time.time()
+    # Clean old attempts
+    _login_attempts[identifier] = [t for t in _login_attempts[identifier] if now - t < _LOGIN_WINDOW_SECONDS]
+    if len(_login_attempts[identifier]) >= _LOGIN_MAX_ATTEMPTS:
+        return False
+    _login_attempts[identifier].append(now)
+    return True
 
 
 # ============================================================================
@@ -1059,9 +1080,10 @@ async def export_all_pco():
         })
 
     except Exception as e:
+        logger.error(f"PCO export failed: {e}")
         return JSONResponse(content={
             "success": False,
-            "message": f"Export failed: {str(e)}"
+            "message": "Export failed. Check that session data is complete."
         }, status_code=500)
 
 
@@ -1193,9 +1215,10 @@ async def export_all_master():
         })
 
     except Exception as e:
+        logger.error(f"Master export failed: {e}")
         return JSONResponse(content={
             "success": False,
-            "message": f"Export failed: {str(e)}"
+            "message": "Export failed. Check that session data is complete."
         }, status_code=500)
 
 
@@ -1222,6 +1245,10 @@ async def auth_login(request: Request):
     password = str(form.get("password", ""))
     service_name = str(form.get("service_name", slug))
 
+    # Rate limiting
+    if not _check_rate_limit(f"service:{slug}"):
+        return {"success": False, "error": "Too many login attempts. Please wait a few minutes."}
+
     service_dir = get_service_dir(slug)
     if not service_dir.exists():
         return {"success": False, "error": "Service not found"}
@@ -1246,8 +1273,8 @@ async def auth_setup(request: Request):
     if not service_name or not password:
         return {"success": False, "error": "Service name and password are required"}
 
-    if len(password) < 4:
-        return {"success": False, "error": "Password must be at least 4 characters"}
+    if len(password) < 8:
+        return {"success": False, "error": "Password must be at least 8 characters"}
 
     pw_hash = hash_password(password)
     slug = create_service(service_name, pw_hash)
@@ -1284,12 +1311,26 @@ async def check_updates(request: Request):
 async def download_update_stream(request: Request):
     """SSE endpoint that downloads the new .exe from GitHub with progress events."""
     import requests as http_requests
+    from urllib.parse import urlparse
 
     url = request.query_params.get("url", "")
     if not url:
         async def error_stream():
             yield f"data: {json.dumps({'error': 'No download URL provided'})}\n\n"
         return StreamingResponse(error_stream(), media_type="text/event-stream")
+
+    # C1 FIX: Whitelist allowed download URLs — only allow GitHub releases
+    parsed = urlparse(url)
+    allowed_hosts = {"github.com", "objects.githubusercontent.com"}
+    if parsed.hostname not in allowed_hosts:
+        async def error_blocked():
+            yield f"data: {json.dumps({'error': 'Download URL not from an allowed source'})}\n\n"
+        return StreamingResponse(error_blocked(), media_type="text/event-stream")
+
+    if parsed.hostname == "github.com" and "/releases/download/" not in parsed.path:
+        async def error_not_release():
+            yield f"data: {json.dumps({'error': 'URL must be a GitHub release download'})}\n\n"
+        return StreamingResponse(error_not_release(), media_type="text/event-stream")
 
     # Determine download directory
     if getattr(sys, 'frozen', False):
@@ -1333,7 +1374,8 @@ async def download_update_stream(request: Request):
                     os.remove(dest_path)
                 except OSError:
                     pass
-            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+            logger.error(f"Download stream error: {e}")
+            yield f"data: {json.dumps({'error': 'Download failed'})}\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")
 
@@ -1350,6 +1392,13 @@ async def apply_update(request: Request):
     if not new_exe_path or not os.path.exists(new_exe_path):
         return JSONResponse({"error": "Downloaded file not found"}, status_code=400)
 
+    # C2 FIX: Validate path is within the expected _updates directory
+    appdata = os.environ.get("APPDATA", os.path.expanduser("~"))
+    expected_updates_dir = os.path.normpath(os.path.join(appdata, "CPR-Tracker", "_updates"))
+    resolved_path = os.path.normpath(os.path.realpath(new_exe_path))
+    if not resolved_path.startswith(expected_updates_dir + os.sep):
+        return JSONResponse({"error": "Update file must be in the updates directory"}, status_code=400)
+
     # MZ header check + size check
     try:
         file_size = os.path.getsize(new_exe_path)
@@ -1362,7 +1411,8 @@ async def apply_update(request: Request):
             os.remove(new_exe_path)
             return JSONResponse({"error": "Downloaded file is not a valid executable"}, status_code=400)
     except Exception as e:
-        return JSONResponse({"error": f"Cannot validate file: {e}"}, status_code=400)
+        logger.error(f"Update file validation failed: {e}")
+        return JSONResponse({"error": "Cannot validate update file"}, status_code=400)
 
     current_exe = sys.executable
     current_pid = os.getpid()
@@ -1458,11 +1508,11 @@ async def shutdown_for_update():
         stderr=subprocess.DEVNULL,
     )
 
-    # Exit after response is sent
+    # Exit after response is sent (use sys.exit for proper cleanup)
     def delayed_exit():
         import time
         time.sleep(0.5)
-        os._exit(0)
+        sys.exit(0)
 
     threading.Thread(target=delayed_exit, daemon=True).start()
     return JSONResponse({"success": True, "message": "Shutting down for update"})
@@ -1509,7 +1559,7 @@ async def backup_push(request: Request):
     return JSONResponse(result)
 
 
-@router.get("/backup/list")
+@router.post("/backup/list")
 async def backup_list(request: Request):
     """List available backups."""
     from app.services import backup_service
@@ -1517,7 +1567,8 @@ async def backup_list(request: Request):
     if not service_dir:
         return JSONResponse({"error": "No active service"}, status_code=401)
 
-    token = request.query_params.get("token", "")
+    data = await request.json()
+    token = data.get("github_token", "").strip()
     if not token:
         return JSONResponse({"error": "GitHub token required"}, status_code=400)
 
@@ -1627,14 +1678,13 @@ async def report_issue(request: Request):
         repo_owner = config.get("repo_owner", "")
         repo_name = config.get("repo_name", "")
 
-        # Get the actual token from backup config file
-        backup_config_file = service_dir / "backup_config.json"
-        if backup_config_file.exists():
-            import json
+        # Decrypt the stored token using the machine key
+        bc = backup_service.load_backup_config(service_dir)
+        encrypted_token = bc.get("encrypted_token", "")
+        if encrypted_token:
             try:
-                bc = json.loads(backup_config_file.read_text(encoding="utf-8"))
-                github_token = bc.get("github_token", "")
-            except (json.JSONDecodeError, IOError):
+                github_token = backup_service._decrypt_token(encrypted_token)
+            except Exception:
                 pass
 
     if not all([github_token, repo_owner, repo_name]):
@@ -1675,7 +1725,8 @@ async def report_issue(request: Request):
                 "error": f"GitHub API error: {resp.status_code} - {resp.text[:200]}"
             }, status_code=500)
     except Exception as e:
+        logger.error(f"Report issue failed: {e}")
         return JSONResponse({
             "success": False,
-            "error": f"Failed to create issue: {str(e)}"
+            "error": "Failed to create issue. Please check your connection and try again."
         }, status_code=500)

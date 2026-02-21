@@ -10,7 +10,7 @@ import requests
 logger = logging.getLogger(__name__)
 
 # This should be set to the actual GitHub repo once created
-UPDATE_REPO_OWNER = "BaseballBinder"
+UPDATE_REPO_OWNER = "JCHanratty"
 UPDATE_REPO_NAME = "CPR-Tracker"
 GITHUB_API = "https://api.github.com"
 

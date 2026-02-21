@@ -126,8 +126,13 @@ class SessionService:
         """
         import hashlib
 
+        # Whitelist allowed file extensions
+        ext = Path(original_filename).suffix.lower()
+        allowed_extensions = {".csv", ".zip", ".xml", ".txt"}
+        if ext not in allowed_extensions:
+            raise ValueError(f"File type '{ext}' not allowed. Accepted: {', '.join(sorted(allowed_extensions))}")
+
         # Generate unique filename
-        ext = Path(original_filename).suffix
         unique_filename = f"{uuid.uuid4().hex}{ext}"
         dest_path = self.settings.upload_tmp_dir / unique_filename
 

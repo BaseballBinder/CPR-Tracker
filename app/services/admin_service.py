@@ -15,9 +15,8 @@ from app.services.activity_service import get_last_active
 
 logger = logging.getLogger(__name__)
 
-# Default admin credentials (auto-created on first startup)
+# Default admin username (password must be set on first run)
 DEFAULT_ADMIN_USERNAME = "Admin"
-DEFAULT_ADMIN_PASSWORD = "Local302!"
 
 # Module-level state
 _admin_authenticated = False
@@ -28,20 +27,35 @@ def get_admin_file() -> Path:
     return get_appdata_dir() / "admin.json"
 
 
-def ensure_admin_credentials() -> None:
-    """Create admin.json with default credentials if it doesn't exist."""
+def admin_needs_setup() -> bool:
+    """Check if admin credentials need to be created on first run."""
+    return not get_admin_file().exists()
+
+
+def setup_admin_credentials(password: str) -> bool:
+    """Create admin credentials on first run. Returns True on success."""
     admin_file = get_admin_file()
     if admin_file.exists():
-        return
+        return False  # Already exists
+
+    if len(password) < 8:
+        return False
 
     admin_file.parent.mkdir(parents=True, exist_ok=True)
-    pw_hash = hash_password(DEFAULT_ADMIN_PASSWORD)
+    pw_hash = hash_password(password)
     data = {
         "username": DEFAULT_ADMIN_USERNAME,
         "password_hash": pw_hash,
     }
     admin_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
-    logger.info("Created default admin credentials")
+    logger.info("Admin credentials created via first-run setup")
+    return True
+
+
+def ensure_admin_credentials() -> None:
+    """Ensure admin directory exists (no longer creates default password)."""
+    admin_file = get_admin_file()
+    admin_file.parent.mkdir(parents=True, exist_ok=True)
 
 
 def check_admin_password(username: str, password: str) -> bool:

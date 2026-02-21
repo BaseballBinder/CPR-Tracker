@@ -2,9 +2,12 @@
 Export service for CanROC template exports.
 Handles PCO and Master template population and export.
 """
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 from openpyxl import load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
@@ -31,11 +34,11 @@ def ensure_templates():
 
     # Check PCO template
     if not settings.canroc_pco_template_path.exists():
-        print(f"WARNING: PCO template not found at {settings.canroc_pco_template_path}")
+        logger.warning(f"PCO template not found at {settings.canroc_pco_template_path}")
 
     # Check Master template
     if not settings.canroc_master_template_path.exists():
-        print(f"WARNING: Master template not found at {settings.canroc_master_template_path}")
+        logger.warning(f"Master template not found at {settings.canroc_master_template_path}")
 
 
 class ExportService:

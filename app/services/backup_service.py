@@ -17,11 +17,22 @@ logger = logging.getLogger(__name__)
 GITHUB_API = "https://api.github.com"
 
 
-def _derive_key(token: str) -> bytes:
-    """Derive a Fernet key from the GitHub token (deterministic)."""
+def _derive_key(passphrase: str) -> bytes:
+    """Derive a Fernet key from a passphrase (deterministic)."""
     import hashlib
-    digest = hashlib.sha256(token.encode("utf-8")).digest()
+    digest = hashlib.sha256(passphrase.encode("utf-8")).digest()
     return base64.urlsafe_b64encode(digest)
+
+
+def _get_machine_key() -> str:
+    """Get a machine-specific key for encrypting tokens at rest.
+    Uses OS username + hostname + a fixed salt so the key is tied to
+    this machine/user but doesn't require the secret being protected.
+    """
+    import getpass
+    import platform
+    material = f"cpr-tracker:{getpass.getuser()}@{platform.node()}:token-encryption"
+    return material
 
 
 def _encrypt(data: bytes, token: str) -> bytes:
@@ -53,12 +64,21 @@ def save_backup_config(service_dir: Path, config: dict) -> None:
     config_file.write_text(json.dumps(config, indent=2), encoding="utf-8")
 
 
+def _encrypt_token(token: str) -> str:
+    """Encrypt a GitHub token using a machine-specific key."""
+    return _encrypt(token.encode("utf-8"), _get_machine_key()).decode("utf-8")
+
+
+def _decrypt_token(encrypted_token: str) -> str:
+    """Decrypt a GitHub token using a machine-specific key."""
+    return _decrypt(encrypted_token.encode("utf-8"), _get_machine_key()).decode("utf-8")
+
+
 def configure(service_dir: Path, github_token: str, repo_owner: str, repo_name: str) -> dict:
     """Configure GitHub backup for a service.
-    Encrypts and stores the GitHub token.
+    Encrypts and stores the GitHub token using a machine-specific key.
     """
-    # Encrypt the token using itself as the key
-    encrypted_token = _encrypt(github_token.encode("utf-8"), github_token).decode("utf-8")
+    encrypted_token = _encrypt_token(github_token)
 
     config = {
         "encrypted_token": encrypted_token,
@@ -196,6 +216,11 @@ def list_backups(service_dir: Path, github_token: str) -> dict:
 
 def restore(service_dir: Path, github_token: str, backup_path: str) -> dict:
     """Download and decrypt a backup, replacing local data."""
+    import re as _re
+    # Validate backup_path format to prevent path traversal
+    if not _re.match(r'^backups/[a-z0-9-]+/[0-9T-]+\.enc$', backup_path):
+        return {"success": False, "error": "Invalid backup path format"}
+
     config = load_backup_config(service_dir)
     if not config.get("repo_owner") or not config.get("repo_name"):
         return {"success": False, "error": "Backup not configured"}

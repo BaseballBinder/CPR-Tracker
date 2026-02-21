@@ -10,7 +10,7 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_REPO = "baseballbinder/CPR-Tracker"
+DEFAULT_REPO = "JCHanratty/CPR-Tracker"
 
 
 def _get_repo() -> str:

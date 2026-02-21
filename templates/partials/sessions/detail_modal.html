@@ -608,7 +608,7 @@
                 <button type="button"
                         @click="
                             exporting = true; exportType = 'pco'; message = ''; error = false;
-                            fetch('/api/sessions/{{ session.id }}/export/pco', { method: 'POST' })
+                            fetch('/api/sessions/' + {{ session.id | tojson }} + '/export/pco', { method: 'POST' })
                                 .then(r => r.json())
                                 .then(data => {
                                     exporting = false;
@@ -638,7 +638,7 @@
                 <button type="button"
                         @click="
                             exporting = true; exportType = 'master'; message = ''; error = false;
-                            fetch('/api/sessions/{{ session.id }}/export/master', { method: 'POST' })
+                            fetch('/api/sessions/' + {{ session.id | tojson }} + '/export/master', { method: 'POST' })
                                 .then(r => r.json())
                                 .then(data => {
                                     exporting = false;
