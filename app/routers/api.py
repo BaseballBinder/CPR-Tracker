@@ -1508,11 +1508,14 @@ async def shutdown_for_update():
         stderr=subprocess.DEVNULL,
     )
 
-    # Exit after response is sent (use sys.exit for proper cleanup)
+    # Hard-exit after response is sent — os._exit() is intentional here:
+    # sys.exit() only kills the current thread, but pywebview's main thread
+    # blocks in webview.start(). We MUST terminate the entire process so the
+    # update .bat script can detect PID exit and swap the executable.
     def delayed_exit():
         import time
         time.sleep(0.5)
-        sys.exit(0)
+        os._exit(0)
 
     threading.Thread(target=delayed_exit, daemon=True).start()
     return JSONResponse({"success": True, "message": "Shutting down for update"})

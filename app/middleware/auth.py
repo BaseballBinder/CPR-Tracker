@@ -14,6 +14,9 @@ PUBLIC_PATHS = {
     "/landing",
     "/__health",
     "/api/updates/check",
+    "/api/updates/download-stream",
+    "/api/updates/apply",
+    "/api/updates/shutdown",
 }
 
 PUBLIC_PREFIXES = (
