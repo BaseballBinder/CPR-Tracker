@@ -592,7 +592,26 @@
                         </div>
                     </div>
 
-                    <p class="text-[11px] text-slate-500 font-semibold uppercase tracking-wide mb-1">v1.5.0 — Auto-Update &amp; Admin Console</p>
+                    <p class="text-[11px] text-slate-500 font-semibold uppercase tracking-wide mb-1">v1.6.1 — Auto-Update Fix</p>
+                    <ul class="release-notes space-y-0 pl-3" style="list-style-type: '›  ';">
+                        <li>Fixed auto-update not applying or closing the app</li>
+                        <li>Update endpoints now accessible from the landing page</li>
+                    </ul>
+
+                    <p class="text-[11px] text-slate-500 font-semibold uppercase tracking-wide mb-1 mt-3">v1.6.0 — Security Hardening</p>
+                    <ul class="release-notes space-y-0 pl-3" style="list-style-type: '›  ';">
+                        <li>All 7 critical security findings resolved</li>
+                        <li>Auto-update pipeline secured with URL whitelisting</li>
+                        <li>Admin first-run password setup (no more defaults)</li>
+                        <li>Encrypted token storage with machine-specific keys</li>
+                        <li>XSS protection — safe template rendering throughout</li>
+                        <li>Rate limiting on login endpoints</li>
+                        <li>File upload size limits &amp; extension whitelist</li>
+                        <li>CSP, clickjacking, and content-type security headers</li>
+                        <li>Build pipeline pinned to commit SHAs with checksums</li>
+                    </ul>
+
+                    <p class="text-[11px] text-slate-500 font-semibold uppercase tracking-wide mb-1 mt-3">v1.5.0 — Auto-Update &amp; Admin Console</p>
                     <ul class="release-notes space-y-0 pl-3" style="list-style-type: '›  ';">
                         <li>One-click auto-update from the landing page</li>
                         <li>Download progress bar with percentage</li>
