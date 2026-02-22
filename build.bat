@@ -39,6 +39,14 @@ if not exist "static\images\logos\JcLS.ico" (
     )
 )
 
+REM Generate services registry from current machine state
+echo.
+echo Generating services registry...
+python -c "from app.services.registry_service import generate_registry; p = generate_registry(); print(f'Registry saved to {p}')"
+if errorlevel 1 (
+    echo WARNING: Could not generate services registry. Continuing without it.
+)
+
 REM Run PyInstaller
 echo.
 echo Building executable...

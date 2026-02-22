@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title }} | CPR Tracking System</title>
+
+    <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg">
+    <link rel="stylesheet" href="/static/vendor/fonts/source-sans-3.css">
+    <link rel="stylesheet" href="/static/css/app.css">
+
+    <!-- Tailwind CSS (vendored for offline use) -->
+    <script src="/static/vendor/js/tailwindcss.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        fire: {
+                            500: '#ef4444',
+                            600: '#dc2626',
+                            700: '#b91c1c',
+                        },
+                        ember: {
+                            300: '#fdba74',
+                            500: '#f97316',
+                        },
+                        steel: {
+                            500: '#64748b',
+                        },
+                        success: { 600: '#16a34a' },
+                        warning: { 600: '#d97706' },
+                        error:   { 700: '#b91c1c' },
+                        info:    { 600: '#2563eb' },
+                        dark: {
+                            body: '#2c2834',
+                            sidebar: '#221e28',
+                            topbar: '#36323e',
+                            card: '#3e3a46',
+                            'card-alt': '#46424e',
+                            input: '#46424e',
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['"Source Sans 3"', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <!-- Alpine.js -->
+    <script defer src="/static/vendor/js/alpine.min.js"></script>
+
+    <!-- Chart.js for service comparison chart -->
+    <script src="/static/vendor/js/chart.min.js"></script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+
+        .spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Progress bar animation */
+        .progress-bar-fill {
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="bg-[#2c2834] font-sans text-[#e2e8f0] antialiased min-h-screen">
+
+    {% if not authenticated %}
+    <!-- ================================================================
+         UNAUTHENTICATED — Login Card
+         ================================================================ -->
+    <div x-data="adminLogin()" class="min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-sm">
+            <!-- Login Card -->
+            <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-lg p-8 shadow-lg fade-in">
+
+                <!-- Logo -->
+                <div class="flex flex-col items-center mb-6">
+                    <div class="flex items-center gap-1 mb-3">
+                        <span class="text-3xl font-bold italic tracking-tight"
+                              style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 30%, #f97316 60%, #dc2626 85%, #b91c1c 100%);
+                                     -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                            JcLS
+                        </span>
+                        <span class="text-3xl font-normal tracking-tight"
+                              style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 30%, #f97316 60%, #dc2626 85%, #b91c1c 100%);
+                                     -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                            Tracker
+                        </span>
+                        <span class="inline-flex items-center justify-center w-5 h-5 ml-0.5">
+                            <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <linearGradient id="heartGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%"   stop-color="#f87171"/>
+                                        <stop offset="50%"  stop-color="#dc2626"/>
+                                        <stop offset="100%" stop-color="#b91c1c"/>
+                                    </linearGradient>
+                                </defs>
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="url(#heartGrad)"/>
+                            </svg>
+                        </span>
+                    </div>
+                    <p class="text-sm text-[#94a3b8] font-medium uppercase tracking-wider">Admin Dashboard</p>
+                </div>
+
+                <!-- Error Message -->
+                <div x-show="errorMsg" x-cloak
+                     class="mb-4 px-3 py-2.5 rounded-md text-sm flex items-center gap-2 fade-in"
+                     style="background: rgba(220, 38, 38, 0.1); border: 1px solid rgba(220, 38, 38, 0.25); color: #fca5a5;">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414
+                                 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293
+                                 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0
+                                 00-1.414-1.414L10 8.586 8.707 7.293z"
+                              clip-rule="evenodd"/>
+                    </svg>
+                    <span x-text="errorMsg"></span>
+                </div>
+
+                <!-- Login Form -->
+                <div class="space-y-4">
+                    <div>
+                        <label for="admin-username" class="block text-[13px] font-medium text-[#94a3b8] mb-1.5 tracking-wide">Username</label>
+                        <input id="admin-username" type="text" x-model="username"
+                               class="w-full px-3 py-2.5 bg-[#46424e] border border-[rgba(255,255,255,0.15)] rounded-lg
+                                      text-[#e2e8f0] text-[15px] outline-none transition-all duration-200
+                                      focus:border-[rgba(220,38,38,0.5)] focus:shadow-[0_0_0_3px_rgba(220,38,38,0.1)]
+                                      placeholder:text-[#4b5563]"
+                               placeholder="Enter username"
+                               @keydown.enter="$refs.passwordInput.focus()">
+                    </div>
+
+                    <div>
+                        <label for="admin-password" class="block text-[13px] font-medium text-[#94a3b8] mb-1.5 tracking-wide">Password</label>
+                        <input id="admin-password" type="password" x-model="password" x-ref="passwordInput"
+                               class="w-full px-3 py-2.5 bg-[#46424e] border border-[rgba(255,255,255,0.15)] rounded-lg
+                                      text-[#e2e8f0] text-[15px] outline-none transition-all duration-200
+                                      focus:border-[rgba(220,38,38,0.5)] focus:shadow-[0_0_0_3px_rgba(220,38,38,0.1)]
+                                      placeholder:text-[#4b5563]"
+                               placeholder="Enter password"
+                               @keydown.enter="handleLogin">
+                    </div>
+
+                    <button class="w-full py-2.5 px-4 font-semibold text-[15px] text-white rounded-lg cursor-pointer
+                                   transition-all duration-200 tracking-wide flex items-center justify-center gap-2
+                                   hover:shadow-[0_4px_15px_rgba(220,38,38,0.3)] hover:-translate-y-px
+                                   active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+                            style="background: linear-gradient(135deg, #dc2626, #b91c1c);"
+                            :disabled="!username || !password || loading"
+                            @click="handleLogin">
+                        <span x-show="!loading">Sign In</span>
+                        <span x-show="loading" class="flex items-center gap-2">
+                            <span class="spinner"></span> Authenticating...
+                        </span>
+                    </button>
+                </div>
+
+                <!-- Back to Landing -->
+                <div class="mt-6 text-center">
+                    <a href="/landing"
+                       class="text-sm text-[#94a3b8] hover:text-[#e2e8f0] transition-colors duration-200">
+                        &larr; Back to Landing
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function adminLogin() {
+            return {
+                username: '',
+                password: '',
+                loading: false,
+                errorMsg: '',
+
+                async handleLogin() {
+                    if (!this.username || !this.password) return;
+                    this.loading = true;
+                    this.errorMsg = '';
+                    try {
+                        const resp = await fetch('/api/admin/login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                username: this.username,
+                                password: this.password,
+                            }),
+                        });
+                        const data = await resp.json();
+                        if (data.success) {
+                            window.location.href = '/admin';
+                        } else {
+                            this.errorMsg = data.error || 'Invalid credentials. Please try again.';
+                        }
+                    } catch (err) {
+                        this.errorMsg = 'Connection error. Please try again.';
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+            };
+        }
+    </script>
+
+    {% else %}
+    <!-- ================================================================
+         AUTHENTICATED — Admin Dashboard
+         ================================================================ -->
+    <div x-data="adminDashboard()" class="min-h-screen flex flex-col">
+
+        <!-- Topbar -->
+        <header class="bg-[#36323e] border-b border-[rgba(255,255,255,0.10)] px-6 py-3 flex items-center justify-between flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <h1 class="text-lg font-semibold text-[#e2e8f0]">Admin Dashboard</h1>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                      style="background: rgba(220, 38, 38, 0.12); border: 1px solid rgba(220, 38, 38, 0.25); color: #f87171;">
+                    {{ services_data | length }} service{{ 's' if services_data | length != 1 else '' }}
+                </span>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="/"
+                   class="text-sm text-[#94a3b8] hover:text-[#e2e8f0] transition-colors duration-200">
+                    &larr; Back to App
+                </a>
+                <button @click="handleLogout()"
+                        class="px-3 py-1.5 text-sm font-medium text-[#94a3b8] rounded-md
+                               border border-[rgba(255,255,255,0.08)] hover:text-[#e2e8f0]
+                               hover:border-[rgba(255,255,255,0.15)] hover:bg-[rgba(255,255,255,0.03)]
+                               transition-all duration-200 cursor-pointer">
+                    Logout
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6 overflow-auto">
+            <div class="max-w-7xl mx-auto space-y-6">
+
+                <!-- ============================================================
+                     Summary Cards (Row 1: Core counts)
+                     ============================================================ -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <!-- Total Services -->
+                    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-medium text-[#94a3b8] uppercase tracking-wider">Services</span>
+                            <svg class="w-5 h-5 text-[#64748b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            </svg>
+                        </div>
+                        <p class="text-3xl font-bold text-[#e2e8f0]">{{ services_data | length }}</p>
+                    </div>
+
+                    <!-- Total Sessions -->
+                    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-medium text-[#94a3b8] uppercase tracking-wider">Sessions</span>
+                            <svg class="w-5 h-5 text-[#64748b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                            </svg>
+                        </div>
+                        <p class="text-3xl font-bold text-[#e2e8f0]">{{ services_data | sum(attribute='total_sessions') }}</p>
+                        <p class="text-xs text-[#64748b] mt-1">
+                            <span class="text-[#f87171]">{{ services_data | sum(attribute='real_calls') }}</span> real
+                            &middot;
+                            <span class="text-[#94a3b8]">{{ services_data | sum(attribute='simulated') }}</span> sim
+                        </p>
+                    </div>
+
+                    <!-- Total Providers -->
+                    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-medium text-[#94a3b8] uppercase tracking-wider">Providers</span>
+                            <svg class="w-5 h-5 text-[#64748b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                        </div>
+                        <p class="text-3xl font-bold text-[#e2e8f0]">{{ services_data | sum(attribute='total_providers') }}</p>
+                        <p class="text-xs text-[#64748b] mt-1">
+                            <span class="text-emerald-400">{{ services_data | sum(attribute='active_providers') }}</span> active
+                        </p>
+                    </div>
+
+                    <!-- ROSC Rate (Aggregate) -->
+                    {% set total_real = services_data | sum(attribute='real_calls') %}
+                    {% set total_rosc = services_data | sum(attribute='rosc_count') %}
+                    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-medium text-[#94a3b8] uppercase tracking-wider">ROSC Rate</span>
+                            <svg class="w-5 h-5 text-[#64748b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                            </svg>
+                        </div>
+                        <p class="text-3xl font-bold text-emerald-400">
+                            {% if total_real > 0 %}{{ ((total_rosc / total_real) * 100) | round(1) }}%{% else %}--{% endif %}
+                        </p>
+                        <p class="text-xs text-[#64748b] mt-1">
+                            {{ total_rosc }} of {{ total_real }} real calls
+                        </p>
+                    </div>
+                </div>
+
+                <!-- ============================================================
+                     Summary Cards (Row 2: ROSC Outcomes)
+                     ============================================================ -->
+                {% if total_real > 0 %}
+                <div class="grid grid-cols-3 gap-4">
+                    {% set total_no_rosc = services_data | sum(attribute='no_rosc_count') %}
+                    {% set total_ongoing = services_data | sum(attribute='ongoing_count') %}
+                    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-4">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                            <span class="text-xs font-medium text-[#94a3b8] uppercase tracking-wider">ROSC</span>
+                        </div>
+                        <p class="text-2xl font-bold text-emerald-400">{{ total_rosc }}</p>
+                    </div>
+                    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-4">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                            <span class="text-xs font-medium text-[#94a3b8] uppercase tracking-wider">No ROSC</span>
+                        </div>
+                        <p class="text-2xl font-bold text-red-400">{{ total_no_rosc }}</p>
+                    </div>
+                    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-4">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                            <span class="text-xs font-medium text-[#94a3b8] uppercase tracking-wider">Ongoing</span>
+                        </div>
+                        <p class="text-2xl font-bold text-amber-400">{{ total_ongoing }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- ============================================================
+                     Charts Row: Quality Comparison + ROSC Outcomes
+                     ============================================================ -->
+                {% if services_data | length > 0 %}
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <!-- Service Quality Comparison Chart -->
+                    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+                        <h2 class="text-sm font-semibold text-[#e2e8f0] uppercase tracking-wider mb-4">Quality Comparison</h2>
+                        <div class="relative" style="height: 280px;">
+                            <canvas id="serviceComparisonChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- ROSC Outcomes by Service -->
+                    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+                        <h2 class="text-sm font-semibold text-[#e2e8f0] uppercase tracking-wider mb-4">ROSC Outcomes by Service</h2>
+                        <div class="relative" style="height: 280px;">
+                            <canvas id="roscChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monthly Trend + Platoon/Cert Breakdown -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <!-- Monthly Session Trends -->
+                    <div class="lg:col-span-2 bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+                        <h2 class="text-sm font-semibold text-[#e2e8f0] uppercase tracking-wider mb-4">Monthly Session Trends</h2>
+                        <div class="relative" style="height: 240px;">
+                            <canvas id="monthlyTrendChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Platoon & Certification Breakdown -->
+                    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5 space-y-5">
+                        <!-- Platoon Breakdown -->
+                        <div>
+                            <h3 class="text-xs font-semibold text-[#94a3b8] uppercase tracking-wider mb-3">Platoon Distribution</h3>
+                            {% set all_platoons = {} %}
+                            {% for svc in services_data %}
+                                {% for p, c in svc.platoon_counts.items() %}
+                                    {% if all_platoons.update({p: all_platoons.get(p, 0) + c}) %}{% endif %}
+                                {% endfor %}
+                            {% endfor %}
+                            {% if all_platoons %}
+                            <div class="space-y-2">
+                                {% for platoon, count in all_platoons.items() | sort %}
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-[#e2e8f0]">{{ platoon }}</span>
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-20 h-1.5 rounded-full bg-[rgba(255,255,255,0.10)]">
+                                            <div class="h-1.5 rounded-full"
+                                                 style="width: {{ (count / services_data | sum(attribute='total_sessions') * 100) | round(0) if services_data | sum(attribute='total_sessions') > 0 else 0 }}%;
+                                                        background: linear-gradient(90deg, #dc2626, #f97316);"></div>
+                                        </div>
+                                        <span class="text-xs text-[#94a3b8] w-6 text-right">{{ count }}</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <p class="text-xs text-[#64748b]">No platoon data available</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Divider -->
+                        <div class="border-t border-[rgba(255,255,255,0.10)]"></div>
+
+                        <!-- Certification Breakdown -->
+                        <div>
+                            <h3 class="text-xs font-semibold text-[#94a3b8] uppercase tracking-wider mb-3">Provider Certifications</h3>
+                            {% set all_certs = {} %}
+                            {% for svc in services_data %}
+                                {% for c, n in svc.cert_counts.items() %}
+                                    {% if all_certs.update({c: all_certs.get(c, 0) + n}) %}{% endif %}
+                                {% endfor %}
+                            {% endfor %}
+                            {% if all_certs %}
+                            <div class="space-y-2">
+                                {% for cert, count in all_certs.items() | sort %}
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-[#e2e8f0]">{{ cert }}</span>
+                                    <span class="px-2 py-0.5 text-xs font-medium rounded-full
+                                        {% if cert == 'ACP' %}bg-blue-900/30 text-blue-400
+                                        {% elif cert == 'PCP' %}bg-emerald-900/30 text-emerald-400
+                                        {% else %}bg-amber-900/30 text-amber-400{% endif %}">
+                                        {{ count }}
+                                    </span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <p class="text-xs text-[#64748b]">No certification data available</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- ============================================================
+                     Performance Trend with Event Annotations
+                     ============================================================ -->
+                {% if services_data | length > 0 %}
+                <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5"
+                     x-data="annotationManager()">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h2 class="text-sm font-semibold text-[#e2e8f0] uppercase tracking-wider">Performance Trend</h2>
+                            <p class="text-xs text-[#64748b] mt-0.5">Monthly average metrics across all services with event annotations</p>
+                        </div>
+                        <button @click="showAddForm = !showAddForm"
+                                class="px-3 py-1.5 text-xs font-medium text-[#94a3b8] rounded-md
+                                       border border-[rgba(255,255,255,0.08)] hover:text-[#e2e8f0]
+                                       hover:border-[rgba(255,255,255,0.15)] hover:bg-[rgba(255,255,255,0.03)]
+                                       transition-all duration-200 cursor-pointer flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                            Add Event
+                        </button>
+                    </div>
+
+                    <!-- Add Annotation Form -->
+                    <div x-show="showAddForm" x-cloak
+                         class="mb-4 p-4 rounded-md border border-[rgba(255,255,255,0.10)] fade-in"
+                         style="background: rgba(255,255,255,0.02);">
+                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-[#94a3b8] mb-1">Month</label>
+                                <input type="month" x-model="newMonth"
+                                       class="w-full text-sm bg-[#46424e] text-[#e2e8f0] border border-[rgba(255,255,255,0.15)]
+                                              rounded-md px-2.5 py-1.5 outline-none focus:border-[rgba(220,38,38,0.5)]">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-[#94a3b8] mb-1">Event Label</label>
+                                <input type="text" x-model="newLabel" placeholder="e.g. CPR Training Push"
+                                       class="w-full text-sm bg-[#46424e] text-[#e2e8f0] placeholder-[#4b5563] border border-[rgba(255,255,255,0.15)]
+                                              rounded-md px-2.5 py-1.5 outline-none focus:border-[rgba(220,38,38,0.5)]">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-[#94a3b8] mb-1">Description (optional)</label>
+                                <input type="text" x-model="newDesc" placeholder="Brief description..."
+                                       class="w-full text-sm bg-[#46424e] text-[#e2e8f0] placeholder-[#4b5563] border border-[rgba(255,255,255,0.15)]
+                                              rounded-md px-2.5 py-1.5 outline-none focus:border-[rgba(220,38,38,0.5)]">
+                            </div>
+                            <div class="flex items-end gap-2">
+                                <div class="flex-1">
+                                    <label class="block text-xs font-medium text-[#94a3b8] mb-1">Color</label>
+                                    <select x-model="newColor"
+                                            class="w-full text-sm bg-[#46424e] text-[#e2e8f0] border border-[rgba(255,255,255,0.15)]
+                                                   rounded-md px-2.5 py-1.5 outline-none focus:border-[rgba(220,38,38,0.5)]">
+                                        <option value="#dc2626">Red</option>
+                                        <option value="#f97316">Orange</option>
+                                        <option value="#3b82f6">Blue</option>
+                                        <option value="#10b981">Green</option>
+                                        <option value="#a855f7">Purple</option>
+                                    </select>
+                                </div>
+                                <button @click="addAnnotation()"
+                                        :disabled="!newMonth || !newLabel"
+                                        class="px-3 py-1.5 text-sm font-medium text-white rounded-md cursor-pointer
+                                               transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                                        style="background: linear-gradient(135deg, #dc2626, #b91c1c);">
+                                    Add
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Existing Annotations List -->
+                    <template x-if="annotations.length > 0">
+                        <div class="mb-4 flex flex-wrap gap-2">
+                            <template x-for="ann in annotations" :key="ann.id">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border"
+                                      :style="'border-color:' + ann.color + '40; background:' + ann.color + '15; color:' + ann.color">
+                                    <span class="w-1.5 h-1.5 rounded-full" :style="'background:' + ann.color"></span>
+                                    <span x-text="ann.month"></span>:
+                                    <span x-text="ann.label"></span>
+                                    <button @click="deleteAnnotation(ann.id)" class="ml-0.5 opacity-60 hover:opacity-100 transition-opacity">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                    </button>
+                                </span>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- Performance Trend Chart -->
+                    <div class="relative" style="height: 320px;">
+                        <canvas id="performanceTrendChart"></canvas>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- ============================================================
+                     Service Comparison Cards
+                     ============================================================ -->
+                <div>
+                    <h2 class="text-sm font-semibold text-[#94a3b8] uppercase tracking-wider mb-3">Services Overview</h2>
+
+                    {% if services_data | length == 0 %}
+                    <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-8 text-center">
+                        <svg class="w-12 h-12 text-[#64748b] mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                  d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                        </svg>
+                        <p class="text-[#94a3b8]">No services have been created yet.</p>
+                        <p class="text-sm text-[#64748b] mt-1">Services will appear here once created from the landing page.</p>
+                    </div>
+                    {% else %}
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {% for svc in services_data %}
+                        <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md overflow-hidden fade-in">
+                            <!-- Service Header -->
+                            <div class="px-5 py-3 border-b border-[rgba(255,255,255,0.10)]"
+                                 style="background: rgba(255,255,255,0.02);">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-base font-semibold text-[#e2e8f0]">{{ svc.name }}</h3>
+                                    <span class="text-xs text-[#64748b] font-mono">{{ svc.slug }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Stats Grid -->
+                            <div class="p-5 space-y-4">
+                                <!-- Sessions & Providers Row -->
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p class="text-xs text-[#64748b] uppercase tracking-wider mb-1">Sessions</p>
+                                        <p class="text-xl font-bold text-[#e2e8f0]">{{ svc.total_sessions }}</p>
+                                        <p class="text-xs text-[#94a3b8] mt-0.5">
+                                            <span class="text-[#f87171]">{{ svc.real_calls }}</span> real
+                                            &middot;
+                                            <span class="text-[#94a3b8]">{{ svc.simulated }}</span> sim
+                                            {% if svc.complete_sessions is defined %}
+                                            &middot;
+                                            <span class="text-emerald-400">{{ svc.complete_sessions }}</span> complete
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-[#64748b] uppercase tracking-wider mb-1">Providers</p>
+                                        <p class="text-xl font-bold text-[#e2e8f0]">{{ svc.total_providers }}</p>
+                                        <p class="text-xs text-[#94a3b8] mt-0.5">
+                                            <span class="text-emerald-400">{{ svc.active_providers }}</span> active
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Metrics -->
+                                <div class="border-t border-[rgba(255,255,255,0.10)] pt-4">
+                                    <p class="text-xs text-[#64748b] uppercase tracking-wider mb-3">Performance Metrics</p>
+                                    <div class="grid grid-cols-5 gap-3 mb-4">
+                                        <div class="text-center">
+                                            <p class="text-lg font-bold text-[#e2e8f0]">{{ svc.avg_compression_rate | default('--') }}</p>
+                                            <p class="text-[10px] text-[#64748b] uppercase tracking-wider">Avg Rate</p>
+                                        </div>
+                                        <div class="text-center">
+                                            <p class="text-lg font-bold text-[#e2e8f0]">{{ svc.avg_compression_depth | default('--') }}</p>
+                                            <p class="text-[10px] text-[#64748b] uppercase tracking-wider">Avg Depth</p>
+                                        </div>
+                                        <div class="text-center">
+                                            <p class="text-lg font-bold text-[#e2e8f0]">{{ svc.avg_ccf | default('--') }}{% if svc.avg_ccf is not none and svc.avg_ccf != '--' %}%{% endif %}</p>
+                                            <p class="text-[10px] text-[#64748b] uppercase tracking-wider">Avg CCF</p>
+                                        </div>
+                                        <div class="text-center">
+                                            <p class="text-lg font-bold {% if svc.avg_jcls >= 75 %}text-emerald-400{% elif svc.avg_jcls >= 50 %}text-amber-400{% elif svc.avg_jcls > 0 %}text-red-400{% else %}text-[#e2e8f0]{% endif %}">{{ svc.avg_jcls | default('--') }}</p>
+                                            <p class="text-[10px] text-[#64748b] uppercase tracking-wider">JcLS Score</p>
+                                        </div>
+                                        <div class="text-center">
+                                            <p class="text-lg font-bold text-emerald-400">{{ svc.rosc_rate | default(0) }}%</p>
+                                            <p class="text-[10px] text-[#64748b] uppercase tracking-wider">ROSC Rate</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- ROSC Outcomes Mini -->
+                                    {% if svc.real_calls > 0 %}
+                                    <div class="grid grid-cols-3 gap-2 mb-4">
+                                        <div class="bg-[rgba(255,255,255,0.02)] rounded px-2 py-1.5 text-center">
+                                            <p class="text-sm font-bold text-emerald-400">{{ svc.rosc_count }}</p>
+                                            <p class="text-[9px] text-[#64748b] uppercase">ROSC</p>
+                                        </div>
+                                        <div class="bg-[rgba(255,255,255,0.02)] rounded px-2 py-1.5 text-center">
+                                            <p class="text-sm font-bold text-red-400">{{ svc.no_rosc_count }}</p>
+                                            <p class="text-[9px] text-[#64748b] uppercase">No ROSC</p>
+                                        </div>
+                                        <div class="bg-[rgba(255,255,255,0.02)] rounded px-2 py-1.5 text-center">
+                                            <p class="text-sm font-bold text-amber-400">{{ svc.ongoing_count }}</p>
+                                            <p class="text-[9px] text-[#64748b] uppercase">Ongoing</p>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+
+                                    <!-- Compliance Progress Bars -->
+                                    <div class="space-y-3">
+                                        <!-- Depth Compliance -->
+                                        <div>
+                                            <div class="flex items-center justify-between mb-1">
+                                                <span class="text-xs text-[#94a3b8]">Depth Compliance</span>
+                                                <span class="text-xs font-semibold text-[#e2e8f0]">{{ svc.avg_depth_compliance | default(0) | round(1) }}%</span>
+                                            </div>
+                                            <div class="w-full h-2 rounded-full" style="background: rgba(255,255,255,0.10);">
+                                                <div class="h-2 rounded-full progress-bar-fill"
+                                                     style="width: {{ svc.avg_depth_compliance | default(0) | round(1) }}%; background: linear-gradient(90deg, #dc2626, #ef4444);">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Rate Compliance -->
+                                        <div>
+                                            <div class="flex items-center justify-between mb-1">
+                                                <span class="text-xs text-[#94a3b8]">Rate Compliance</span>
+                                                <span class="text-xs font-semibold text-[#e2e8f0]">{{ svc.avg_rate_compliance | default(0) | round(1) }}%</span>
+                                            </div>
+                                            <div class="w-full h-2 rounded-full" style="background: rgba(255,255,255,0.10);">
+                                                <div class="h-2 rounded-full progress-bar-fill"
+                                                     style="width: {{ svc.avg_rate_compliance | default(0) | round(1) }}%; background: linear-gradient(90deg, #dc2626, #ef4444);">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- ============================================================
+                     Test Data Section
+                     ============================================================ -->
+                <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+                    <h2 class="text-sm font-semibold text-[#e2e8f0] uppercase tracking-wider mb-1">Test Data</h2>
+                    <p class="text-xs text-[#64748b] mb-4">Generate or delete synthetic test data across all services for development and testing.</p>
+
+                    <!-- Status Message -->
+                    <div x-show="testDataMsg" x-cloak
+                         class="mb-4 px-3 py-2.5 rounded-md text-sm flex items-center gap-2 fade-in"
+                         :class="testDataSuccess
+                             ? 'bg-[rgba(22,163,74,0.1)] border border-[rgba(22,163,74,0.25)] text-emerald-400'
+                             : 'bg-[rgba(220,38,38,0.1)] border border-[rgba(220,38,38,0.25)] text-[#fca5a5]'">
+                        <span x-text="testDataMsg"></span>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <button @click="generateTestData()"
+                                :disabled="testDataLoading"
+                                class="px-4 py-2 text-sm font-medium text-white rounded-md cursor-pointer
+                                       transition-all duration-200 flex items-center gap-2
+                                       hover:shadow-[0_4px_15px_rgba(220,38,38,0.3)] hover:-translate-y-px
+                                       active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+                                style="background: linear-gradient(135deg, #dc2626, #b91c1c);">
+                            <span x-show="!testDataLoading || testDataAction !== 'generate'">
+                                <svg class="w-4 h-4 inline -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                </svg>
+                                Generate Test Data
+                            </span>
+                            <span x-show="testDataLoading && testDataAction === 'generate'" class="flex items-center gap-2">
+                                <span class="spinner"></span> Generating...
+                            </span>
+                        </button>
+
+                        <button @click="deleteTestData()"
+                                :disabled="testDataLoading"
+                                class="px-4 py-2 text-sm font-medium text-[#fca5a5] rounded-md cursor-pointer
+                                       border border-[rgba(220,38,38,0.25)] transition-all duration-200 flex items-center gap-2
+                                       hover:bg-[rgba(220,38,38,0.1)] hover:border-[rgba(220,38,38,0.4)]
+                                       disabled:opacity-50 disabled:cursor-not-allowed"
+                                style="background: rgba(220, 38, 38, 0.06);">
+                            <span x-show="!testDataLoading || testDataAction !== 'delete'">
+                                <svg class="w-4 h-4 inline -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                                Delete Test Data
+                            </span>
+                            <span x-show="testDataLoading && testDataAction === 'delete'" class="flex items-center gap-2">
+                                <span class="spinner"></span> Deleting...
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ============================================================
+                     Backup & Restore Section (Placeholder)
+                     ============================================================ -->
+                <div class="bg-[#3e3a46] border border-[rgba(255,255,255,0.10)] rounded-md p-5">
+                    <h2 class="text-sm font-semibold text-[#e2e8f0] uppercase tracking-wider mb-1">Backup & Restore</h2>
+                    <p class="text-xs text-[#64748b] mb-4">Cross-service backup and restore functionality.</p>
+                    <div class="flex items-center gap-3 py-6 justify-center border border-dashed border-[rgba(255,255,255,0.08)] rounded-md"
+                         style="background: rgba(255,255,255,0.01);">
+                        <svg class="w-5 h-5 text-[#64748b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                  d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                        </svg>
+                        <span class="text-sm text-[#64748b]">Coming soon</span>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function adminDashboard() {
+            return {
+                testDataLoading: false,
+                testDataMsg: '',
+                testDataSuccess: false,
+                testDataAction: '',
+
+                init() {
+                    this.$nextTick(() => { this.initCharts(); });
+                },
+
+                initCharts() {
+                    const servicesData = {{ services_data | tojson }};
+                    if (!servicesData || servicesData.length === 0) return;
+
+                    const labels = servicesData.map(s => s.name);
+                    const chartFont = { family: '"Source Sans 3", system-ui, sans-serif' };
+                    const tooltipStyle = {
+                        backgroundColor: '#36323e',
+                        titleColor: '#e2e8f0',
+                        bodyColor: '#94a3b8',
+                        borderColor: 'rgba(255,255,255,0.15)',
+                        borderWidth: 1,
+                        padding: 10,
+                        cornerRadius: 6,
+                        titleFont: { ...chartFont, weight: '600' },
+                        bodyFont: chartFont,
+                    };
+                    const gridStyle = { color: 'rgba(255,255,255,0.04)' };
+
+                    // 1. Quality Comparison Bar Chart
+                    const qualityCanvas = document.getElementById('serviceComparisonChart');
+                    if (qualityCanvas) {
+                        new Chart(qualityCanvas.getContext('2d'), {
+                            type: 'bar',
+                            data: {
+                                labels: labels,
+                                datasets: [
+                                    {
+                                        label: 'Avg Rate',
+                                        data: servicesData.map(s => s.avg_compression_rate || 0),
+                                        backgroundColor: 'rgba(220, 38, 38, 0.7)',
+                                        borderColor: '#dc2626',
+                                        borderWidth: 1,
+                                        borderRadius: 3,
+                                    },
+                                    {
+                                        label: 'Avg Depth (mm)',
+                                        data: servicesData.map(s => s.avg_compression_depth || 0),
+                                        backgroundColor: 'rgba(249, 115, 22, 0.7)',
+                                        borderColor: '#f97316',
+                                        borderWidth: 1,
+                                        borderRadius: 3,
+                                    },
+                                    {
+                                        label: 'Avg CCF (%)',
+                                        data: servicesData.map(s => s.avg_ccf || 0),
+                                        backgroundColor: 'rgba(100, 116, 139, 0.7)',
+                                        borderColor: '#64748b',
+                                        borderWidth: 1,
+                                        borderRadius: 3,
+                                    },
+                                    {
+                                        label: 'Depth Compliance (%)',
+                                        data: servicesData.map(s => s.avg_depth_compliance || 0),
+                                        backgroundColor: 'rgba(239, 68, 68, 0.5)',
+                                        borderColor: '#ef4444',
+                                        borderWidth: 1,
+                                        borderRadius: 3,
+                                    },
+                                    {
+                                        label: 'Rate Compliance (%)',
+                                        data: servicesData.map(s => s.avg_rate_compliance || 0),
+                                        backgroundColor: 'rgba(251, 191, 36, 0.5)',
+                                        borderColor: '#fbbf24',
+                                        borderWidth: 1,
+                                        borderRadius: 3,
+                                    },
+                                    {
+                                        label: 'JcLS Score',
+                                        data: servicesData.map(s => s.avg_jcls || 0),
+                                        backgroundColor: 'rgba(139, 92, 246, 0.7)',
+                                        borderColor: '#8b5cf6',
+                                        borderWidth: 1,
+                                        borderRadius: 3,
+                                    },
+                                ],
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'top',
+                                        labels: { color: '#94a3b8', font: { ...chartFont, size: 10 }, padding: 12, usePointStyle: true, pointStyle: 'rectRounded' },
+                                    },
+                                    tooltip: tooltipStyle,
+                                },
+                                scales: {
+                                    x: { ticks: { color: '#94a3b8', font: { ...chartFont, size: 11 } }, grid: gridStyle },
+                                    y: { beginAtZero: true, ticks: { color: '#64748b', font: { ...chartFont, size: 10 } }, grid: gridStyle },
+                                },
+                            },
+                        });
+                    }
+
+                    // 2. ROSC Outcomes Stacked Bar Chart
+                    const roscCanvas = document.getElementById('roscChart');
+                    if (roscCanvas) {
+                        new Chart(roscCanvas.getContext('2d'), {
+                            type: 'bar',
+                            data: {
+                                labels: labels,
+                                datasets: [
+                                    {
+                                        label: 'ROSC',
+                                        data: servicesData.map(s => s.rosc_count || 0),
+                                        backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                                        borderColor: '#10b981',
+                                        borderWidth: 1,
+                                        borderRadius: 3,
+                                    },
+                                    {
+                                        label: 'No ROSC',
+                                        data: servicesData.map(s => s.no_rosc_count || 0),
+                                        backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                                        borderColor: '#ef4444',
+                                        borderWidth: 1,
+                                        borderRadius: 3,
+                                    },
+                                    {
+                                        label: 'Ongoing',
+                                        data: servicesData.map(s => s.ongoing_count || 0),
+                                        backgroundColor: 'rgba(245, 158, 11, 0.7)',
+                                        borderColor: '#f59e0b',
+                                        borderWidth: 1,
+                                        borderRadius: 3,
+                                    },
+                                ],
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'top',
+                                        labels: { color: '#94a3b8', font: { ...chartFont, size: 11 }, padding: 16, usePointStyle: true, pointStyle: 'rectRounded' },
+                                    },
+                                    tooltip: tooltipStyle,
+                                },
+                                scales: {
+                                    x: { stacked: true, ticks: { color: '#94a3b8', font: { ...chartFont, size: 11 } }, grid: gridStyle },
+                                    y: { stacked: true, beginAtZero: true, ticks: { color: '#64748b', font: { ...chartFont, size: 10 }, stepSize: 1 }, grid: gridStyle },
+                                },
+                            },
+                        });
+                    }
+
+                    // 3. Monthly Trend Line Chart
+                    const trendCanvas = document.getElementById('monthlyTrendChart');
+                    if (trendCanvas) {
+                        // Merge monthly data from all services
+                        const allMonths = new Set();
+                        servicesData.forEach(s => {
+                            if (s.monthly_counts) Object.keys(s.monthly_counts).forEach(m => allMonths.add(m));
+                        });
+                        const monthLabels = Array.from(allMonths).sort();
+                        const monthDisplayLabels = monthLabels.map(m => {
+                            const [y, mo] = m.split('-');
+                            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                            return months[parseInt(mo) - 1] + ' ' + y.slice(2);
+                        });
+
+                        const colors = [
+                            { bg: 'rgba(220, 38, 38, 0.2)', border: '#dc2626' },
+                            { bg: 'rgba(249, 115, 22, 0.2)', border: '#f97316' },
+                            { bg: 'rgba(59, 130, 246, 0.2)', border: '#3b82f6' },
+                            { bg: 'rgba(16, 185, 129, 0.2)', border: '#10b981' },
+                        ];
+
+                        const datasets = servicesData.map((s, i) => ({
+                            label: s.name,
+                            data: monthLabels.map(m => (s.monthly_counts && s.monthly_counts[m]) || 0),
+                            borderColor: colors[i % colors.length].border,
+                            backgroundColor: colors[i % colors.length].bg,
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: true,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                        }));
+
+                        new Chart(trendCanvas.getContext('2d'), {
+                            type: 'line',
+                            data: { labels: monthDisplayLabels, datasets: datasets },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'top',
+                                        labels: { color: '#94a3b8', font: { ...chartFont, size: 11 }, padding: 16, usePointStyle: true },
+                                    },
+                                    tooltip: tooltipStyle,
+                                },
+                                scales: {
+                                    x: { ticks: { color: '#94a3b8', font: { ...chartFont, size: 11 } }, grid: gridStyle },
+                                    y: { beginAtZero: true, ticks: { color: '#64748b', font: { ...chartFont, size: 10 }, stepSize: 1 }, grid: gridStyle },
+                                },
+                            },
+                        });
+                    }
+
+                    // 4. Performance Trend Chart (with annotation markers)
+                    const perfCanvas = document.getElementById('performanceTrendChart');
+                    if (perfCanvas) {
+                        // Merge monthly_avg data from all services into aggregate averages
+                        const allPerfMonths = new Set();
+                        servicesData.forEach(s => {
+                            if (s.monthly_avg) Object.keys(s.monthly_avg).forEach(m => allPerfMonths.add(m));
+                            if (s.monthly_counts) Object.keys(s.monthly_counts).forEach(m => allPerfMonths.add(m));
+                        });
+                        const perfMonthKeys = Array.from(allPerfMonths).sort();
+                        const perfLabels = perfMonthKeys.map(m => {
+                            const [y, mo] = m.split('-');
+                            const ms = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                            return ms[parseInt(mo) - 1] + ' ' + y.slice(2);
+                        });
+
+                        // Aggregate monthly averages across services
+                        function aggMetric(key) {
+                            return perfMonthKeys.map(m => {
+                                const vals = [];
+                                servicesData.forEach(s => {
+                                    if (s.monthly_avg && s.monthly_avg[m] && s.monthly_avg[m][key] != null) {
+                                        vals.push(s.monthly_avg[m][key]);
+                                    }
+                                });
+                                return vals.length ? Math.round(vals.reduce((a,b) => a+b, 0) / vals.length * 10) / 10 : null;
+                            });
+                        }
+
+                        // Custom plugin for vertical annotation lines
+                        const annotationLinePlugin = {
+                            id: 'annotationLines',
+                            afterDraw(chart) {
+                                const anns = chart.options.plugins?.annotationLines?.items;
+                                if (!anns || anns.length === 0) return;
+                                const ctx = chart.ctx;
+                                const xScale = chart.scales.x;
+                                const yScale = chart.scales.y;
+                                anns.forEach(ann => {
+                                    const idx = perfLabels.indexOf(ann.displayLabel);
+                                    if (idx === -1) return;
+                                    const xPixel = xScale.getPixelForValue(idx);
+                                    ctx.save();
+                                    // Dashed vertical line
+                                    ctx.beginPath();
+                                    ctx.moveTo(xPixel, yScale.top);
+                                    ctx.lineTo(xPixel, yScale.bottom);
+                                    ctx.strokeStyle = ann.color || '#dc2626';
+                                    ctx.lineWidth = 2;
+                                    ctx.setLineDash([6, 4]);
+                                    ctx.stroke();
+                                    // Label background
+                                    ctx.setLineDash([]);
+                                    const text = ann.label;
+                                    ctx.font = 'bold 11px Source Sans 3, sans-serif';
+                                    const tw = ctx.measureText(text).width;
+                                    const pad = 4;
+                                    const bx = xPixel - tw/2 - pad;
+                                    const by = yScale.top - 22;
+                                    ctx.fillStyle = ann.color || '#dc2626';
+                                    ctx.beginPath();
+                                    ctx.roundRect(bx, by, tw + pad*2, 18, 3);
+                                    ctx.fill();
+                                    // Label text
+                                    ctx.fillStyle = '#fff';
+                                    ctx.textAlign = 'center';
+                                    ctx.textBaseline = 'middle';
+                                    ctx.fillText(text, xPixel, by + 9);
+                                    ctx.restore();
+                                });
+                            }
+                        };
+
+                        // Build annotation items for chart
+                        const storedAnnotations = {{ annotations | tojson }};
+                        const annotationItems = storedAnnotations.map(a => {
+                            const [y, mo] = a.month.split('-');
+                            const ms = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                            return {
+                                displayLabel: ms[parseInt(mo) - 1] + ' ' + y.slice(2),
+                                label: a.label,
+                                color: a.color || '#dc2626',
+                            };
+                        });
+
+                        new Chart(perfCanvas.getContext('2d'), {
+                            type: 'line',
+                            plugins: [annotationLinePlugin],
+                            data: {
+                                labels: perfLabels,
+                                datasets: [
+                                    {
+                                        label: 'Avg CCF (%)',
+                                        data: aggMetric('avg_ccf'),
+                                        borderColor: '#dc2626',
+                                        backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                                        borderWidth: 2.5,
+                                        tension: 0.3,
+                                        fill: true,
+                                        pointRadius: 4,
+                                        pointHoverRadius: 7,
+                                        spanGaps: true,
+                                    },
+                                    {
+                                        label: 'Depth Compliance (%)',
+                                        data: aggMetric('avg_depth_compliance'),
+                                        borderColor: '#f97316',
+                                        backgroundColor: 'rgba(249, 115, 22, 0.08)',
+                                        borderWidth: 2,
+                                        tension: 0.3,
+                                        fill: true,
+                                        pointRadius: 4,
+                                        pointHoverRadius: 7,
+                                        spanGaps: true,
+                                    },
+                                    {
+                                        label: 'Rate Compliance (%)',
+                                        data: aggMetric('avg_rate_compliance'),
+                                        borderColor: '#3b82f6',
+                                        backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                                        borderWidth: 2,
+                                        tension: 0.3,
+                                        fill: true,
+                                        pointRadius: 4,
+                                        pointHoverRadius: 7,
+                                        spanGaps: true,
+                                    },
+                                    {
+                                        label: 'JcLS Score',
+                                        data: aggMetric('avg_jcls'),
+                                        borderColor: '#8b5cf6',
+                                        backgroundColor: 'rgba(139, 92, 246, 0.08)',
+                                        borderWidth: 2,
+                                        tension: 0.3,
+                                        fill: true,
+                                        pointRadius: 4,
+                                        pointHoverRadius: 7,
+                                        spanGaps: true,
+                                    },
+                                    {
+                                        label: 'Avg Rate (cpm)',
+                                        data: aggMetric('avg_rate'),
+                                        borderColor: '#10b981',
+                                        backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                                        borderWidth: 1.5,
+                                        tension: 0.3,
+                                        fill: false,
+                                        pointRadius: 3,
+                                        pointHoverRadius: 6,
+                                        spanGaps: true,
+                                        yAxisID: 'y1',
+                                    },
+                                ],
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                layout: { padding: { top: 28 } },
+                                plugins: {
+                                    legend: {
+                                        position: 'top',
+                                        labels: { color: '#94a3b8', font: { ...chartFont, size: 11 }, padding: 14, usePointStyle: true },
+                                    },
+                                    tooltip: {
+                                        ...tooltipStyle,
+                                        callbacks: {
+                                            afterBody: function(items) {
+                                                const label = items[0]?.label;
+                                                const match = annotationItems.find(a => a.displayLabel === label);
+                                                return match ? '\n📌 ' + match.label : '';
+                                            }
+                                        }
+                                    },
+                                    annotationLines: { items: annotationItems },
+                                },
+                                scales: {
+                                    x: { ticks: { color: '#94a3b8', font: { ...chartFont, size: 11 } }, grid: gridStyle },
+                                    y: {
+                                        beginAtZero: true,
+                                        max: 100,
+                                        position: 'left',
+                                        title: { display: true, text: 'Percentage (%)', color: '#64748b', font: { ...chartFont, size: 11 } },
+                                        ticks: { color: '#64748b', font: { ...chartFont, size: 10 } },
+                                        grid: gridStyle,
+                                    },
+                                    y1: {
+                                        beginAtZero: true,
+                                        position: 'right',
+                                        title: { display: true, text: 'Rate (cpm)', color: '#64748b', font: { ...chartFont, size: 11 } },
+                                        ticks: { color: '#64748b', font: { ...chartFont, size: 10 } },
+                                        grid: { drawOnChartArea: false },
+                                    },
+                                },
+                            },
+                        });
+                    }
+                },
+
+                async generateTestData() {
+                    this.testDataLoading = true;
+                    this.testDataAction = 'generate';
+                    this.testDataMsg = '';
+                    try {
+                        const resp = await fetch('/api/admin/test-data/generate', { method: 'POST' });
+                        const data = await resp.json();
+                        if (resp.ok) {
+                            this.testDataSuccess = true;
+                            this.testDataMsg = data.message || 'Test data generated successfully.';
+                            setTimeout(() => { window.location.reload(); }, 1500);
+                        } else {
+                            this.testDataSuccess = false;
+                            this.testDataMsg = data.error || 'Failed to generate test data.';
+                        }
+                    } catch (err) {
+                        this.testDataSuccess = false;
+                        this.testDataMsg = 'Connection error. Please try again.';
+                    } finally {
+                        this.testDataLoading = false;
+                    }
+                },
+
+                async deleteTestData() {
+                    if (!confirm('Are you sure you want to delete all test data? This cannot be undone.')) return;
+                    this.testDataLoading = true;
+                    this.testDataAction = 'delete';
+                    this.testDataMsg = '';
+                    try {
+                        const resp = await fetch('/api/admin/test-data/delete', { method: 'DELETE' });
+                        const data = await resp.json();
+                        if (resp.ok) {
+                            this.testDataSuccess = true;
+                            this.testDataMsg = data.message || 'Test data deleted successfully.';
+                            setTimeout(() => { window.location.reload(); }, 1500);
+                        } else {
+                            this.testDataSuccess = false;
+                            this.testDataMsg = data.error || 'Failed to delete test data.';
+                        }
+                    } catch (err) {
+                        this.testDataSuccess = false;
+                        this.testDataMsg = 'Connection error. Please try again.';
+                    } finally {
+                        this.testDataLoading = false;
+                    }
+                },
+
+                async handleLogout() {
+                    try {
+                        await fetch('/api/admin/logout', { method: 'POST' });
+                    } catch (e) {}
+                    window.location.href = '/landing';
+                },
+            };
+        }
+
+        function annotationManager() {
+            return {
+                annotations: {{ annotations | tojson }},
+                showAddForm: false,
+                newMonth: '',
+                newLabel: '',
+                newDesc: '',
+                newColor: '#dc2626',
+
+                async addAnnotation() {
+                    if (!this.newMonth || !this.newLabel) return;
+                    try {
+                        const resp = await fetch('/api/admin/annotations', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                month: this.newMonth,
+                                label: this.newLabel,
+                                description: this.newDesc,
+                                color: this.newColor,
+                            }),
+                        });
+                        const data = await resp.json();
+                        if (data.success) {
+                            // Reload to re-render chart with new annotation
+                            window.location.reload();
+                        }
+                    } catch (e) {}
+                },
+
+                async deleteAnnotation(id) {
+                    try {
+                        const resp = await fetch('/api/admin/annotations/' + id, { method: 'DELETE' });
+                        const data = await resp.json();
+                        if (data.success) {
+                            window.location.reload();
+                        }
+                    } catch (e) {}
+                },
+            };
+        }
+    </script>
+    {% endif %}
+
+</body>
+</html>

@@ -50,6 +50,12 @@ def set_active_service(slug: str, name: Optional[str] = None) -> None:
     # Clear ALL cached state so paths and data update for the new service
     _clear_all_caches()
 
+    # Auto-sync: pull latest backup from GitHub before loading data
+    service_dir = get_service_dir(slug)
+    from app.services.sync_service import initialize_for_service, auto_pull
+    initialize_for_service(service_dir)
+    auto_pull(service_dir)
+
     # Reinitialize in-memory data from the new service's directory
     _reinitialize_data()
 
@@ -67,6 +73,10 @@ def clear_active_service() -> None:
     global _active_service_slug, _active_service_name
     _active_service_slug = None
     _active_service_name = None
+
+    # Cancel pending sync pushes
+    from app.services.sync_service import reset as sync_reset
+    sync_reset()
 
     # Clear all cached state
     _clear_all_caches()

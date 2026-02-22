@@ -65,6 +65,13 @@ def save_sessions(sessions: List[Dict[str, Any]]) -> bool:
         }
         with open(_get_sessions_file(), 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, default=str)
+
+        try:
+            from app.services.sync_service import schedule_push
+            schedule_push()
+        except Exception:
+            pass
+
         return True
     except IOError as e:
         logger.error(f"Error saving sessions: {e}")
@@ -129,6 +136,13 @@ def save_providers(providers: List[Dict[str, Any]]) -> bool:
         }
         with open(_get_providers_file(), 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, default=str)
+
+        try:
+            from app.services.sync_service import schedule_push
+            schedule_push()
+        except Exception:
+            pass
+
         return True
     except IOError as e:
         logger.error(f"Error saving providers: {e}")

@@ -339,10 +339,10 @@
                                         </div>
                                         {# EtCO2 #}
                                         <div class="rounded-lg p-2 text-center border"
-                                             :class="isValidEtCO2(sessionData.metrics?.etco2) ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'">
-                                            <p class="text-xs font-medium" :class="isValidEtCO2(sessionData.metrics?.etco2) ? 'text-emerald-700' : 'text-red-700'">EtCO2</p>
-                                            <p class="text-2xl font-bold" :class="isValidEtCO2(sessionData.metrics?.etco2) ? 'text-emerald-600' : 'text-red-600'" x-text="isValidEtCO2(sessionData.metrics?.etco2) ? sessionData.metrics.etco2 + ' mmHg' : '—'"></p>
-                                            <p class="text-xs font-medium" :class="isValidEtCO2(sessionData.metrics?.etco2) ? 'text-emerald-500' : 'text-red-500'" x-text="isValidEtCO2(sessionData.metrics?.etco2) ? '✓ Recorded' : '! Remember EtCO2'"></p>
+                                             :class="isValidEtCO2(sessionData.metrics?.mean_etco2) ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'">
+                                            <p class="text-xs font-medium" :class="isValidEtCO2(sessionData.metrics?.mean_etco2) ? 'text-emerald-700' : 'text-red-700'">Avg EtCO2</p>
+                                            <p class="text-2xl font-bold" :class="isValidEtCO2(sessionData.metrics?.mean_etco2) ? 'text-emerald-600' : 'text-red-600'" x-text="isValidEtCO2(sessionData.metrics?.mean_etco2) ? sessionData.metrics.mean_etco2 + ' mmHg' : '—'"></p>
+                                            <p class="text-xs font-medium" :class="isValidEtCO2(sessionData.metrics?.max_etco2) ? 'text-emerald-500' : 'text-red-500'" x-text="isValidEtCO2(sessionData.metrics?.max_etco2) ? 'Max: ' + sessionData.metrics.max_etco2 + ' mmHg' : '! Remember EtCO2'"></p>
                                         </div>
                                     </div>
                                 </div>
@@ -511,8 +511,8 @@
                                                     <td class="px-3 py-2 text-gray-700">Higher is better</td>
                                                 </tr>
                                                 <tr>
-                                                    <td class="px-3 py-2 text-gray-800 font-medium">EtCO2</td>
-                                                    <td class="px-3 py-2 text-gray-600">End-tidal carbon dioxide — capnography measurement indicating perfusion quality during CPR</td>
+                                                    <td class="px-3 py-2 text-gray-800 font-medium">EtCO2 (Mean / Max)</td>
+                                                    <td class="px-3 py-2 text-gray-600">End-tidal carbon dioxide — capnography measurement indicating perfusion quality during CPR. Mean is the average across the call; Max is the peak value recorded.</td>
                                                     <td class="px-3 py-2 text-gray-700">10–20+ mmHg</td>
                                                 </tr>
                                             </tbody>

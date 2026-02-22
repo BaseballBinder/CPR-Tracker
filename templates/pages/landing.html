@@ -592,7 +592,17 @@
                         </div>
                     </div>
 
-                    <p class="text-[11px] text-slate-500 font-semibold uppercase tracking-wide mb-1">v1.6.1 — Auto-Update Fix</p>
+                    <p class="text-[11px] text-slate-500 font-semibold uppercase tracking-wide mb-1">v1.6.2 — Sync &amp; EtCO2 Fix</p>
+                    <ul class="release-notes space-y-0 pl-3" style="list-style-type: '›  ';">
+                        <li>Auto-sync via GitHub (push after changes, pull on login)</li>
+                        <li>Service registry — departments auto-seed on new machines</li>
+                        <li>Sync status indicator in topbar</li>
+                        <li>JcLS score added to admin dashboard charts</li>
+                        <li>Fixed EtCO2 not displaying on team reports</li>
+                        <li>Report now shows both Avg and Max EtCO2</li>
+                    </ul>
+
+                    <p class="text-[11px] text-slate-500 font-semibold uppercase tracking-wide mb-1 mt-3">v1.6.1 — Auto-Update Fix</p>
                     <ul class="release-notes space-y-0 pl-3" style="list-style-type: '›  ';">
                         <li>Fixed auto-update not applying or closing the app</li>
                         <li>Update endpoints now accessible from the landing page</li>
@@ -1003,6 +1013,7 @@
                         this.loading = false;
                     }
                 },
+
             };
         }
     </script>

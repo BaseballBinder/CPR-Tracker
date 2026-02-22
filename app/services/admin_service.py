@@ -142,11 +142,13 @@ def get_all_services_data() -> list:
         avg_ccf = 0
         avg_depth_compliance = 0
         avg_rate_compliance = 0
+        avg_jcls = 0
         rates = []
         depths = []
         ccfs = []
         depth_comps = []
         rate_comps = []
+        jcls_scores = []
 
         metrics_sessions = [s for s in complete_sessions if s.get("metrics")]
         if metrics_sessions:
@@ -155,12 +157,14 @@ def get_all_services_data() -> list:
             ccfs = [s["metrics"].get("compression_fraction", 0) for s in metrics_sessions if s["metrics"].get("compression_fraction")]
             depth_comps = [s["metrics"].get("correct_depth_percent", 0) for s in metrics_sessions if s["metrics"].get("correct_depth_percent")]
             rate_comps = [s["metrics"].get("correct_rate_percent", 0) for s in metrics_sessions if s["metrics"].get("correct_rate_percent")]
+            jcls_scores = [s["metrics"].get("jcls_score", 0) for s in metrics_sessions if s["metrics"].get("jcls_score") is not None]
 
             avg_rate = round(sum(rates) / len(rates), 1) if rates else 0
             avg_depth = round(sum(depths) / len(depths), 1) if depths else 0
             avg_ccf = round(sum(ccfs) / len(ccfs), 1) if ccfs else 0
             avg_depth_compliance = round(sum(depth_comps) / len(depth_comps), 1) if depth_comps else 0
             avg_rate_compliance = round(sum(rate_comps) / len(rate_comps), 1) if rate_comps else 0
+            avg_jcls = round(sum(jcls_scores) / len(jcls_scores), 1) if jcls_scores else 0
 
         active_providers = [p for p in providers if p.get("status") == "active"]
 
@@ -211,7 +215,7 @@ def get_all_services_data() -> list:
             if d and len(d) >= 7 and m:
                 mk = d[:7]
                 if mk not in monthly_metrics:
-                    monthly_metrics[mk] = {"rates": [], "depths": [], "ccfs": [], "depth_comps": [], "rate_comps": []}
+                    monthly_metrics[mk] = {"rates": [], "depths": [], "ccfs": [], "depth_comps": [], "rate_comps": [], "jcls": []}
                 if m.get("compression_rate"):
                     monthly_metrics[mk]["rates"].append(m["compression_rate"])
                 if m.get("compression_depth"):
@@ -222,6 +226,8 @@ def get_all_services_data() -> list:
                     monthly_metrics[mk]["depth_comps"].append(m["correct_depth_percent"])
                 if m.get("correct_rate_percent"):
                     monthly_metrics[mk]["rate_comps"].append(m["correct_rate_percent"])
+                if m.get("jcls_score") is not None:
+                    monthly_metrics[mk]["jcls"].append(m["jcls_score"])
 
         monthly_avg = {}
         for mk, vals in monthly_metrics.items():
@@ -231,6 +237,7 @@ def get_all_services_data() -> list:
                 "avg_ccf": round(sum(vals["ccfs"]) / len(vals["ccfs"]), 1) if vals["ccfs"] else None,
                 "avg_depth_compliance": round(sum(vals["depth_comps"]) / len(vals["depth_comps"]), 1) if vals["depth_comps"] else None,
                 "avg_rate_compliance": round(sum(vals["rate_comps"]) / len(vals["rate_comps"]), 1) if vals["rate_comps"] else None,
+                "avg_jcls": round(sum(vals["jcls"]) / len(vals["jcls"]), 1) if vals["jcls"] else None,
                 "session_count": len(vals["rates"]) or len(vals["depths"]) or 0,
             }
 
@@ -249,6 +256,7 @@ def get_all_services_data() -> list:
             "avg_ccf": avg_ccf,
             "avg_depth_compliance": avg_depth_compliance,
             "avg_rate_compliance": avg_rate_compliance,
+            "avg_jcls": avg_jcls,
             # ROSC stats
             "rosc_count": len(rosc_sessions),
             "no_rosc_count": len(no_rosc_sessions),

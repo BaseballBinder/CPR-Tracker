@@ -32,6 +32,10 @@ router = APIRouter()
 @router.get("/landing", response_class=HTMLResponse)
 async def landing(request: Request):
     """Landing page - service selector and password entry."""
+    # Seed any bundled services that don't exist locally yet
+    from app.services.registry_service import seed_from_registry
+    seed_from_registry()
+
     from app.service_context import list_services
     from app.version import __version__
     services = list_services()

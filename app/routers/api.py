@@ -1290,6 +1290,98 @@ async def auth_logout():
     return {"success": True, "redirect": "/landing"}
 
 
+@router.post("/auth/discover-services")
+async def discover_services(request: Request):
+    """Discover existing service backups on a GitHub repo.
+    Lists subdirectories under backups/ to find service slugs.
+    """
+    import requests as http_requests
+
+    data = await request.json()
+    github_token = data.get("github_token", "").strip()
+    repo_owner = data.get("repo_owner", "").strip()
+    repo_name = data.get("repo_name", "").strip()
+
+    if not all([github_token, repo_owner, repo_name]):
+        return JSONResponse({"error": "All fields are required"}, status_code=400)
+
+    headers = {
+        "Authorization": f"token {github_token}",
+        "Accept": "application/vnd.github.v3+json",
+    }
+
+    try:
+        url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/contents/backups"
+        resp = http_requests.get(url, headers=headers, timeout=10)
+
+        if resp.status_code == 404:
+            return JSONResponse({"success": True, "services": []})
+        if resp.status_code != 200:
+            return JSONResponse({"error": f"GitHub API returned {resp.status_code}"}, status_code=400)
+
+        items = resp.json()
+        services = [
+            {"slug": item["name"], "path": item["path"]}
+            for item in items
+            if item.get("type") == "dir"
+        ]
+
+        return JSONResponse({"success": True, "services": services})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@router.post("/auth/import-service")
+async def import_service(request: Request):
+    """Import a service from a GitHub backup.
+    Creates the local service directory, configures backup, and restores data.
+    """
+    from app.services.auth_service import hash_password
+    from app.services import backup_service
+    from app.service_context import create_service, set_active_service
+    from app.desktop_config import get_service_dir
+
+    data = await request.json()
+    github_token = data.get("github_token", "").strip()
+    repo_owner = data.get("repo_owner", "").strip()
+    repo_name = data.get("repo_name", "").strip()
+    service_slug = data.get("service_slug", "").strip()
+    service_name = data.get("service_name", "").strip() or service_slug
+    password = data.get("password", "").strip()
+
+    if not all([github_token, repo_owner, repo_name, service_slug, password]):
+        return JSONResponse({"error": "All fields are required"}, status_code=400)
+
+    if len(password) < 4:
+        return JSONResponse({"error": "Password must be at least 4 characters"}, status_code=400)
+
+    # Create the service locally
+    pw_hash = hash_password(password)
+    slug = create_service(service_name, pw_hash)
+
+    # Configure backup so the service knows its GitHub repo
+    service_dir = get_service_dir(slug)
+    backup_service.configure(service_dir, github_token, repo_owner, repo_name)
+
+    # Restore latest backup
+    result = backup_service.list_backups(service_dir, github_token)
+    restored = False
+    if result.get("success") and result.get("backups"):
+        newest = result["backups"][0]
+        restore_result = backup_service.restore(service_dir, github_token, newest["path"])
+        restored = restore_result.get("success", False)
+
+    # Log the user into the imported service
+    set_active_service(slug, service_name)
+
+    return JSONResponse({
+        "success": True,
+        "slug": slug,
+        "restored": restored,
+        "redirect": "/",
+    })
+
+
 # ============================================================================
 # Update Endpoints
 # ============================================================================
@@ -1612,6 +1704,132 @@ async def backup_config():
 
     result = backup_service.get_config_display(service_dir)
     return JSONResponse(result)
+
+
+# ============================================================================
+# Admin Endpoints
+# ============================================================================
+
+@router.post("/admin/login")
+async def admin_login(request: Request):
+    """Authenticate as admin."""
+    from app.services.admin_service import check_admin_password, set_admin_authenticated
+
+    # Accept both JSON and form data
+    content_type = request.headers.get("content-type", "")
+    if "application/json" in content_type:
+        data = await request.json()
+        username = str(data.get("username", ""))
+        password = str(data.get("password", ""))
+    else:
+        form = await request.form()
+        username = str(form.get("username", ""))
+        password = str(form.get("password", ""))
+
+    if check_admin_password(username, password):
+        set_admin_authenticated(True)
+        return {"success": True, "redirect": "/admin"}
+    return {"success": False, "error": "Invalid admin credentials"}
+
+
+@router.post("/admin/logout")
+async def admin_logout():
+    """Log out admin."""
+    from app.services.admin_service import set_admin_authenticated
+    set_admin_authenticated(False)
+    return {"success": True, "redirect": "/landing"}
+
+
+@router.get("/admin/services-data")
+async def admin_services_data():
+    """Get cross-service data for admin dashboard."""
+    from app.services.admin_service import is_admin_authenticated, get_all_services_data
+    if not is_admin_authenticated():
+        return JSONResponse({"error": "Not authenticated"}, status_code=401)
+    data = get_all_services_data()
+    return JSONResponse(content={"services": data})
+
+
+# ============================================================================
+# Test Data Endpoints
+# ============================================================================
+
+@router.post("/admin/test-data/generate")
+async def generate_test_data_endpoint():
+    """Generate test fire department data."""
+    from app.services.admin_service import is_admin_authenticated
+    from app.services.test_data_service import generate_test_data
+    if not is_admin_authenticated():
+        return JSONResponse({"error": "Not authenticated"}, status_code=401)
+    result = generate_test_data()
+    if result.get("success"):
+        return JSONResponse(result)
+    return JSONResponse(result, status_code=400)
+
+
+@router.delete("/admin/test-data/delete")
+async def delete_test_data_endpoint():
+    """Delete test fire department data."""
+    from app.services.admin_service import is_admin_authenticated
+    from app.services.test_data_service import delete_test_data
+    if not is_admin_authenticated():
+        return JSONResponse({"error": "Not authenticated"}, status_code=401)
+    result = delete_test_data()
+    if result.get("success"):
+        return JSONResponse(result)
+    return JSONResponse(result, status_code=400)
+
+
+# ============================================================================
+# Annotation Endpoints (Event Markers for Trend Charts)
+# ============================================================================
+
+@router.get("/admin/annotations")
+async def list_annotations():
+    """Get all event annotations."""
+    from app.services.admin_service import is_admin_authenticated, load_annotations
+    if not is_admin_authenticated():
+        return JSONResponse({"error": "Not authenticated"}, status_code=401)
+    return JSONResponse(content={"annotations": load_annotations()})
+
+
+@router.post("/admin/annotations")
+async def create_annotation(request: Request):
+    """Create an event annotation."""
+    from app.services.admin_service import is_admin_authenticated, add_annotation
+    if not is_admin_authenticated():
+        return JSONResponse({"error": "Not authenticated"}, status_code=401)
+    data = await request.json()
+    month = str(data.get("month", "")).strip()
+    label = str(data.get("label", "")).strip()
+    description = str(data.get("description", "")).strip()
+    color = str(data.get("color", "#dc2626")).strip()
+    if not month or not label:
+        return JSONResponse({"error": "Month and label are required"}, status_code=400)
+    entry = add_annotation(month, label, description, color)
+    return JSONResponse(content={"success": True, "annotation": entry})
+
+
+@router.delete("/admin/annotations/{annotation_id}")
+async def remove_annotation(annotation_id: str):
+    """Delete an event annotation."""
+    from app.services.admin_service import is_admin_authenticated, delete_annotation
+    if not is_admin_authenticated():
+        return JSONResponse({"error": "Not authenticated"}, status_code=401)
+    if delete_annotation(annotation_id):
+        return JSONResponse(content={"success": True})
+    return JSONResponse({"error": "Annotation not found"}, status_code=404)
+
+
+# ============================================================================
+# Sync Endpoints
+# ============================================================================
+
+@router.get("/sync/status")
+async def sync_status():
+    """Get current auto-sync state."""
+    from app.services.sync_service import get_sync_state
+    return JSONResponse(content=get_sync_state())
 
 
 # ============================================================================

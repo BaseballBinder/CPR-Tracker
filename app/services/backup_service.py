@@ -82,6 +82,7 @@ def configure(service_dir: Path, github_token: str, repo_owner: str, repo_name: 
 
     config = {
         "encrypted_token": encrypted_token,
+        "github_token": github_token,
         "repo_owner": repo_owner,
         "repo_name": repo_name,
         "configured_at": datetime.now(timezone.utc).isoformat(),
@@ -273,3 +274,11 @@ def get_config_display(service_dir: Path) -> dict:
         "configured_at": config.get("configured_at", ""),
         "verified": config.get("verified", False),
     }
+
+
+def get_stored_token(service_dir: Path) -> Optional[str]:
+    """Retrieve the stored GitHub token for auto-sync.
+    Returns None if backup is not configured or token is missing.
+    """
+    config = load_backup_config(service_dir)
+    return config.get("github_token") or None
